@@ -1,0 +1,121 @@
+/* Global CSS */
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Firebase ui customization */
+.mdl-button--colored {
+  background-color: #134A84 !important;
+  color: #FFFFFF;
+}
+
+.mdl-button--primary {
+  color: #333333 !important;
+}
+
+.firebaseui-container {
+  box-shadow: none !important;
+}
+
+.firebaseui-label:after {
+  background-color: #134A84 !important;
+}
+
+#hbspt-form {
+  margin: auto;
+
+  fieldset, .hs-input {
+    width: 100%;
+    max-width: inherit;
+  }
+
+  .hs-form-field {
+    margin-top: 16px;
+
+    label {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 16px;
+      color: #000000;
+      line-height: 29px;
+      font-weight: 400;
+    }
+
+    input, textarea {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin-top: 8px;
+      width: 100%;
+      font-size: 16px;
+      padding: 12px 12px;
+      border: 1px solid rgba(38, 50, 56, 0.16);
+      border-radius: 4px;
+      background-color: #f5f8fa;
+    }
+
+    .error {
+      border-color: #F44336;
+      color: #F44336;
+    }
+
+    .error::placeholder {
+      color: #F44336;
+    }
+  }
+
+  .hs-error-msgs {
+    list-style: none;
+    padding: 0;
+    margin: 3px 14px 0px;
+
+    .hs-error-msg, .hs-main-font-element {
+      font-size: 12px;
+      line-height: 20px;
+      color: #F44336;
+    }
+  }
+
+  .hs_error_rollup {
+    display: none;
+  }
+
+  .hs-submit {
+    margin-top: 46px;
+
+    .actions {
+      text-align: center;
+      input {
+        color: #FFFFFF;
+        font-size: 18px;
+        line-height: 24px;
+        background-color: #CB0808;
+        padding: 8px 22px;
+        box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px rgba(0, 0, 0, 0.14), 0px 1px 10px rgba(0, 0, 0, 0.12);
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .grecaptcha-badge{
+    margin: auto;
+  }
+
+  .submitted-message {
+    color: #000000;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px;
+  }
+}
