@@ -5,6 +5,8 @@ import { styled } from "@mui/material/styles";
 import { ConnectKitButton } from "connectkit";
 import Image from "next/image";
 import { Box } from "@mui/material";
+import Link from "next/link";
+import { AppRoute } from "@/enums/route";
 
 export default function Header() {
   return (
@@ -12,12 +14,19 @@ export default function Header() {
       <StyledContainerDiv>
         <StyledAppBarDiv>
           <StyledLeftDiv>
-            <StyledMenuItemDiv>
-              <Image alt="Icon" src="/icons/usdtx.svg" width={30} height={30} />
-              <Box fontWeight={"bold"} marginLeft={"5px"}>
-                X-GATE
-              </Box>
-            </StyledMenuItemDiv>
+            <Link href={AppRoute.HOME}>
+              <StyledMenuItemDiv>
+                <Image
+                  alt="Icon"
+                  src="/icons/usdtx.svg"
+                  width={30}
+                  height={30}
+                />
+                <Box fontWeight={"bold"} marginLeft={"5px"}>
+                  X-GATE
+                </Box>
+              </StyledMenuItemDiv>
+            </Link>
           </StyledLeftDiv>
           <StyledRightDiv>
             <ConnectKitButton />
