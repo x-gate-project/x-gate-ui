@@ -1,0 +1,43 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@formatjs/intl-localematcher": "^0.6.0",
+    "@layerzerolabs/lz-definitions": "^3.0.67",
+    "@layerzerolabs/lz-v2-utilities": "^3.0.67",
+    "@mui/material": "^6.4.4",
+    "@mui/material-nextjs": "^6.4.3",
+    "connectkit": "^1.8.2",
+    "ethers": "^6.13.5",
+    "negotiator": "^1.0.0",
+    "next": "15.1.7",
+    "notistack": "^3.0.2",
+    "pino-pretty": "^13.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.54.2",
+    "tss-react": "^4.9.15",
+    "viem": "^2.23.1",
+    "wagmi": "^2.14.11"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/negotiator": "^0.6.3",
+    "@types/node": "^20",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.7",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "dashboard": {
+    "send_title": "Send",
+    "mint_title": "Mint",
+    "burn_title": "Burn"
+  },
+  "header": {
+    "connect_wallet": "Connect wallet"
+  },
+  "send_tab": {
+    "from": "From",
+    "to": "To",
+    "button": "Send USDTX",
+    "max": "Max",
+    "balance": "Balance",
+    "invalid_amount": "Amount is invalid or bigger than total balance!"
+  },
+  "mint_tab": {
+    "mint": "Mint USDTX Using",
+    "made": "Made",
+    "button": "Mint USDTX",
+    "max": "Max",
+    "balance": "Balance",
+    "invalid_amount": "Amount is invalid or bigger than total balance!",
+    "mint_success": "Mint USDTX successfully!"
+  },
+  "burn_tab": {
+    "burn": "Burn USDTX",
+    "out": "Out",
+    "button": "Burn USDTX",
+    "max": "Max",
+    "balance": "Balance",
+    "invalid_amount": "Amount is invalid or bigger than total balance!",
+    "burn_success": "Burn USDTX successfully!"
+  },
+  "account_detail_popover": {
+    "disconnect": "Disconnect"
+  },
+  "error_page": {
+    "404_message": "The page you are looking for doesn't exist or has been moved.",
+    "500_message": "A system error has occurred. Please try again in a few minutes.",
+    "click_here_to_contact_us": "Click here to contact us"
+  }
+}

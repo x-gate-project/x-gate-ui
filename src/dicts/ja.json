@@ -1,0 +1,44 @@
+{
+  "dashboard": {
+    "send_title": "送信",
+    "mint_title": "ミント",
+    "burn_title": "バーン"
+  },
+  "header": {
+    "connect_wallet": "ウォレットを接続"
+  },
+  "send_tab": {
+    "from": "送信元",
+    "to": "送信先",
+    "button": "USDTXを送信",
+    "max": "最大",
+    "balance": "残高",
+    "invalid_amount": "金額が無効または総残高を超えています！"
+  },
+  "mint_tab": {
+    "mint": "USDTXをミントする",
+    "made": "作成済み",
+    "button": "USDTXをミント",
+    "max": "最大",
+    "balance": "残高",
+    "invalid_amount": "金額が無効または総残高を超えています！"
+  },
+  "burn_tab": {
+    "burn": "USDTXをバーン",
+    "out": "出金",
+    "button": "USDTXをバーン",
+    "max": "最大",
+    "balance": "残高",
+    "invalid_amount": "金額が無効または総残高を超えています！",
+    "mint_success": "USDTXをミントしました！",
+    "burn_success": "USDTXをバーンしました！"
+  },
+  "account_detail_popover": {
+    "disconnect": "切断"
+  },
+  "error_page": {
+    "404_message": "お探しのページは存在しないか、移動されました。",
+    "500_message": "システムエラーが発生しました。数分後に再試行してください。",
+    "click_here_to_contact_us": "こちらをクリックしてお問い合わせください"
+  }
+}
