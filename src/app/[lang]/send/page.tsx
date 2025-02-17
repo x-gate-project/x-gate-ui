@@ -30,7 +30,7 @@ import {
 import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
-import { parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { ethers } from "ethers";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import { isProduction } from "@/utils/system";
@@ -68,7 +68,12 @@ export default function Send() {
 
   const handleSendAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const amount = event.target.value.replace(/\D/g, ""); // Replace all non-digit characters with empty string
+      const amount = event.target.value
+        .replace(/[^0-9.]/g, '') // Removes non-numeric characters or periods
+        .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
+        .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
+        .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
+        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setSendAmount(amount);
     },
     []
@@ -86,11 +91,9 @@ export default function Send() {
 
   const handleSetHalfAmount = useCallback(() => {
     if (usdtxEthereumBalance && usdtxJocBalance) {
-      // Set half of the balance
-      const halfAmount = Math.floor(
-        Number(isFromETH ? usdtxEthereumBalance : usdtxJocBalance) / 2
-      );
-      setSendAmount(halfAmount.toString());
+      // Set half of the balance and format it to the token decimal
+      const halfAmount = (parseUnits(isFromETH ? usdtxEthereumBalance : usdtxJocBalance, 6) / BigInt(2));
+      setSendAmount(formatUnits(halfAmount, 6));
     }
   }, [isFromETH, usdtxEthereumBalance, usdtxJocBalance]);
 
