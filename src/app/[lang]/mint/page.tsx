@@ -27,7 +27,7 @@ import {
   waitForTransactionReceipt,
 } from "wagmi/actions";
 import { ethereum } from "@/wagmi.config";
-import { parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
 import Layout from "@/components/Layout";
@@ -55,7 +55,12 @@ export default function Mint() {
 
   const handleMintAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const amount = event.target.value.replace(/\D/g, ""); // Replace all non-digit characters with empty string
+      const amount = event.target.value
+        .replace(/[^0-9.]/g, '') // Removes non-numeric characters or periods
+        .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
+        .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
+        .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
+        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setMintAmount(amount);
     },
     []
@@ -69,9 +74,9 @@ export default function Mint() {
 
   const handleSetHalfAmount = useCallback(() => {
     if (usdtEthereumBalance) {
-      // Set half of the balance
-      const halfAmount = Math.floor(Number(usdtEthereumBalance) / 2);
-      setMintAmount(halfAmount.toString());
+      // Set half of the balance and format it to the token decimal
+      const halfAmount = (parseUnits(usdtEthereumBalance, 6) / BigInt(2));
+      setMintAmount(formatUnits(halfAmount, 6));
     }
   }, [usdtEthereumBalance]);
 

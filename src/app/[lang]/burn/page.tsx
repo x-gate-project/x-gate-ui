@@ -22,7 +22,7 @@ import {
   waitForTransactionReceipt,
 } from "wagmi/actions";
 import { ethereum } from "@/wagmi.config";
-import { parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import UsdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
 
@@ -50,7 +50,12 @@ export default function Burn() {
 
   const handleMintAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const amount = event.target.value.replace(/\D/g, ""); // Replace all non-digit characters with empty string
+      const amount = event.target.value
+        .replace(/[^0-9.]/g, '') // Removes non-numeric characters or periods
+        .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
+        .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
+        .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
+        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setBurnAmount(amount);
     },
     []
@@ -64,9 +69,9 @@ export default function Burn() {
 
   const handleSetHalfAmount = useCallback(() => {
     if (usdtxEthereumBalance) {
-      // Set half of the balance
-      const halfAmount = Math.floor(Number(usdtxEthereumBalance) / 2);
-      setBurnAmount(halfAmount.toString());
+      // Set half of the balance and format it to the token decimal
+      const halfAmount = (parseUnits(usdtxEthereumBalance, 6) / BigInt(2));
+      setBurnAmount(formatUnits(halfAmount, 6));
     }
   }, [usdtxEthereumBalance]);
 
