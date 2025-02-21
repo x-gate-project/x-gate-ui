@@ -10,24 +10,27 @@
   "send_tab": {
     "from": "From",
     "to": "To",
-    "button": "Send USDTX",
+    "button": "Send",
     "max": "Max",
     "balance": "Balance",
-    "invalid_amount": "Amount is invalid or bigger than total balance!"
+    "invalid_amount": "Amount is invalid or bigger than total balance!",
+    "another_wallet_address": "or Another Wallet address",
+    "invalid_receive_address": "Invalid receive address!",
+    "receive_address_placeholder": "Enter a receive address"
   },
   "mint_tab": {
-    "mint": "Mint USDTX Using",
+    "mint": "Mint Using",
     "made": "Made",
-    "button": "Mint USDTX",
+    "button": "Mint",
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
     "mint_success": "Mint USDTX successfully!"
   },
   "burn_tab": {
-    "burn": "Burn USDTX",
+    "burn": "Burn",
     "out": "Out",
-    "button": "Burn USDTX",
+    "button": "Burn",
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
@@ -40,5 +43,13 @@
     "404_message": "The page you are looking for doesn't exist or has been moved.",
     "500_message": "A system error has occurred. Please try again in a few minutes.",
     "click_here_to_contact_us": "Click here to contact us"
+  },
+  "network_change_popover": {
+    "search_placeholder": "Search Network",
+    "select_network": "Select a Network"
+  },
+  "token_change_popover": {
+    "search_placeholder": "Search Tokens",
+    "select_token": "Select a Token"
   }
 }

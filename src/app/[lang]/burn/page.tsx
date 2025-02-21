@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Button,
   TextField,
@@ -9,6 +9,7 @@ import {
   Box,
   alpha,
   InputAdornment,
+  useTheme,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -20,11 +21,28 @@ import {
   switchChain,
   writeContract,
   waitForTransactionReceipt,
+  readContract,
 } from "wagmi/actions";
-import { ethereum } from "@/wagmi.config";
-import { formatUnits, parseUnits } from "viem";
-import UsdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
+import { Chain, formatUnits, parseUnits } from "viem";
+import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
+import NetworkChangePopover from "@/components/NetworkChangePopover";
+import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
+import { Options } from "@layerzerolabs/lz-v2-utilities";
+import { ethers } from "ethers";
+import { EndpointId } from "@layerzerolabs/lz-definitions";
+
+const burnToken = [
+  {
+    name: 'USDTX',
+    icon: '/icons/usdtx-icon.svg',
+  },
+  // {
+  //   name: 'USDCX',
+  //   icon: '/icons/usdcx-icon.svg',
+  // },
+]
 
 export default function Burn() {
   const dict = useDict();
@@ -36,16 +54,22 @@ export default function Burn() {
   const { classes } = useStyles();
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const { data: usdtxEthereumData, refetch: refetchUsdtEthereumData } =
+  const [selectedNetwork, setSelectedNetwork] = useState<Chain>(ethereum);
+  const [selectedToken, setSelectedToken] = useState<Token>(burnToken[0]);
+  const { data: currentTokenData, refetch: refetchCurrentTokenData } =
     useBalance({
       address,
-      token: process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any,
-      chainId: ethereum.id,
+      token: CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any,
+      chainId: selectedNetwork.id,
     });
+  const [networkChangePopoverAnchorEl, setNetworkChangePopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
+  const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
 
-  const usdtxEthereumBalance = usdtxEthereumData?.formatted;
+  const currentTokenBalance = currentTokenData?.formatted;
   const insufficientBalance = burnAmount
-    ? Number(burnAmount) > Number(usdtxEthereumBalance)
+    ? Number(burnAmount) > Number(currentTokenBalance)
     : false;
 
   const handleMintAmountChange = useCallback(
@@ -62,41 +86,87 @@ export default function Burn() {
   );
 
   const handleSetMaxAmount = useCallback(() => {
-    if (usdtxEthereumBalance) {
-      setBurnAmount(usdtxEthereumBalance);
+    if (currentTokenBalance) {
+      setBurnAmount(currentTokenBalance);
     }
-  }, [usdtxEthereumBalance]);
+  }, [currentTokenBalance]);
 
   const handleSetHalfAmount = useCallback(() => {
-    if (usdtxEthereumBalance) {
+    if (currentTokenBalance) {
       // Set half of the balance and format it to the token decimal
-      const halfAmount = (parseUnits(usdtxEthereumBalance, 6) / BigInt(2));
+      const halfAmount = (parseUnits(currentTokenBalance, 6) / BigInt(2));
       setBurnAmount(formatUnits(halfAmount, 6));
     }
-  }, [usdtxEthereumBalance]);
+  }, [currentTokenBalance]);
 
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
       setIsBurning(true);
       try {
-        if (chainId !== ethereum.id) {
-          await switchChain(wagmiConfig, { chainId: ethereum.id });
+        if (chainId !== selectedNetwork.id) {
+          await switchChain(wagmiConfig, { chainId: selectedNetwork.id });
         }
 
-        const hash = await writeContract(wagmiConfig, {
-          abi: UsdtxAbi,
-          address: process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any,
-          functionName: "burn",
-          args: [parseUnits(burnAmount, 6)],
-        });
+        const isFromETH = selectedNetwork.id === ethereum.id;
 
-        await waitForTransactionReceipt(wagmiConfig, {
-          hash,
-        });
+        if(!isFromETH && address) {
+          const ethereumUsdtxAddress = CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any;
+          const sourceUsdtxAddress = CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any;
+
+          const options = Options.newOptions()
+            .addExecutorLzReceiveOption(200000, 0)
+            .addExecutorComposeOption(0, 500000, 0)
+            .toHex()
+            .toString();
+
+          const composeMessage = ethers.solidityPacked(
+            ["uint16", "bytes32"],
+            [1, ethers.zeroPadValue(address, 32)]
+          );
+
+          const sendParam = [
+            EndpointId.SEPOLIA_V2_TESTNET,
+            ethers.zeroPadValue(ethereumUsdtxAddress, 32),
+            ethers.parseUnits(burnAmount, 6),
+            ethers.parseUnits(burnAmount, 6),
+            options,
+            composeMessage,
+            "0x",
+          ];
+
+          const fee: any = await readContract(wagmiConfig, {
+            abi: usdtxAbi,
+            address: sourceUsdtxAddress,
+            functionName: "quoteSend",
+            args: [sendParam, false],
+          });
+
+          const sendUsdtxTxHash = await writeContract(wagmiConfig, {
+            abi: usdtxAbi,
+            address: sourceUsdtxAddress,
+            functionName: "send",
+            args: [sendParam, [fee.nativeFee, 0], address],
+            value: fee.nativeFee,
+          });
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: sendUsdtxTxHash,
+          });
+        } else {
+          const hash = await writeContract(wagmiConfig, {
+            abi: usdtxAbi,
+            address: CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any,
+            functionName: "burn",
+            args: [parseUnits(burnAmount, 6)],
+          });
+
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash,
+          });
+        }
 
         resetBurnAmount();
-        refetchUsdtEthereumData();
+        refetchCurrentTokenData();
         enqueueSnackbar(dict.burn_tab.burn_success, { variant: "success" });
       } catch (error) {
         console.log("Burn failded with error: ", error);
@@ -110,165 +180,274 @@ export default function Burn() {
       chainId,
       dict.burn_tab.burn_success,
       enqueueSnackbar,
-      refetchUsdtEthereumData,
+      selectedNetwork,
+      refetchCurrentTokenData,
       resetBurnAmount,
       wagmiConfig,
+      address,
     ]
   );
+
+  const onOpenNetworkChangePopover = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setNetworkChangePopoverAnchorEl(event.currentTarget);
+    },
+    [setNetworkChangePopoverAnchorEl],
+  );
+  const onCloseNetworkChangePopover = useCallback(() => {
+    setNetworkChangePopoverAnchorEl(null);
+  }, [setNetworkChangePopoverAnchorEl]);
+
+  const onOpenTokenChangePopover = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setTokenChangePopoverAnchorEl(event.currentTarget);
+    },
+    [setTokenChangePopoverAnchorEl],
+  );
+  const onCloseTokenChangePopover = useCallback(() => {
+    setTokenChangePopoverAnchorEl(null);
+  }, [setTokenChangePopoverAnchorEl]);
+
+  const theme = useTheme();
 
   return (
     <Layout>
       <form onSubmit={handleSubmit}>
         <div className={classes.wrapper}>
-          <div className={classes.itemWrapper}>
-            <Box fontSize={16} color="#000000">
-              {dict.burn_tab.burn}
-            </Box>
-            <TextField
-              fullWidth
-              placeholder="0"
-              variant="outlined"
-              // name="amountSSS"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <div className={classes.recommendWrapper}>
-                      <div className={classes.chipWrapper}>
-                        <Chip
-                          onClick={handleSetMaxAmount}
-                          label={dict.burn_tab.max}
-                          className={classes.chipButton}
-                        />
-                        <Chip
-                          onClick={handleSetHalfAmount}
-                          label={"50%"}
-                          className={classes.chipButton}
-                        />
-                      </div>
-                      <div className={classes.balanceWrapper}>
-                        <Box
-                          border="1px solid #bdbdbd"
-                          borderRadius={8}
-                          display={"flex"}
-                          alignItems={"center"}
-                          padding={"8px 12px"}
-                        >
-                          <TokenWithChainIcon
-                            tokenIcon="/icons/usdtx.svg"
-                            chainIcon="/icons/ethereum.svg"
-                            width={24}
-                            height={24}
-                          />
-                          <Box marginLeft="4px" color="black">
-                            USDTX
-                          </Box>
-                        </Box>
-                        {usdtxEthereumBalance && (
-                          <Box
-                            display="flex"
-                            alignItems="baseline"
-                            overflow="hidden"
-                            maxWidth={120}
-                            gap={1}
-                          >
-                            <Box fontSize={14}>{dict.burn_tab.balance}:</Box>
-                            <Box>{usdtxEthereumBalance}</Box>
-                          </Box>
-                        )}
-                      </div>
+          <div className={classes.infoWrapper}>
+
+            <div className={classes.itemWrapper}>
+              <Box
+                width="100%"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                flexDirection="column"
+                gap="8px"
+                border="1px solid #E2E8F0"
+                borderRadius="6px"
+                padding="16px"
+                paddingBottom={currentTokenBalance ? "16px" : "32px"}
+              >
+                <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
+                  <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
+                    <Box className={classes.inputTitle}>
+                      {dict.burn_tab.burn}
+                    </Box>
+                  </Box>
+                  <Button
+                    onClick={onOpenNetworkChangePopover}
+                    className={classes.switchNetworkButton}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]} alt={selectedNetwork.name} width={16} height={16} />
+                    <div className={classes.selectedNetworkTitle}>
+                      {selectedNetwork.name}
                     </div>
-                  </InputAdornment>
-                ),
-              }}
-              className={classes.textField}
-              sx={{
-                "& .MuiInputBase-input": {
-                  padding: "32px",
-                },
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                },
-              }}
-              autoFocus
-              size="medium"
-              value={burnAmount}
-              onChange={handleMintAmountChange}
-              inputProps={{ "data-testid": "amount-input" }}
-              error={insufficientBalance}
-              helperText={insufficientBalance && dict.burn_tab.invalid_amount}
-            />
-          </div>
-          <div className={classes.itemWrapper}>
-            <Box fontSize={16} color="#000000">
-              {dict.burn_tab.out}
-            </Box>
-            <TextField
-              fullWidth
-              placeholder="0"
-              variant="outlined"
-              disabled
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <div className={classes.recommendWrapper}>
-                      <div className={classes.balanceWrapper}>
-                        <Box
-                          border="1px solid #bdbdbd"
-                          borderRadius={8}
-                          display={"flex"}
-                          alignItems={"center"}
-                          padding={"8px 12px"}
-                        >
-                          <TokenWithChainIcon
-                            tokenIcon="/icons/usdt.svg"
-                            chainIcon="/icons/ethereum.svg"
-                            width={24}
-                            height={24}
-                          />
-                          <Box marginLeft="4px" color="black">
-                            USDT
-                          </Box>
-                        </Box>
-                      </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="icons/arrow-down.svg" alt="USDT" width="16" />
+                  </Button>
+                </Box>
+                <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
+                  <TextField
+                    fullWidth
+                    placeholder="0"
+                    InputProps={{
+                      sx: { paddingRight: "0px" },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <div className={classes.recommendWrapper}>
+                            <div className={classes.chipWrapper}>
+                              <Chip
+                                onClick={handleSetMaxAmount}
+                                label={dict.burn_tab.max}
+                                className={classes.chipButton}
+                              />
+                              <Chip
+                                onClick={handleSetHalfAmount}
+                                label={"50%"}
+                                className={classes.chipButton}
+                              />
+                            </div>
+                            <div className={classes.balanceWrapper}>
+                              <div
+                                  className={classes.selectedTokenWrapper}
+                                  onClick={onOpenTokenChangePopover}
+                                >
+                                  <TokenWithChainIcon
+                                    tokenIcon={selectedToken.icon}
+                                    chainIcon={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]}
+                                    width={24}
+                                    height={24}
+                                  />
+                                  <Box marginLeft="4px" color="black">
+                                    {selectedToken.name}
+                                  </Box>
+                                  <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src="icons/caret-sort.svg" alt="USDT" width="16"/>
+                                </Box>
+                              </div>
+                            </div>
+                          </div>
+                        </InputAdornment>
+                      ),
+                    }}
+                    className={classes.newTextField}
+                    sx={{
+                      "& .MuiInputBase-input": {
+                        padding: "0px",
+                      },
+                    }}
+                    autoFocus
+                    size="medium"
+                    value={burnAmount}
+                    onChange={handleMintAmountChange}
+                    inputProps={{ "data-testid": "amount-input" }}
+                    error={insufficientBalance}
+                    helperText={insufficientBalance && dict.burn_tab.invalid_amount}
+                    FormHelperTextProps={{
+                      className: classes.helperText,
+                    }}
+                  />
+                  {currentTokenBalance && <Box
+                    display="flex"
+                    alignItems="baseline"
+                    justifyContent="start"
+                    overflow="hidden"
+                    maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                    gap={1}
+                    width="100%"
+                  >
+                    <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                    <Box color="#64748B"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap">
+                      {currentTokenBalance}
+                    </Box>
+                  </Box>
+                  }
+                </Box>
+              </Box>
+            </div>
+
+            <div className={classes.itemWrapper}>
+              <Box
+                width="100%"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                flexDirection="column"
+                gap="8px"
+                border="1px solid #E2E8F0"
+                borderRadius="6px"
+                padding="16px"
+                sx={{ backgroundColor: "#E2E8F0" }}
+              >
+                <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
+                  <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
+                    <Box className={classes.inputTitle}>
+                      {dict.burn_tab.out}
+                    </Box>
+                  </Box>
+                  <div
+                    className={classes.madeNetworkWrapper}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={selectedNetwork.name} width="16" />
+                    <div className={classes.selectedNetworkTitle}>
+                      {ethereum.name}
                     </div>
-                  </InputAdornment>
-                ),
-              }}
-              className={classes.textField}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                },
-                "& .MuiInputBase-input": {
-                  paddingLeft: "32px",
-                },
-              }}
-              size="medium"
-              value={burnAmount}
-              name="to"
-              inputProps={{ "data-testid": "to-input" }}
-            />
+                  </div>
+                </Box>
+                <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
+                  <TextField
+                    fullWidth
+                    placeholder="0"
+                    disabled
+                    InputProps={{
+                      sx: { paddingRight: "0px" },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <div className={classes.recommendWrapper}>
+                            <div className={classes.balanceWrapper}>
+                              <Box
+                                sx={{ backgroundColor: "white" }}
+                                borderRadius={8}
+                                display={"flex"}
+                                alignItems={"center"}
+                                padding={"8px 12px"}
+                              >
+                                <TokenWithChainIcon
+                                  tokenIcon="/icons/usdt.svg"
+                                  chainIcon="/icons/ethereum.svg"
+                                  width={24}
+                                  height={24}
+                                />
+                                <Box marginLeft="4px" color="black">
+                                  USDT
+                                </Box>
+                              </Box>
+                            </div>
+                          </div>
+                        </InputAdornment>
+                      ),
+                    }}
+                    className={classes.newTextField}
+                    sx={{
+                      "& .MuiInputBase-input": {
+                        padding: "0px",
+                      },
+                    }}
+                    size="medium"
+                    value={burnAmount}
+                    name="to"
+                    inputProps={{ "data-testid": "to-input" }}
+                  />
+                </Box>
+              </Box>
+            </div>
           </div>
           <Button
-            variant="contained"
-            className={classes.sendButton}
-            type="submit"
-            color="primary"
-            disabled={
-              isBurning ||
-              !burnAmount ||
-              insufficientBalance ||
-              isDisconnected ||
-              isConnecting
-            }
-            endIcon={
-              isBurning && <CircularProgress size={20} color="inherit" />
-            }
-          >
-            {dict.burn_tab.button}
+              variant="contained"
+              className={classes.sendButton}
+              type="submit"
+              color="primary"
+              disabled={
+                isBurning ||
+                !burnAmount ||
+                insufficientBalance ||
+                isDisconnected ||
+                isConnecting
+              }
+              endIcon={
+                isBurning && <CircularProgress size={20} color="inherit" />
+              }
+            >
+              {dict.burn_tab.button}
           </Button>
         </div>
       </form>
+      <NetworkChangePopover
+        open={Boolean(networkChangePopoverAnchorEl)}
+        onClose={onCloseNetworkChangePopover}
+        onChangeNetwork={(network: Chain) => {setSelectedNetwork(network)}}
+        anchorEl={networkChangePopoverAnchorEl}
+        selectedNetwork={selectedNetwork}
+        networks={wagmiConfig.chains as any}
+      />
+      <TokenChangePopover
+        open={Boolean(tokenChangePopoverAnchorEl)}
+        onClose={onCloseTokenChangePopover}
+        onChangeToken={(token: Token) => {setSelectedToken(token)}}
+        anchorEl={tokenChangePopoverAnchorEl}
+        selectedToken={selectedToken}
+        currentNetwork={selectedNetwork.name}
+        tokens={burnToken}
+      />
     </Layout>
   );
 }
@@ -280,11 +459,20 @@ const useStyles = makeStyles()((theme: Theme) => ({
     borderRadius: "8px",
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "24px",
     backgroundColor: "white",
     boxShadow:
       "0px 1px 2px -1px rgba(0, 0, 0, 0.10), 0px 1px 3px 0px rgba(0, 0, 0, 0.10)",
     border: `1px solid ${theme.palette.divider}`,
+    [theme.breakpoints.down("sm")]: {
+      padding: "24px",
+    },
+  },
+  infoWrapper: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
   },
   itemWrapper: {
     display: "flex",
@@ -315,6 +503,14 @@ const useStyles = makeStyles()((theme: Theme) => ({
     fontStyle: "normal",
     fontWeight: 400,
   },
+  newTextField: {
+    "& input": { fontSize: "32px", fontWeight: 400 },
+    fontSize: "32px",
+    fontStyle: "normal",
+    fontWeight: 400,
+    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+    padding: "0px",
+  },
   balanceWrapper: {
     display: "flex",
     flexDirection: "column",
@@ -334,13 +530,16 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     [theme.breakpoints.down("sm")]: {
       flexDirection: "column",
-      alignItems: "center",
+      alignItems: "end",
       gap: "4px",
     },
   },
   chipWrapper: {
     display: "flex",
     gap: "4px",
+    [theme.breakpoints.down("sm")]: {
+      paddingTop: "24px",
+    },
   },
   chipButton: {
     background: alpha(theme.palette.primary.main, 0.1),
@@ -356,7 +555,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
   },
   balanceTitle: {
     fontSize: "14px",
-    // color: theme.palette.text.secondary,
     maxLines: 1,
   },
   balanceContent: {
@@ -365,5 +563,62 @@ const useStyles = makeStyles()((theme: Theme) => ({
     overflow: "hidden",
     textOverflow: "ellipsis",
     maxLines: 1,
+  },
+  switchNetworkButton: {
+    fontSize: "16px",
+    fontWeight: 400,
+    color: "black",
+    lineHeight: "20px",
+    textAlign: "left",
+    textTransform: "none",
+    borderRadius: "9999px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px 12px",
+    gap: "4px",
+    background: "#F1F5F9",
+  },
+  inputTitle: {
+    fontSize: "16px",
+    color: "#000000",
+  },
+  selectedNetworkTitle: {
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "20px",
+    letterSpacing: 0,
+  },
+  madeNetworkWrapper: {
+    fontSize: "16px",
+    fontWeight: 400,
+    color: "black",
+    lineHeight: "20px",
+    textAlign: "left",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px 12px",
+    gap: "4px",
+  },
+  helperText: {
+    marginLeft: 0,
+    textAlign: "left",
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "140px",
+    },
+  },
+  selectedTokenWrapper: {
+    border: "1px solid #bdbdbd",
+    borderRadius: "9999px",
+    display: "flex",
+    alignItems: "center",
+    padding: "8px 12px",
+    gap: "4px",
+    cursor: "pointer",
+    [theme.breakpoints.down("sm")]: {
+      padding: "8px 4px",
+      gap: "2px",
+    },
   },
 }));

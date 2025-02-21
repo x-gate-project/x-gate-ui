@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { SyntheticEvent, useCallback, useState } from "react";
 import Image from "next/image";
 import {
   Button,
@@ -12,15 +12,18 @@ import {
   InputAdornment,
   Divider,
   IconButton,
+  Checkbox,
+  FormControlLabel,
+  useTheme,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import theme from "@/theme.config";
 import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
-import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
+import { useAccount, useBalance, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
-import { joc, ethereum } from "@/wagmi.config";
+import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
 import {
   switchChain,
   readContract,
@@ -29,11 +32,23 @@ import {
 } from "wagmi/actions";
 import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
-import { EndpointId } from "@layerzerolabs/lz-definitions";
-import { formatUnits, parseUnits } from "viem";
+import { Chain, formatUnits, parseUnits } from "viem";
 import { ethers } from "ethers";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
-import { isProduction } from "@/utils/system";
+import { ellipsifyText } from "@/utils/string.utils";
+import NetworkChangePopover from "@/components/NetworkChangePopover";
+import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
+
+const sendTokens = [
+  {
+    name: 'USDTX',
+    icon: '/icons/usdtx-icon.svg',
+  },
+  // {
+  //   name: 'USDCX',
+  //   icon: '/icons/usdcx-icon.svg',
+  // },
+]
 
 export default function Send() {
   const dict = useDict();
@@ -42,28 +57,29 @@ export default function Send() {
   const { classes } = useStyles();
   const { enqueueSnackbar } = useSnackbar();
   const [isSending, setIsSending] = useState(false);
-  const [isFromETH, setIsFromETH] = useState(false);
   const wagmiConfig = useConfig();
   const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const { data: usdtxEthereumData, refetch: refetchUsdtxEthereumBalance } =
-    useBalance({
-      address,
-      token: process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any,
-      chainId: ethereum.id,
-    });
-  const usdtxEthereumBalance = usdtxEthereumData?.formatted;
-
-  const { data: usdtxJocData, refetch: refetchUsdtxJocBalance } = useBalance({
+  const [selectedFromNetwork, setSelectedFromNetwork] = useState<Chain>(ethereum);
+  const [selectedToNetwork, setSelectedToNetwork] = useState<Chain>(ethereum);
+  const [selectedToken, setSelectedToken] = useState<Token>(sendTokens[0]);
+  const [receiveAddress, setReceiveAddress] = useState("");
+  const [fromNetworkChangePopoverAnchorEl, setFromNetworkChangePopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
+  const [toNetworkChangePopoverAnchorEl, setToNetworkChangePopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
+  const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
+  const [isSendToAnotherWallet, setIsSendToAnotherWallet] = useState(false);
+  const { data: fromTokenData, refetch: refetchFromTokenBalance } = useBalance({
     address,
-    token: process.env.NEXT_PUBLIC_USDTX_JOC_ADDRESS as any,
-    chainId: joc.id,
+    token: CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any,
+    chainId: selectedFromNetwork.id,
   });
-  const usdtxJocBalance = usdtxJocData?.formatted;
 
+  const fromTokenBalance = fromTokenData?.formatted;
   const insufficientBalance = sendAmount
     ? Number(sendAmount) >
-      (isFromETH ? Number(usdtxEthereumBalance) : Number(usdtxJocBalance))
+      Number(fromTokenBalance)
     : false;
 
   const handleSendAmountChange = useCallback(
@@ -80,22 +96,24 @@ export default function Send() {
   );
 
   const swapFromAndToNetwork = useCallback(() => {
-    setIsFromETH(!isFromETH);
-  }, [setIsFromETH, isFromETH]);
+    const tempSelectedFromNetwork = selectedFromNetwork;
+    setSelectedFromNetwork(selectedToNetwork);
+    setSelectedToNetwork(tempSelectedFromNetwork);
+  }, [setSelectedFromNetwork, setSelectedToNetwork, selectedFromNetwork, selectedToNetwork]);
 
   const handleSetMaxAmount = useCallback(() => {
-    if (usdtxEthereumBalance && usdtxJocBalance) {
-      setSendAmount(isFromETH ? usdtxEthereumBalance : usdtxJocBalance);
+    if (fromTokenBalance) {
+      setSendAmount(fromTokenBalance);
     }
-  }, [isFromETH, usdtxEthereumBalance, usdtxJocBalance]);
+  }, [fromTokenBalance]);
 
   const handleSetHalfAmount = useCallback(() => {
-    if (usdtxEthereumBalance && usdtxJocBalance) {
+    if (fromTokenBalance) {
       // Set half of the balance and format it to the token decimal
-      const halfAmount = (parseUnits(isFromETH ? usdtxEthereumBalance : usdtxJocBalance, 6) / BigInt(2));
+      const halfAmount = (parseUnits(fromTokenBalance, 6) / BigInt(2));
       setSendAmount(formatUnits(halfAmount, 6));
     }
-  }, [isFromETH, usdtxEthereumBalance, usdtxJocBalance]);
+  }, [fromTokenBalance]);
 
   const handleSubmit = useCallback(
     async (event: any) => {
@@ -103,17 +121,15 @@ export default function Send() {
         return;
       }
 
+      const receiverAddress = isSendToAnotherWallet ? receiveAddress : address;
+
       event.preventDefault();
       setIsSending(true);
 
       try {
-        if (isFromETH && chainId !== ethereum.id) {
-          await switchChain(wagmiConfig, { chainId: ethereum.id });
-        }
+        await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
 
-        if (!isFromETH && chainId !== joc.id) {
-          await switchChain(wagmiConfig, { chainId: joc.id });
-        }
+        const isFromETH = selectedFromNetwork.id === ethereum.id;
 
         const options = isFromETH
           ? Options.newOptions()
@@ -125,26 +141,19 @@ export default function Send() {
               .addExecutorComposeOption(0, 500000, 0)
               .toHex()
               .toString();
-        const sourceUsdtxAddress: any = isFromETH
-          ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS
-          : process.env.NEXT_PUBLIC_USDTX_JOC_ADDRESS;
+        const sourceUsdtxAddress = CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any;
         const composeMessage = isFromETH
           ? "0x"
           : ethers.solidityPacked(
               ["uint16", "bytes32"],
-              [1, ethers.zeroPadValue(address, 32)]
+              [1, ethers.zeroPadValue(receiverAddress, 32)]
             );
-        const destChain = isFromETH
-          ? isProduction
-            ? EndpointId.JOC_V2_MAINNET
-            : EndpointId.JOC_V2_TESTNET
-          : isProduction
-          ? EndpointId.ETHEREUM_V2_MAINNET
-          : EndpointId.SEPOLIA_V2_TESTNET;
+
+        const destChain = CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id];
 
         const sendParam = [
           destChain,
-          ethers.zeroPadValue(address, 32),
+          ethers.zeroPadValue(receiverAddress, 32),
           parseUnits(sendAmount, 6),
           parseUnits(sendAmount, 6),
           options,
@@ -171,8 +180,7 @@ export default function Send() {
         });
 
         resetSendAmount();
-        refetchUsdtxEthereumBalance();
-        refetchUsdtxJocBalance();
+        refetchFromTokenBalance();
         enqueueSnackbar(
           "Send USDTX successfully. Please wait a moment before the token is sent to the destination network.",
           { variant: "success" }
@@ -186,119 +194,202 @@ export default function Send() {
     },
     [
       address,
-      chainId,
       enqueueSnackbar,
-      isFromETH,
-      refetchUsdtxEthereumBalance,
-      refetchUsdtxJocBalance,
+      refetchFromTokenBalance,
       resetSendAmount,
       sendAmount,
       wagmiConfig,
+      selectedFromNetwork,
+      selectedToNetwork,
+      isSendToAnotherWallet,
+      receiveAddress,
     ]
   );
+
+  const onOpenFromNetworkChangePopover = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setFromNetworkChangePopoverAnchorEl(event.currentTarget);
+    },
+    [setFromNetworkChangePopoverAnchorEl],
+  );
+  const onCloseFromNetworkChangePopover = useCallback(() => {
+    setFromNetworkChangePopoverAnchorEl(null);
+  }, [setFromNetworkChangePopoverAnchorEl]);
+
+  const onOpenToNetworkChangePopover = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setToNetworkChangePopoverAnchorEl(event.currentTarget);
+    },
+    [setToNetworkChangePopoverAnchorEl],
+  );
+  const onCloseToNetworkChangePopover = useCallback(() => {
+    setToNetworkChangePopoverAnchorEl(null);
+  }, [setToNetworkChangePopoverAnchorEl]);
+
+  const onOpenTokenChangePopover = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setTokenChangePopoverAnchorEl(event.currentTarget);
+    },
+    [setTokenChangePopoverAnchorEl],
+  );
+  const onCloseTokenChangePopover = useCallback(() => {
+    setTokenChangePopoverAnchorEl(null);
+  }, [setTokenChangePopoverAnchorEl]);
+
+  const handleSendToAnotherWalletCheckboxChange = useCallback((event: SyntheticEvent<Element, Event>, checked: boolean) => {
+    setIsSendToAnotherWallet(checked);
+  }, []);
+
+  const handleReceiveAddressChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setReceiveAddress(event.target.value);
+  }, []);
+
+  const handleSelectFromNetwork = useCallback((network: Chain) => {
+    setSelectedFromNetwork(network);
+    resetSendAmount();
+  }, [setSelectedFromNetwork, resetSendAmount]);
+
+  const handleSelectToNetwork = useCallback((network: Chain) => {
+    setSelectedToNetwork(network);
+  }, [setSelectedToNetwork]);
 
   return (
     <Layout>
       <form onSubmit={handleSubmit}>
         <div className={classes.wrapper}>
-          <div className={classes.itemWrapper}>
-            <Box fontSize={16} color="#000000">
-              {dict.send_tab.from}
-            </Box>
-            <TextField
-              fullWidth
-              placeholder="0"
-              variant="outlined"
-              value={sendAmount}
-              onChange={handleSendAmountChange}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <div className={classes.recommendWrapper}>
-                      <div className={classes.chipWrapper}>
-                        <Chip
-                          onClick={handleSetMaxAmount}
-                          label={dict.send_tab.max}
-                          className={classes.chipButton}
-                        />
-                        <Chip
-                          onClick={handleSetHalfAmount}
-                          label={"50%"}
-                          className={classes.chipButton}
-                        />
-                      </div>
-                      <div className={classes.balanceWrapper}>
-                        <Box
-                          border="1px solid #bdbdbd"
-                          borderRadius={8}
-                          display={"flex"}
-                          alignItems={"center"}
-                          padding={"8px 12px"}
-                        >
-                          {isFromETH ? (
-                            <TokenWithChainIcon
-                              tokenIcon="/icons/usdtx.svg"
-                              chainIcon="/icons/ethereum.svg"
-                              width={24}
-                              height={24}
-                            />
-                          ) : (
-                            <TokenWithChainIcon
-                              tokenIcon="/icons/usdtx.svg"
-                              chainIcon="/icons/japan-open-chain.svg"
-                              width={24}
-                              height={24}
-                            />
-                          )}
-                          <Box marginLeft="4px" color="black">
-                            USDTX
-                          </Box>
-                        </Box>
-                        {usdtxEthereumBalance && usdtxJocBalance && <Box
-                          display="flex"
-                          alignItems="baseline"
-                          overflow="hidden"
-                          maxWidth={120}
-                          gap={1}
-                        >
-                          <Box fontSize={14}>{dict.mint_tab.balance}:</Box>
-                          <Box>
-                            {isFromETH ? usdtxEthereumBalance : usdtxJocBalance}
-                          </Box>
-                        </Box>}
-                      </div>
-                    </div>
-                  </InputAdornment>
-                ),
-              }}
-              className={classes.textField}
-              sx={{
-                "& .MuiInputBase-input": {
-                  padding: "32px",
-                },
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                },
-              }}
-              autoFocus
-              size="medium"
-              name="from"
-              inputProps={{ "data-testid": "from-input" }}
-              error={insufficientBalance}
-              helperText={insufficientBalance && dict.send_tab.invalid_amount}
-            />
-          </div>
+          <div className={classes.infoWrapper}>
 
-          <div className={classes.dividerWrapper}>
-            <Divider className={classes.divider}></Divider>
+            <div className={classes.itemWrapper}>
+              <Box
+                width="100%"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                flexDirection="column"
+                gap="8px"
+                border="1px solid #E2E8F0"
+                borderRadius="6px"
+                padding="16px"
+                paddingBottom={fromTokenBalance ? "16px" : "32px"}
+              >
+                <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
+                  <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
+                    <Box className={classes.inputTitle}>
+                      {dict.send_tab.from}
+                    </Box>
+                    <Box className={classes.addressTitle}>
+                      {address && ellipsifyText(address, 6, 4)}
+                    </Box>
+                  </Box>
+                  <Button
+                    onClick={onOpenFromNetworkChangePopover}
+                    className={classes.switchNetworkButton}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CHAIN_ID_TO_ICON_MAP[selectedFromNetwork.id]} alt={selectedFromNetwork.name} width={16} height={16} />
+                    <div className={classes.selectedNetworkTitle}>
+                      {selectedFromNetwork.name}
+                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="icons/arrow-down.svg" alt="USDT" width="16" />
+                  </Button>
+                </Box>
+                <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
+                  <TextField
+                    fullWidth
+                    placeholder="0"
+                    variant="outlined"
+                    value={sendAmount}
+                    onChange={handleSendAmountChange}
+                    InputProps={{
+                      sx: { paddingRight: "0px" },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <div className={classes.recommendWrapper}>
+                            <div className={classes.chipWrapper}>
+                              <Chip
+                                onClick={handleSetMaxAmount}
+                                label={dict.send_tab.max}
+                                className={classes.chipButton}
+                              />
+                              <Chip
+                                onClick={handleSetHalfAmount}
+                                label={"50%"}
+                                className={classes.chipButton}
+                              />
+                            </div>
+                            <div
+                                className={classes.selectedTokenWrapper}
+                                onClick={onOpenTokenChangePopover}
+                              >
+                                <TokenWithChainIcon
+                                    tokenIcon={selectedToken.icon}
+                                    chainIcon={CHAIN_ID_TO_ICON_MAP[selectedFromNetwork.id]}
+                                    width={24}
+                                    height={24}
+                                  />
+                                <Box color="black">
+                                  {selectedToken.name}
+                                </Box>
+                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src="icons/caret-sort.svg" alt="USDT" width="16"/>
+                                </Box>
+                            </div>
+                          </div>
+                        </InputAdornment>
+                      ),
+                    }}
+                    className={classes.newTextField}
+                    sx={{
+                      "& .MuiInputBase-input": {
+                        padding: "0px",
+                      },
+                    }}
+                    autoFocus
+                    size="medium"
+                    name="from"
+                    inputProps={{ "data-testid": "from-input" }}
+                    error={insufficientBalance}
+                    helperText={insufficientBalance && dict.send_tab.invalid_amount}
+                    FormHelperTextProps={{
+                      className: classes.helperText,
+                    }}
+                  />
+                  {fromTokenBalance && <Box
+                    display="flex"
+                    alignItems="baseline"
+                    justifyContent="start"
+                    overflow="hidden"
+                    maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
+                    gap={1}
+                    width="100%"
+                  >
+                    <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                    <Box color="#64748B">
+                      {fromTokenBalance}
+                    </Box>
+                  </Box>
+                  }
+                </Box>
+              </Box>
+            </div>
+
             <IconButton
-              onClick={swapFromAndToNetwork}
-              sx={{
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: "4px",
-                width: "40px",
-                height: "40px",
-              }}
+                onClick={swapFromAndToNetwork}
+                sx={{
+                  borderRadius: "6px",
+                  backgroundColor: "#E2E8F0",
+                  width: "40px",
+                  height: "40px",
+                  position: "absolute",
+                  top: insufficientBalance ? "46%" : "40%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  "&:hover": {
+                    backgroundColor: "#96A0B8",
+                  },
+                }}
             >
               <Image
                 alt="Icon"
@@ -307,68 +398,127 @@ export default function Send() {
                 height={16}
               />
             </IconButton>
-            <Divider className={classes.divider}></Divider>
-          </div>
 
-          <div className={classes.itemWrapper}>
-            <Box fontSize={16} color="#000000">
-              {dict.send_tab.to}
-            </Box>
-            <TextField
-              fullWidth
-              placeholder="0"
-              variant="outlined"
-              disabled
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <div className={classes.recommendWrapper}>
-                      <div className={classes.balanceWrapper}>
-                        <Box
-                          border="1px solid #bdbdbd"
-                          borderRadius={8}
-                          display={"flex"}
-                          alignItems={"center"}
-                          padding={"8px 12px"}
-                        >
-                          {isFromETH ? (
-                            <TokenWithChainIcon
-                              tokenIcon="/icons/usdtx.svg"
-                              chainIcon="/icons/japan-open-chain.svg"
-                              width={24}
-                              height={24}
-                            />
-                          ) : (
-                            <TokenWithChainIcon
-                              tokenIcon="/icons/usdtx.svg"
-                              chainIcon="/icons/ethereum.svg"
-                              width={24}
-                              height={24}
-                            />
-                          )}
-                          <Box marginLeft="4px" color="black">
-                            USDTX
-                          </Box>
-                        </Box>
-                      </div>
+            <div className={classes.itemWrapper}>
+              <Box
+                width="100%"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                flexDirection="column"
+                gap="8px"
+                border="1px solid #E2E8F0"
+                borderRadius="6px"
+                padding="16px"
+              >
+                <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
+                  <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
+                    <Box className={classes.inputTitle}>
+                    {dict.send_tab.to}
+                    </Box>
+                    <Box className={classes.addressTitle}>
+                      {address && ellipsifyText(address, 6, 4)}
+                    </Box>
+                  </Box>
+                  <Button
+                    onClick={onOpenToNetworkChangePopover}
+                    className={classes.switchNetworkButton}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CHAIN_ID_TO_ICON_MAP[selectedToNetwork.id]} alt={selectedToNetwork.name} width={16} height={16} />
+                    <div className={classes.selectedNetworkTitle}>
+                      {selectedToNetwork.name}
                     </div>
-                  </InputAdornment>
-                ),
-              }}
-              className={classes.textField}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                },
-                "& .MuiInputBase-input": {
-                  paddingLeft: "32px",
-                },
-              }}
-              size="medium"
-              value={sendAmount}
-              name="to"
-              inputProps={{ "data-testid": "to-input" }}
-            />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="icons/arrow-down.svg" alt="USDT" width="16" />
+                  </Button>
+                </Box>
+                <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
+                  <TextField
+                    fullWidth
+                    placeholder="0"
+                    disabled
+                    InputProps={{
+                      sx: { paddingRight: "0px" },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <div className={classes.recommendWrapper}>
+                            <div className={classes.balanceWrapper}>
+                              <Box
+                                border="1px solid #bdbdbd"
+                                borderRadius={8}
+                                display={"flex"}
+                                alignItems={"center"}
+                                padding={"8px 12px"}
+                              >
+                                <TokenWithChainIcon
+                                    tokenIcon="/icons/usdtx-icon.svg"
+                                    chainIcon={CHAIN_ID_TO_ICON_MAP[selectedToNetwork.id]}
+                                    width={24}
+                                    height={24}
+                                  />
+                                <Box marginLeft="4px" color="black">
+                                  USDTX
+                                </Box>
+                              </Box>
+                            </div>
+                          </div>
+                        </InputAdornment>
+                      ),
+                    }}
+                    className={classes.newTextField}
+                    sx={{
+                      "& .MuiInputBase-input": {
+                        padding: "0px",
+                      },
+                    }}
+                    size="medium"
+                    value={sendAmount}
+                    name="to"
+                    inputProps={{ "data-testid": "to-input" }}
+                  />
+                </Box>
+              </Box>
+            </div>
+
+            <div className={classes.itemWrapper}>
+              <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
+                <FormControlLabel
+                  data-testid="agree-check-box-label"
+                  control={<Checkbox data-testid="agree-check-box" />}
+                  checked={isSendToAnotherWallet}
+                  disabled={isSending}
+                  label={
+                    <Box className={classes.inputTitle}>
+                      {dict.send_tab.another_wallet_address}
+                    </Box>
+                  }
+                  onChange={handleSendToAnotherWalletCheckboxChange}
+                />
+              </Box>
+              <TextField
+                fullWidth
+                placeholder={dict.send_tab.receive_address_placeholder}
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "6px",
+                  },
+                  "& .MuiInputBase-input": {
+                    paddingLeft: "24px",
+                  },
+                }}
+                disabled={!isSendToAnotherWallet}
+                className={classes.addressTextField}
+                onChange={handleReceiveAddressChange}
+                size="small"
+                value={receiveAddress}
+                name="to"
+                inputProps={{ "data-testid": "address-input" }}
+                error={!ethers.isAddress(receiveAddress) && receiveAddress !== ""}
+                helperText={!ethers.isAddress(receiveAddress) && receiveAddress !== "" && dict.send_tab.invalid_receive_address}
+              />
+            </div>
           </div>
           <Button
             variant="contained"
@@ -376,7 +526,11 @@ export default function Send() {
             type="submit"
             color="primary"
             disabled={
-              isSending || !sendAmount || insufficientBalance || !isConnected
+              isSending ||
+              !sendAmount ||
+              insufficientBalance ||
+              !isConnected ||
+              (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))
             }
             endIcon={
               isSending && <CircularProgress size={20} color="inherit" />
@@ -386,6 +540,31 @@ export default function Send() {
           </Button>
         </div>
       </form>
+      <NetworkChangePopover
+        open={Boolean(fromNetworkChangePopoverAnchorEl)}
+        onClose={onCloseFromNetworkChangePopover}
+        onChangeNetwork={handleSelectFromNetwork}
+        anchorEl={fromNetworkChangePopoverAnchorEl}
+        selectedNetwork={selectedFromNetwork}
+        networks={wagmiConfig.chains as any}
+      />
+      <NetworkChangePopover
+        open={Boolean(toNetworkChangePopoverAnchorEl)}
+        onClose={onCloseToNetworkChangePopover}
+        onChangeNetwork={handleSelectToNetwork}
+        anchorEl={toNetworkChangePopoverAnchorEl}
+        selectedNetwork={selectedToNetwork}
+        networks={wagmiConfig.chains as any}
+      />
+      <TokenChangePopover
+        open={Boolean(tokenChangePopoverAnchorEl)}
+        onClose={onCloseTokenChangePopover}
+        onChangeToken={(token: Token) => {setSelectedToken(token)}}
+        anchorEl={tokenChangePopoverAnchorEl}
+        selectedToken={selectedToken}
+        currentNetwork={selectedFromNetwork.name}
+        tokens={sendTokens}
+      />
     </Layout>
   );
 }
@@ -393,19 +572,28 @@ export default function Send() {
 const useStyles = makeStyles()((theme: Theme) => ({
   wrapper: {
     width: "100%",
-    padding: "32px",
+    padding: '32px',
     borderRadius: "8px",
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
-    boxShadow:
-      "0px 1px 2px -1px rgba(0, 0, 0, 0.10), 0px 1px 3px 0px rgba(0, 0, 0, 0.10)",
+    gap: "24px",
+    boxShadow: "0px 1px 3px 0px #0000001A, 0px 1px 2px -1px #0000001A",
     border: `1px solid ${theme.palette.divider}`,
+    [theme.breakpoints.down("sm")]: {
+      padding: '24px',
+    },
+  },
+  infoWrapper: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+    position: "relative",
   },
   itemWrapper: {
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "6px",
     alignItems: "start",
   },
   sendButton: {
@@ -431,6 +619,20 @@ const useStyles = makeStyles()((theme: Theme) => ({
     fontStyle: "normal",
     fontWeight: 400,
   },
+  newTextField: {
+    "& input": { fontSize: "32px", fontWeight: 400 },
+    fontSize: "32px",
+    fontStyle: "normal",
+    fontWeight: 400,
+    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+    padding: "0px",
+  },
+  addressTextField: {
+    "& input": { fontSize: "16px", fontWeight: 400, color: "#64748B", },
+    fontSize: "16px",
+    fontStyle: "normal",
+    fontWeight: 400,
+  },
   balanceWrapper: {
     display: "flex",
     flexDirection: "column",
@@ -450,13 +652,16 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     [theme.breakpoints.down("sm")]: {
       flexDirection: "column",
-      alignItems: "center",
+      alignItems: "end",
       gap: "4px",
     },
   },
   chipWrapper: {
     display: "flex",
     gap: "4px",
+    [theme.breakpoints.down("sm")]: {
+      paddingTop: "24px",
+    },
   },
   chipButton: {
     background: alpha(theme.palette.primary.main, 0.1),
@@ -496,5 +701,71 @@ const useStyles = makeStyles()((theme: Theme) => ({
     color: theme.palette.divider,
     display: "flex",
     flex: 1,
+  },
+  switchNetworkButton: {
+    fontSize: "16px",
+    fontWeight: 400,
+    color: "black",
+    lineHeight: "20px",
+    textAlign: "left",
+    textTransform: "none",
+    borderRadius: "9999px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px 12px",
+    gap: "4px",
+    background: "#F1F5F9",
+    maxWidth: "200px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "115px",
+    },
+  },
+  inputTitle: {
+    fontSize: "16px",
+    color: "#000000",
+  },
+  addressTitle: {
+    fontSize: "14px",
+    color: '#64748B',
+  },
+  checkbox: {
+    padding: "0px",
+  },
+  selectedNetworkTitle: {
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "24px",
+    letterSpacing: "0%",
+    maxLines: 1,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "100px",
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "80px",
+    },
+  },
+  helperText: {
+    marginLeft: 0,
+    textAlign: "left",
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "140px",
+    },
+  },
+  selectedTokenWrapper: {
+    border: "1px solid #bdbdbd",
+    borderRadius: "9999px",
+    display: "flex",
+    alignItems: "center",
+    padding: "8px 12px",
+    gap: "4px",
+    cursor: "pointer",
+    [theme.breakpoints.down("sm")]: {
+      padding: "8px 4px",
+      gap: "2px",
+    },
   },
 }));

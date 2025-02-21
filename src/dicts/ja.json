@@ -10,23 +10,26 @@
   "send_tab": {
     "from": "送信元",
     "to": "送信先",
-    "button": "USDTXを送信",
+    "button": "送信",
     "max": "最大",
     "balance": "残高",
-    "invalid_amount": "金額が無効または総残高を超えています！"
+    "invalid_amount": "金額が無効または総残高を超えています！",
+    "another_wallet_address": "または他のウォレットアドレス",
+    "invalid_receive_address": "受信アドレスが無効です！",
+    "receive_address_placeholder": "受信アドレスを入力"
   },
   "mint_tab": {
-    "mint": "USDTXをミントする",
+    "mint": "をミントする",
     "made": "作成済み",
-    "button": "USDTXをミント",
+    "button": "をミント",
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！"
   },
   "burn_tab": {
-    "burn": "USDTXをバーン",
+    "burn": "をバーン",
     "out": "出金",
-    "button": "USDTXをバーン",
+    "button": "をバーン",
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
@@ -40,5 +43,13 @@
     "404_message": "お探しのページは存在しないか、移動されました。",
     "500_message": "システムエラーが発生しました。数分後に再試行してください。",
     "click_here_to_contact_us": "こちらをクリックしてお問い合わせください"
+  },
+  "network_change_popover": {
+    "search_placeholder": "ネットワークを検索",
+    "select_network": "ネットワークを選択"
+  },
+  "token_change_popover": {
+    "search_placeholder": "トークンを検索",
+    "select_token": "トークンを選択"
   }
 }
