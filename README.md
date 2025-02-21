@@ -1,4 +1,4 @@
-# usdtx-ui
+# X-GATE
 
 ## Getting Started
 
