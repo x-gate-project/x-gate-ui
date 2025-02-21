@@ -23,7 +23,7 @@ import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import { useAccount, useBalance, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
-import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
+import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
 import {
   switchChain,
   readContract,
@@ -60,7 +60,7 @@ export default function Send() {
   const wagmiConfig = useConfig();
   const { address, isConnected } = useAccount();
   const [selectedFromNetwork, setSelectedFromNetwork] = useState<Chain>(ethereum);
-  const [selectedToNetwork, setSelectedToNetwork] = useState<Chain>(ethereum);
+  const [selectedToNetwork, setSelectedToNetwork] = useState<Chain>(joc);
   const [selectedToken, setSelectedToken] = useState<Token>(sendTokens[0]);
   const [receiveAddress, setReceiveAddress] = useState("");
   const [fromNetworkChangePopoverAnchorEl, setFromNetworkChangePopoverAnchorEl] =
@@ -546,7 +546,7 @@ export default function Send() {
         onChangeNetwork={handleSelectFromNetwork}
         anchorEl={fromNetworkChangePopoverAnchorEl}
         selectedNetwork={selectedFromNetwork}
-        networks={wagmiConfig.chains as any}
+        networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedToNetwork.id) as any}
       />
       <NetworkChangePopover
         open={Boolean(toNetworkChangePopoverAnchorEl)}
@@ -554,7 +554,7 @@ export default function Send() {
         onChangeNetwork={handleSelectToNetwork}
         anchorEl={toNetworkChangePopoverAnchorEl}
         selectedNetwork={selectedToNetwork}
-        networks={wagmiConfig.chains as any}
+        networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedFromNetwork.id) as any}
       />
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
