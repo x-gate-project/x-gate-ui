@@ -11,7 +11,7 @@ import { debounce, InputAdornment, TextField } from '@mui/material';
 import clsx from 'clsx';
 import { Chain } from 'viem';
 import { CHAIN_ID_TO_ICON_MAP } from '@/wagmi.config';
-
+import Image from 'next/image';
 interface IProps {
   open: boolean;
   onClose: () => void;
@@ -85,8 +85,7 @@ const NetworkChangePopover: React.FC<IProps> = ({
           onChange={onSearchChange}
           InputProps={{
             startAdornment: <InputAdornment position="start">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/search-icon.svg" alt="search" width={16} height={16} />
+              <Image src="/icons/search-icon.svg" alt="search" width={16} height={16} />
             </InputAdornment>,
           }}
         />
@@ -101,8 +100,7 @@ const NetworkChangePopover: React.FC<IProps> = ({
               className={clsx(classes.listItem, network.name === selectedNetwork.name && classes.listItemSelected)}
               onClick={() => onChangeNetworkClick(network)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={CHAIN_ID_TO_ICON_MAP[network.id]} alt={network.name} width={16} height={16} />
+              <Image src={CHAIN_ID_TO_ICON_MAP[network.id]} alt={network.name} width={16} height={16} />
               <Typography className={classes.networkName}>{network.name}</Typography>
             </div>
           ))}

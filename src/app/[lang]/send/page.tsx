@@ -285,13 +285,11 @@ export default function Send() {
                     onClick={onOpenFromNetworkChangePopover}
                     className={classes.switchNetworkButton}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={CHAIN_ID_TO_ICON_MAP[selectedFromNetwork.id]} alt={selectedFromNetwork.name} width={16} height={16} />
+                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedFromNetwork.id]} alt={selectedFromNetwork.name} width={16} height={16} />
                     <div className={classes.selectedNetworkTitle}>
                       {selectedFromNetwork.name}
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="icons/arrow-down.svg" alt="USDT" width="16" />
+                    <Image src="icons/arrow-down.svg" alt="USDT" width={16} height={16} />
                   </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -332,8 +330,7 @@ export default function Send() {
                                   {selectedToken.name}
                                 </Box>
                                 <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src="icons/caret-sort.svg" alt="USDT" width="16"/>
+                                  <Image src="icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                             </div>
                           </div>
@@ -424,13 +421,11 @@ export default function Send() {
                     onClick={onOpenToNetworkChangePopover}
                     className={classes.switchNetworkButton}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={CHAIN_ID_TO_ICON_MAP[selectedToNetwork.id]} alt={selectedToNetwork.name} width={16} height={16} />
+                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedToNetwork.id]} alt={selectedToNetwork.name} width={16} height={16} />
                     <div className={classes.selectedNetworkTitle}>
                       {selectedToNetwork.name}
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="icons/arrow-down.svg" alt="USDT" width="16" />
+                    <Image src="icons/arrow-down.svg" alt="USDT" width={16} height={16} />
                   </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
