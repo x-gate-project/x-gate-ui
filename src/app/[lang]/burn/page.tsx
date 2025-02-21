@@ -244,7 +244,7 @@ export default function Burn() {
                     <div className={classes.selectedNetworkTitle}>
                       {selectedNetwork.name}
                     </div>
-                    <Image src="icons/arrow-down.svg" alt="USDT" width={16} height={16} />
+                    <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
                   </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -283,7 +283,7 @@ export default function Burn() {
                                     {selectedToken.name}
                                   </Box>
                                   <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
-                                    <Image src="icons/caret-sort.svg" alt="USDT" width={16} height={16} />
+                                    <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </div>
                             </div>
