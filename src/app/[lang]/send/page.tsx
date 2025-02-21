@@ -245,13 +245,19 @@ export default function Send() {
   }, []);
 
   const handleSelectFromNetwork = useCallback((network: Chain) => {
+    if(network.id === selectedToNetwork.id) {
+      setSelectedToNetwork(wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain);
+    }
     setSelectedFromNetwork(network);
     resetSendAmount();
-  }, [setSelectedFromNetwork, resetSendAmount]);
+  }, [setSelectedFromNetwork, resetSendAmount, selectedToNetwork, wagmiConfig]);
 
   const handleSelectToNetwork = useCallback((network: Chain) => {
+    if(network.id === selectedFromNetwork.id) {
+      setSelectedFromNetwork(wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain);
+    }
     setSelectedToNetwork(network);
-  }, [setSelectedToNetwork]);
+  }, [setSelectedToNetwork, selectedFromNetwork, wagmiConfig]);
 
   return (
     <Layout>
@@ -541,7 +547,7 @@ export default function Send() {
         onChangeNetwork={handleSelectFromNetwork}
         anchorEl={fromNetworkChangePopoverAnchorEl}
         selectedNetwork={selectedFromNetwork}
-        networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedToNetwork.id) as any}
+        networks={wagmiConfig.chains as any}
       />
       <NetworkChangePopover
         open={Boolean(toNetworkChangePopoverAnchorEl)}
@@ -549,7 +555,7 @@ export default function Send() {
         onChangeNetwork={handleSelectToNetwork}
         anchorEl={toNetworkChangePopoverAnchorEl}
         selectedNetwork={selectedToNetwork}
-        networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedFromNetwork.id) as any}
+        networks={wagmiConfig.chains as any}
       />
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
