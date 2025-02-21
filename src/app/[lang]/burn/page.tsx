@@ -32,6 +32,7 @@ import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { ethers } from "ethers";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
+import Image from "next/image";
 
 const burnToken = [
   {
@@ -239,13 +240,11 @@ export default function Burn() {
                     onClick={onOpenNetworkChangePopover}
                     className={classes.switchNetworkButton}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]} alt={selectedNetwork.name} width={16} height={16} />
+                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]} alt={selectedNetwork.name} width={16} height={16} />
                     <div className={classes.selectedNetworkTitle}>
                       {selectedNetwork.name}
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="icons/arrow-down.svg" alt="USDT" width="16" />
+                    <Image src="icons/arrow-down.svg" alt="USDT" width={16} height={16} />
                   </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -284,8 +283,7 @@ export default function Burn() {
                                     {selectedToken.name}
                                   </Box>
                                   <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src="icons/caret-sort.svg" alt="USDT" width="16"/>
+                                    <Image src="icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </div>
                             </div>
@@ -356,8 +354,7 @@ export default function Burn() {
                   <div
                     className={classes.madeNetworkWrapper}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={selectedNetwork.name} width="16" />
+                    <Image src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={selectedNetwork.name} width={16} height={16} />
                     <div className={classes.selectedNetworkTitle}>
                       {ethereum.name}
                     </div>

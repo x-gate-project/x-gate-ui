@@ -9,6 +9,7 @@ import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { debounce, InputAdornment, TextField } from '@mui/material';
 import clsx from 'clsx';
+import Image from 'next/image';
 
 export type Token = {
   name: string;
@@ -103,8 +104,7 @@ const TokenChangePopover: React.FC<IProps> = ({
           onChange={onSearchChange}
           InputProps={{
             startAdornment: <InputAdornment position="start">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/search-icon.svg" alt="search" width={16} height={16} />
+              <Image src="/icons/search-icon.svg" alt="search" width={16} height={16} />
             </InputAdornment>,
           }}
         />
@@ -120,8 +120,7 @@ const TokenChangePopover: React.FC<IProps> = ({
               onClick={() => onChangeTokenClick(token)}
             >
               <div className={classes.tokenInfoWrapper}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={token.icon} alt={token.name} width={16} height={16} />
+                <Image src={token.icon} alt={token.name} width={16} height={16} />
                 <Typography className={classes.tokenName}>{token.name}</Typography>
               </div>
               <Typography className={classes.networkName}>{currentNetwork}</Typography>
