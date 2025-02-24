@@ -61,7 +61,7 @@ export const baseNet = isProduction ? base : baseSepolia;
 export const avalancheNet = isProduction ? avalanche : avalancheFuji;
 export function getWagmiConfig() {
   return createConfig({
-    chains: [ethereum, joc, arbitrumNet, avalancheNet],
+    chains: [ethereum, joc, arbitrumNet, baseNet, avalancheNet],
     ssr: true,
     storage: createStorage({
       storage: cookieStorage,
