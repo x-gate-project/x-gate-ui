@@ -18,13 +18,10 @@ export default function Header() {
               <StyledMenuItemDiv>
                 <Image
                   alt="Icon"
-                  src="/icons/usdtx.svg"
-                  width={30}
-                  height={30}
+                  src="/icons/logo.svg"
+                  width={69}
+                  height={24}
                 />
-                <Box fontWeight={"bold"} marginLeft={"5px"}>
-                  X-GATE
-                </Box>
               </StyledMenuItemDiv>
             </Link>
           </StyledLeftDiv>
