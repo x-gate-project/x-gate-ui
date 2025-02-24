@@ -38,6 +38,7 @@ import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import { ellipsifyText } from "@/utils/string.utils";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
 import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
+import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 
 const sendTokens = [
   {
@@ -179,10 +180,17 @@ export default function Send() {
           hash: sendUsdtxTxHash,
         });
 
+        enqueueSnackbar(
+          "Your token is being sent to the destination network! Please wait a moment...",
+          { variant: "info" }
+        );
+
+        await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendUsdtxTxHash);
+
         resetSendAmount();
         refetchFromTokenBalance();
         enqueueSnackbar(
-          "Send USDTX successfully. Please wait a moment before the token is sent to the destination network.",
+          "Send USDTX successfully!",
           { variant: "success" }
         );
       } catch (error) {
