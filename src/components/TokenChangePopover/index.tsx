@@ -10,11 +10,8 @@ import { Theme } from "@mui/material/styles";
 import { debounce, InputAdornment, TextField } from '@mui/material';
 import clsx from 'clsx';
 import Image from 'next/image';
-
-export type Token = {
-  name: string;
-  icon: string;
-}
+import { Token } from '@/enums/token';
+import { TOKEN_TO_ICON_MAP } from '@/utils/token.utils';
 
 interface IProps {
   open: boolean;
@@ -48,19 +45,6 @@ const TokenChangePopover: React.FC<IProps> = ({
     onChangeToken(token);
   }, [onClose, onChangeToken]);
 
-  const networks = useMemo(() => {
-    return [
-      {
-        name: 'Japan Open Chain',
-        icon: '/icons/japan-open-chain.svg',
-      },
-      {
-        name: 'Ethereum',
-        icon: '/icons/ethereum.svg',
-      },
-    ];
-  }, []);
-
   const changeHandler = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   }, []);
@@ -75,7 +59,7 @@ const TokenChangePopover: React.FC<IProps> = ({
     }
     return tokens.filter(
       (token) =>
-        token.name.toLowerCase().includes(searchText.toLowerCase()),
+        token.toLowerCase().includes(searchText.toLowerCase()),
     );
   }, [searchText, tokens]);
 
@@ -115,13 +99,13 @@ const TokenChangePopover: React.FC<IProps> = ({
           </div>
           {filteredTokens.map((token) => (
             <div
-              key={token.name}
-              className={clsx(classes.listItem, token.name === selectedToken.name && classes.listItemSelected)}
+              key={token}
+              className={clsx(classes.listItem, token === selectedToken && classes.listItemSelected)}
               onClick={() => onChangeTokenClick(token)}
             >
               <div className={classes.tokenInfoWrapper}>
-                <Image src={token.icon} alt={token.name} width={16} height={16} />
-                <Typography className={classes.tokenName}>{token.name}</Typography>
+                <Image src={TOKEN_TO_ICON_MAP[token]} alt={token} width={16} height={16} />
+                <Typography className={classes.tokenName}>{token}</Typography>
               </div>
               <Typography className={classes.networkName}>{currentNetwork}</Typography>
             </div>

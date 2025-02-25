@@ -10,6 +10,7 @@ import {
   alpha,
   InputAdornment,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -23,26 +24,23 @@ import {
   waitForTransactionReceipt,
   readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
 import { Chain, formatUnits, parseUnits } from "viem";
-import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
+import tokenContractAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
-import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
+import TokenChangePopover from "@/components/TokenChangePopover";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { ethers } from "ethers";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
+import { Token } from "@/enums/token";
+import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 
-const burnToken = [
-  {
-    name: 'USDTX',
-    icon: '/icons/usdtx-icon.svg',
-  },
-  // {
-  //   name: 'USDCX',
-  //   icon: '/icons/usdcx-icon.svg',
-  // },
+const BURN_SUPPORT_TOKENS = [
+  Token.USDTX,
+  Token.USDCX,
 ]
 
 export default function Burn() {
@@ -56,11 +54,11 @@ export default function Burn() {
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [selectedNetwork, setSelectedNetwork] = useState<Chain>(ethereum);
-  const [selectedToken, setSelectedToken] = useState<Token>(burnToken[0]);
+  const [selectedToken, setSelectedToken] = useState<Token>(BURN_SUPPORT_TOKENS[0]);
   const { data: currentTokenData, refetch: refetchCurrentTokenData } =
     useBalance({
       address,
-      token: CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any,
+      token: selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any,
       chainId: selectedNetwork.id,
     });
   const [networkChangePopoverAnchorEl, setNetworkChangePopoverAnchorEl] =
@@ -112,8 +110,8 @@ export default function Burn() {
         const isFromETH = selectedNetwork.id === ethereum.id;
 
         if(!isFromETH && address) {
-          const ethereumUsdtxAddress = CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any;
-          const sourceUsdtxAddress = CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any;
+          const ethereumTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[ethereum.id] as any;
+          const sourceTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any;
 
           const options = Options.newOptions()
             .addExecutorLzReceiveOption(200000, 0)
@@ -128,7 +126,7 @@ export default function Burn() {
 
           const sendParam = [
             EndpointId.SEPOLIA_V2_TESTNET,
-            ethers.zeroPadValue(ethereumUsdtxAddress, 32),
+            ethers.zeroPadValue(ethereumTokenAddress, 32),
             ethers.parseUnits(burnAmount, 6),
             ethers.parseUnits(burnAmount, 6),
             options,
@@ -137,26 +135,32 @@ export default function Burn() {
           ];
 
           const fee: any = await readContract(wagmiConfig, {
-            abi: usdtxAbi,
-            address: sourceUsdtxAddress,
+            abi: tokenContractAbi,
+            address: sourceTokenAddress,
             functionName: "quoteSend",
             args: [sendParam, false],
           });
 
-          const sendUsdtxTxHash = await writeContract(wagmiConfig, {
-            abi: usdtxAbi,
-            address: sourceUsdtxAddress,
+          const sendTokenTxHash = await writeContract(wagmiConfig, {
+            abi: tokenContractAbi,
+            address: sourceTokenAddress,
             functionName: "send",
             args: [sendParam, [fee.nativeFee, 0], address],
             value: fee.nativeFee,
           });
           await waitForTransactionReceipt(wagmiConfig, {
-            hash: sendUsdtxTxHash,
+            hash: sendTokenTxHash,
           });
+          enqueueSnackbar(
+            `Your ${selectedToken === Token.USDTX ? Token.USDT : Token.USDC} is being sent to the ${ethereum.name} network! Please wait a moment...`,
+            { variant: "info" }
+          );
+
+          await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
         } else {
           const hash = await writeContract(wagmiConfig, {
-            abi: usdtxAbi,
-            address: CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any,
+            abi: tokenContractAbi,
+            address: selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any,
             functionName: "burn",
             args: [parseUnits(burnAmount, 6)],
           });
@@ -186,6 +190,7 @@ export default function Burn() {
       resetBurnAmount,
       wagmiConfig,
       address,
+      selectedToken,
     ]
   );
 
@@ -274,13 +279,13 @@ export default function Burn() {
                                   onClick={onOpenTokenChangePopover}
                                 >
                                   <TokenWithChainIcon
-                                    tokenIcon={selectedToken.icon}
+                                    tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
                                     chainIcon={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]}
                                     width={24}
                                     height={24}
                                   />
                                   <Box marginLeft="4px" color="black">
-                                    {selectedToken.name}
+                                    {selectedToken}
                                   </Box>
                                   <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
                                     <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
@@ -308,25 +313,28 @@ export default function Burn() {
                       className: classes.helperText,
                     }}
                   />
-                  {currentTokenBalance && <Box
-                    display="flex"
-                    alignItems="baseline"
-                    justifyContent="start"
-                    overflow="hidden"
-                    maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
-                    textOverflow="ellipsis"
-                    whiteSpace="nowrap"
-                    gap={1}
-                    width="100%"
-                  >
-                    <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                    <Box color="#64748B"
+                  {currentTokenBalance &&
+                  <Tooltip title={currentTokenBalance}>
+                    <Box
+                      display="flex"
+                      alignItems="baseline"
+                      justifyContent="start"
                       overflow="hidden"
+                      maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
                       textOverflow="ellipsis"
-                      whiteSpace="nowrap">
-                      {currentTokenBalance}
+                      whiteSpace="nowrap"
+                      gap={1}
+                      width="100%"
+                    >
+                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                      <Box color="#64748B"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap">
+                        {currentTokenBalance}
+                      </Box>
                     </Box>
-                  </Box>
+                  </Tooltip>
                   }
                 </Box>
               </Box>
@@ -379,13 +387,13 @@ export default function Burn() {
                                 padding={"8px 12px"}
                               >
                                 <TokenWithChainIcon
-                                  tokenIcon="/icons/usdt.svg"
+                                  tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
                                   chainIcon="/icons/ethereum.svg"
                                   width={24}
                                   height={24}
                                 />
                                 <Box marginLeft="4px" color="black">
-                                  USDT
+                                  {selectedToken === Token.USDTX ? Token.USDT : Token.USDC}
                                 </Box>
                               </Box>
                             </div>
@@ -443,7 +451,7 @@ export default function Burn() {
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         currentNetwork={selectedNetwork.name}
-        tokens={burnToken}
+        tokens={BURN_SUPPORT_TOKENS}
       />
     </Layout>
   );

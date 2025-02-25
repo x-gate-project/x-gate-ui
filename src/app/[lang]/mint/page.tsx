@@ -10,6 +10,7 @@ import {
   alpha,
   InputAdornment,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -33,14 +34,14 @@ import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
 import Layout from "@/components/Layout";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
-import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
+import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
+import { Token } from "@/enums/token";
+import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 
-const mintTokens = [
-  {
-    name: 'USDT',
-    icon: '/icons/usdt.svg',
-  },
+const MINT_SUPPORT_TOKENS = [
+  Token.USDT,
+  Token.USDC,
 ]
 
 export default function Mint() {
@@ -54,7 +55,7 @@ export default function Mint() {
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [selectedNetwork, setSelectedNetwork] = useState<Chain>(ethereum);
-  const [selectedToken, setSelectedToken] = useState<Token>(mintTokens[0]);
+  const [selectedToken, setSelectedToken] = useState<Token>(MINT_SUPPORT_TOKENS[0]);
   const [networkChangePopoverAnchorEl, setNetworkChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
@@ -62,7 +63,7 @@ export default function Mint() {
   const { data: usdtEthereumData, refetch: refetchUsdtEthereumData } =
     useBalance({
       address,
-      token: process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any,
+      token: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
       chainId: selectedNetwork.id,
     });
   const usdtEthereumBalance = usdtEthereumData?.formatted;
@@ -107,37 +108,37 @@ export default function Mint() {
           await switchChain(wagmiConfig, { chainId: ethereum.id });
         }
 
-        const approveUsdtxTxHash = await writeContract(wagmiConfig, {
+        const approveTokenTxHash = await writeContract(wagmiConfig, {
           abi: erc20Abi,
-          address: process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any,
+          address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
           functionName: "approve",
           args: [
-            process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any,
+            selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
             parseUnits(mintAmount, 6),
           ],
         });
         await waitForTransactionReceipt(wagmiConfig, {
-          hash: approveUsdtxTxHash,
+          hash: approveTokenTxHash,
         });
-        console.log("Approved USDTX successfully. Minting USDTX...");
+        console.log(`Approved ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully. Minting ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} ...`);
 
-        const mintUsdtxTxHash = await writeContract(wagmiConfig, {
+        const mintTokenTxHash = await writeContract(wagmiConfig, {
           abi: usdtxAbi,
-          address: process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any,
+          address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
           functionName: "mint",
           args: [parseUnits(mintAmount, 6)],
         });
         await waitForTransactionReceipt(wagmiConfig, {
-          hash: mintUsdtxTxHash,
+          hash: mintTokenTxHash,
         });
-        console.log("Mint USDTX successfully.");
+        console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully.`);
 
         resetMintAmount();
         refetchUsdtEthereumData();
         enqueueSnackbar(dict.burn_tab.burn_success, { variant: "success" });
       } catch (error) {
-        console.log("Mint USDTX failded with error: ", error);
-        enqueueSnackbar("Mint USDTX failed.", { variant: "error" });
+        console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed with error: ${error}`);
+        enqueueSnackbar(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed.`, { variant: "error" });
       } finally {
         setIsMinting(false);
       }
@@ -150,6 +151,7 @@ export default function Mint() {
       refetchUsdtEthereumData,
       resetMintAmount,
       wagmiConfig,
+      selectedToken,
     ]
   );
 
@@ -238,13 +240,13 @@ export default function Mint() {
                                 onClick={onOpenTokenChangePopover}
                               >
                                 <TokenWithChainIcon
-                                  tokenIcon={selectedToken.icon}
+                                  tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
                                   chainIcon={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]}
                                   width={24}
                                   height={24}
                                 />
                                 <Box marginLeft="4px" color="black">
-                                  {selectedToken.name}
+                                  {selectedToken}
                                 </Box>
                                 <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
@@ -271,25 +273,28 @@ export default function Mint() {
                       className: classes.helperText,
                     }}
                   />
-                  {usdtEthereumBalance && <Box
-                    display="flex"
-                    alignItems="baseline"
-                    justifyContent="start"
-                    overflow="hidden"
-                    maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
-                    textOverflow="ellipsis"
-                    whiteSpace="nowrap"
-                    gap={1}
-                    width="100%"
-                  >
-                    <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                    <Box color="#64748B"
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                      whiteSpace="nowrap">
-                      {usdtEthereumBalance}
-                    </Box>
-                  </Box>
+                  {usdtEthereumBalance &&
+                    <Tooltip title={usdtEthereumBalance}>
+                      <Box
+                        display="flex"
+                        alignItems="baseline"
+                        justifyContent="start"
+                        overflow="hidden"
+                        maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap"
+                        gap={1}
+                        width="100%"
+                      >
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {usdtEthereumBalance}
+                        </Box>
+                      </Box>
+                    </Tooltip>
                   }
                 </Box>
               </Box>
@@ -342,13 +347,13 @@ export default function Mint() {
                                 padding={"8px 12px"}
                               >
                                 <TokenWithChainIcon
-                                  tokenIcon="/icons/usdtx-icon.svg"
+                                  tokenIcon={selectedToken === Token.USDT ? TOKEN_TO_ICON_MAP[Token.USDTX] : TOKEN_TO_ICON_MAP[Token.USDCX]}
                                   chainIcon="/icons/ethereum.svg"
                                   width={24}
                                   height={24}
                                 />
                                 <Box marginLeft="4px" color="black">
-                                  USDTX
+                                  {selectedToken === Token.USDT ? Token.USDTX : Token.USDCX}
                                 </Box>
                               </Box>
                             </div>
@@ -406,7 +411,7 @@ export default function Mint() {
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         currentNetwork={selectedNetwork.name}
-        tokens={mintTokens}
+        tokens={MINT_SUPPORT_TOKENS}
       />
     </Layout>
   );
