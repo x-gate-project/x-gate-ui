@@ -15,6 +15,7 @@ import {
   Checkbox,
   FormControlLabel,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -23,7 +24,7 @@ import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import { useAccount, useBalance, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
-import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
+import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP } from "@/wagmi.config";
 import {
   switchChain,
   readContract,
@@ -34,21 +35,17 @@ import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, formatUnits, parseUnits } from "viem";
 import { ethers } from "ethers";
-import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
+import tokenAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import { ellipsifyText } from "@/utils/string.utils";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
-import TokenChangePopover, { Token } from "@/components/TokenChangePopover";
+import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
+import { Token } from "@/enums/token";
+import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 
-const sendTokens = [
-  {
-    name: 'USDTX',
-    icon: '/icons/usdtx-icon.svg',
-  },
-  // {
-  //   name: 'USDCX',
-  //   icon: '/icons/usdcx-icon.svg',
-  // },
+const SEND_SUPPORT_TOKENS = [
+  Token.USDTX,
+  Token.USDCX,
 ]
 
 export default function Send() {
@@ -62,7 +59,7 @@ export default function Send() {
   const { address, isConnected } = useAccount();
   const [selectedFromNetwork, setSelectedFromNetwork] = useState<Chain>(ethereum);
   const [selectedToNetwork, setSelectedToNetwork] = useState<Chain>(joc);
-  const [selectedToken, setSelectedToken] = useState<Token>(sendTokens[0]);
+  const [selectedToken, setSelectedToken] = useState<Token>(SEND_SUPPORT_TOKENS[0]);
   const [receiveAddress, setReceiveAddress] = useState("");
   const [fromNetworkChangePopoverAnchorEl, setFromNetworkChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
@@ -73,7 +70,8 @@ export default function Send() {
   const [isSendToAnotherWallet, setIsSendToAnotherWallet] = useState(false);
   const { data: fromTokenData, refetch: refetchFromTokenBalance } = useBalance({
     address,
-    token: CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any,
+    token: selectedToken === Token.USDTX ?
+      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any,
     chainId: selectedFromNetwork.id,
   });
 
@@ -142,7 +140,8 @@ export default function Send() {
               .addExecutorComposeOption(0, 500000, 0)
               .toHex()
               .toString();
-        const sourceUsdtxAddress = CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any;
+        const sourceTokenAddress = selectedToken === Token.USDTX ?
+          CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any;
         const composeMessage = isFromETH
           ? "0x"
           : ethers.solidityPacked(
@@ -163,21 +162,21 @@ export default function Send() {
         ];
 
         const fee: any = await readContract(wagmiConfig, {
-          abi: usdtxAbi,
-          address: sourceUsdtxAddress,
+          abi: tokenAbi,
+          address: sourceTokenAddress,
           functionName: "quoteSend",
           args: [sendParam, false],
         });
 
-        const sendUsdtxTxHash = await writeContract(wagmiConfig, {
-          abi: usdtxAbi,
-          address: sourceUsdtxAddress,
+        const sendTokenTxHash = await writeContract(wagmiConfig, {
+          abi: tokenAbi,
+          address: sourceTokenAddress,
           functionName: "send",
           args: [sendParam, [fee.nativeFee, 0], address],
           value: fee.nativeFee,
         });
         await waitForTransactionReceipt(wagmiConfig, {
-          hash: sendUsdtxTxHash,
+          hash: sendTokenTxHash,
         });
 
         enqueueSnackbar(
@@ -185,17 +184,17 @@ export default function Send() {
           { variant: "info" }
         );
 
-        await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendUsdtxTxHash);
+        await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendTokenTxHash);
 
         resetSendAmount();
         refetchFromTokenBalance();
         enqueueSnackbar(
-          "Send USDTX successfully!",
+          `Send ${selectedToken} successfully!`,
           { variant: "success" }
         );
       } catch (error) {
-        console.log("Send USDTX failded with error: ", error);
-        enqueueSnackbar("Send USDTX failed.", { variant: "error" });
+        console.log(`Send ${selectedToken} failded with error: ${error}`);
+        enqueueSnackbar(`Send ${selectedToken} failed.`, { variant: "error" });
       } finally {
         setIsSending(false);
       }
@@ -211,6 +210,7 @@ export default function Send() {
       selectedToNetwork,
       isSendToAnotherWallet,
       receiveAddress,
+      selectedToken,
     ]
   );
 
@@ -335,13 +335,13 @@ export default function Send() {
                                 onClick={onOpenTokenChangePopover}
                               >
                                 <TokenWithChainIcon
-                                    tokenIcon={selectedToken.icon}
+                                    tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
                                     chainIcon={CHAIN_ID_TO_ICON_MAP[selectedFromNetwork.id]}
                                     width={24}
                                     height={24}
                                   />
                                 <Box color="black">
-                                  {selectedToken.name}
+                                  {selectedToken}
                                 </Box>
                                 <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
@@ -367,20 +367,23 @@ export default function Send() {
                       className: classes.helperText,
                     }}
                   />
-                  {fromTokenBalance && <Box
-                    display="flex"
-                    alignItems="baseline"
-                    justifyContent="start"
-                    overflow="hidden"
-                    maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
-                    gap={1}
-                    width="100%"
-                  >
-                    <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                    <Box color="#64748B">
-                      {fromTokenBalance}
-                    </Box>
-                  </Box>
+                  {fromTokenBalance &&
+                    <Tooltip title={fromTokenBalance}>
+                      <Box
+                        display="flex"
+                        alignItems="baseline"
+                        justifyContent="start"
+                        overflow="hidden"
+                        maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
+                        gap={1}
+                        width="100%"
+                      >
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B">
+                          {fromTokenBalance}
+                        </Box>
+                      </Box>
+                    </Tooltip>
                   }
                 </Box>
               </Box>
@@ -461,13 +464,13 @@ export default function Send() {
                                 padding={"8px 12px"}
                               >
                                 <TokenWithChainIcon
-                                    tokenIcon="/icons/usdtx-icon.svg"
+                                    tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
                                     chainIcon={CHAIN_ID_TO_ICON_MAP[selectedToNetwork.id]}
                                     width={24}
                                     height={24}
                                   />
                                 <Box marginLeft="4px" color="black">
-                                  USDTX
+                                  {selectedToken}
                                 </Box>
                               </Box>
                             </div>
@@ -572,7 +575,7 @@ export default function Send() {
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         currentNetwork={selectedFromNetwork.name}
-        tokens={sendTokens}
+        tokens={SEND_SUPPORT_TOKENS}
       />
     </Layout>
   );
