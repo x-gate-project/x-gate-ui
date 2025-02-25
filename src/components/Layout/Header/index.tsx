@@ -4,7 +4,7 @@ import React from "react";
 import { styled } from "@mui/material/styles";
 import { ConnectKitButton } from "connectkit";
 import Image from "next/image";
-import { Box } from "@mui/material";
+import Button from "@mui/material/Button";
 import Link from "next/link";
 import { AppRoute } from "@/enums/route";
 
@@ -26,7 +26,25 @@ export default function Header() {
             </Link>
           </StyledLeftDiv>
           <StyledRightDiv>
-            <ConnectKitButton />
+            <ConnectKitButton.Custom>
+              {({ isConnected, show, truncatedAddress }) => (
+                <Button
+                  variant="contained"
+                  onClick={show}
+                  startIcon={<Image src="/icons/wallet-icon.svg" alt="Wallet" width={16} height={16} />}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: "6px",
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    lineHeight: '24px',
+                    letterSpacing: 0,
+                  }}
+                >
+                  {isConnected ? truncatedAddress : "Connect Wallet"}
+                </Button>
+              )}
+            </ConnectKitButton.Custom>
           </StyledRightDiv>
         </StyledAppBarDiv>
       </StyledContainerDiv>
