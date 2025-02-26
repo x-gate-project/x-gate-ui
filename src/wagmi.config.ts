@@ -7,7 +7,7 @@ import { EndpointId } from "@layerzerolabs/lz-definitions";
 export const joc = isProduction
   ? defineChain({
       id: 81,
-      name: "Japan Open Chain Mainnet",
+      name: "Japan Open Chain",
       nativeCurrency: {
         name: "Japan Open Chain Token",
         symbol: "JOC",

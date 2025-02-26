@@ -179,22 +179,22 @@ export default function Send() {
           hash: sendTokenTxHash,
         });
 
-        enqueueSnackbar(
-          "Your token is being sent to the destination network! Please wait a moment...",
-          { variant: "info" }
-        );
+        enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
 
         await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendTokenTxHash);
 
         resetSendAmount();
         refetchFromTokenBalance();
         enqueueSnackbar(
-          `Send ${selectedToken} successfully!`,
+          dict.send_tab.send_success.replace("{{token}}", selectedToken),
           { variant: "success" }
         );
       } catch (error) {
         console.log(`Send ${selectedToken} failded with error: ${error}`);
-        enqueueSnackbar(`Send ${selectedToken} failed.`, { variant: "error" });
+        enqueueSnackbar(
+          dict.send_tab.send_failed.replace("{{token}}", selectedToken),
+          { variant: "error" }
+        );
       } finally {
         setIsSending(false);
       }
@@ -211,6 +211,7 @@ export default function Send() {
       isSendToAnotherWallet,
       receiveAddress,
       selectedToken,
+      dict
     ]
   );
 
