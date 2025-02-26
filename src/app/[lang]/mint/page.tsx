@@ -135,23 +135,29 @@ export default function Mint() {
 
         resetMintAmount();
         refetchUsdtEthereumData();
-        enqueueSnackbar(dict.burn_tab.burn_success, { variant: "success" });
+        enqueueSnackbar(
+          dict.mint_tab.mint_success.replace("{{token}}", selectedToken),
+          { variant: "success" }
+        );
       } catch (error) {
         console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed with error: ${error}`);
-        enqueueSnackbar(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed.`, { variant: "error" });
+        enqueueSnackbar(
+          dict.mint_tab.mint_failed.replace("{{token}}", selectedToken),
+          { variant: "error" }
+        );
       } finally {
         setIsMinting(false);
       }
     },
     [
       chainId,
-      dict.burn_tab.burn_success,
       enqueueSnackbar,
       mintAmount,
       refetchUsdtEthereumData,
       resetMintAmount,
       wagmiConfig,
       selectedToken,
+      dict
     ]
   );
 

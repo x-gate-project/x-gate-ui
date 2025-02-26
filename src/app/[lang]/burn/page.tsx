@@ -152,7 +152,7 @@ export default function Burn() {
             hash: sendTokenTxHash,
           });
           enqueueSnackbar(
-            `Your ${selectedToken === Token.USDTX ? Token.USDT : Token.USDC} is being sent to the ${ethereum.name} network! Please wait a moment...`,
+            dict.burn_tab.waiting_for_sending.replace("{{token}}", selectedToken).replace("{{destination}}", ethereum.name),
             { variant: "info" }
           );
 
@@ -172,10 +172,16 @@ export default function Burn() {
 
         resetBurnAmount();
         refetchCurrentTokenData();
-        enqueueSnackbar(dict.burn_tab.burn_success, { variant: "success" });
+        enqueueSnackbar(
+          dict.burn_tab.burn_success.replace("{{token}}", selectedToken),
+          { variant: "success" }
+        );
       } catch (error) {
         console.log("Burn failded with error: ", error);
-        enqueueSnackbar("Burn failed.", { variant: "error" });
+        enqueueSnackbar(
+          dict.burn_tab.burn_failed.replace("{{token}}", selectedToken),
+          { variant: "error" }
+        );
       } finally {
         setIsBurning(false);
       }
@@ -183,7 +189,7 @@ export default function Burn() {
     [
       burnAmount,
       chainId,
-      dict.burn_tab.burn_success,
+      dict,
       enqueueSnackbar,
       selectedNetwork,
       refetchCurrentTokenData,
