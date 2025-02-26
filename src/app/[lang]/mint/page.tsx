@@ -27,8 +27,9 @@ import {
   switchChain,
   writeContract,
   waitForTransactionReceipt,
+  readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, ethereum } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, ethereum } from "@/wagmi.config";
 import { Chain, formatUnits, parseUnits } from "viem";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
@@ -38,6 +39,10 @@ import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { ethers } from "ethers";
+import { Options } from "@layerzerolabs/lz-v2-utilities";
+import oftxHelperAbi from "@/libs/usdtx/abis/OftxHelperAbi.json";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -108,29 +113,87 @@ export default function Mint() {
           await switchChain(wagmiConfig, { chainId: ethereum.id });
         }
 
-        const approveTokenTxHash = await writeContract(wagmiConfig, {
-          abi: erc20Abi,
-          address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
-          functionName: "approve",
-          args: [
-            selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
-            parseUnits(mintAmount, 6),
-          ],
-        });
-        await waitForTransactionReceipt(wagmiConfig, {
-          hash: approveTokenTxHash,
-        });
-        console.log(`Approved ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully. Minting ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} ...`);
+        if (selectedNetwork.id !== ethereum.id && address) {
+          const sourceTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS!
 
-        const mintTokenTxHash = await writeContract(wagmiConfig, {
-          abi: usdtxAbi,
-          address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
-          functionName: "mint",
-          args: [parseUnits(mintAmount, 6)],
-        });
-        await waitForTransactionReceipt(wagmiConfig, {
-          hash: mintTokenTxHash,
-        });
+          const options = Options.newOptions().addExecutorLzReceiveOption(200000, 0).toHex().toString()
+
+          const sendParam = [
+              CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id],
+              ethers.zeroPadValue(address, 32),
+              parseUnits(mintAmount, 6),
+              parseUnits(mintAmount, 6),
+              options,
+              '0x',
+              '0x',
+          ]
+
+          const fee: any = await readContract(wagmiConfig, {
+            abi: usdtxAbi,
+            address: process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS! as `0x${string}`,
+            functionName: "quoteSend",
+            args: [sendParam, false],
+          });
+
+          const allowance = await readContract(wagmiConfig, {
+            address: sourceTokenAddress as `0x${string}`,
+            abi: erc20Abi,
+            functionName: "allowance",
+            args: [address, process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS!],
+          });
+
+          if((allowance as bigint) < parseUnits(mintAmount, 6)) {
+            const approveTokenTxHash = await writeContract(wagmiConfig, {
+              abi: erc20Abi,
+              address: sourceTokenAddress as `0x${string}`,
+              functionName: "approve",
+              args: [
+                process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as any,
+                parseUnits(mintAmount, 6),
+              ],
+            });
+            await waitForTransactionReceipt(wagmiConfig, {
+              hash: approveTokenTxHash,
+            });
+          }
+
+          const mintTokenTxHash = await writeContract(wagmiConfig, {
+            abi: oftxHelperAbi,
+            address: process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as any,
+            functionName: "mintAndSendOFTX",
+            args: [process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS!, sendParam, [fee.nativeFee, 0], address],
+            value: fee.nativeFee,
+          });
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: mintTokenTxHash,
+          });
+
+          await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id], mintTokenTxHash);
+        } else {
+          const approveTokenTxHash = await writeContract(wagmiConfig, {
+            abi: erc20Abi,
+            address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
+            functionName: "approve",
+            args: [
+              selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
+              parseUnits(mintAmount, 6),
+            ],
+          });
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: approveTokenTxHash,
+          });
+          console.log(`Approved ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully. Minting ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} ...`);
+
+          const mintTokenTxHash = await writeContract(wagmiConfig, {
+            abi: usdtxAbi,
+            address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
+            functionName: "mint",
+            args: [parseUnits(mintAmount, 6)],
+          });
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: mintTokenTxHash,
+          });
+        }
         console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully.`);
 
         resetMintAmount();
@@ -157,7 +220,9 @@ export default function Mint() {
       resetMintAmount,
       wagmiConfig,
       selectedToken,
-      dict
+      dict,
+      selectedNetwork,
+      address,
     ]
   );
 
@@ -207,7 +272,7 @@ export default function Mint() {
                     {dict.mint_tab.mint}
                     </Box>
                   </Box>
-                  <Button
+                  {/* <Button
                     onClick={onOpenNetworkChangePopover}
                     className={classes.switchNetworkButton}
                   >
@@ -216,7 +281,15 @@ export default function Mint() {
                       {selectedNetwork.name}
                     </div>
                     <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
-                  </Button>
+                  </Button> */}
+                  <div
+                    className={classes.madeNetworkWrapper}
+                  >
+                    <Image src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={selectedNetwork.name} width={16} height={16} />
+                    <div className={classes.selectedNetworkTitle}>
+                      {ethereum.name}
+                    </div>
+                  </div>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -317,7 +390,6 @@ export default function Mint() {
                 border="1px solid #E2E8F0"
                 borderRadius="6px"
                 padding="16px"
-                sx={{ backgroundColor: "#E2E8F0" }}
               >
                 <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
                   <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
@@ -325,14 +397,16 @@ export default function Mint() {
                       {dict.mint_tab.made}
                     </Box>
                   </Box>
-                  <div
-                    className={classes.madeNetworkWrapper}
+                  <Button
+                    onClick={onOpenNetworkChangePopover}
+                    className={classes.switchNetworkButton}
                   >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={selectedNetwork.name} width={16} height={16} />
+                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]} alt={selectedNetwork.name} width={16} height={16} />
                     <div className={classes.selectedNetworkTitle}>
-                      {ethereum.name}
+                      {selectedNetwork.name}
                     </div>
-                  </div>
+                    <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
+                  </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -408,7 +482,7 @@ export default function Mint() {
         onChangeNetwork={(network: Chain) => {setSelectedNetwork(network)}}
         anchorEl={networkChangePopoverAnchorEl}
         selectedNetwork={selectedNetwork}
-        networks={wagmiConfig.chains.filter((chain) => chain.id === ethereum.id)}
+        networks={wagmiConfig.chains as any}
       />
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
@@ -564,8 +638,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
   selectedNetworkTitle: {
     fontWeight: 400,
     fontSize: "12px",
-    lineHeight: "20px",
-    letterSpacing: 0,
+    lineHeight: "24px",
+    letterSpacing: "0%",
+    maxLines: 1,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
     maxWidth: "100px",
     [theme.breakpoints.down("sm")]: {
       maxWidth: "80px",
@@ -577,11 +654,21 @@ const useStyles = makeStyles()((theme: Theme) => ({
     color: "black",
     lineHeight: "20px",
     textAlign: "left",
+    textTransform: "none",
+    borderRadius: "9999px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: "4px 12px",
     gap: "4px",
+    background: "#F1F5F9",
+    maxWidth: "200px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "160px",
+    },
   },
   helperText: {
     marginLeft: 0,
