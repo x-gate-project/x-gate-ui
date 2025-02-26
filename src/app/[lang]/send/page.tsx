@@ -1,6 +1,6 @@
 "use client";
 
-import React, { SyntheticEvent, useCallback, useState } from "react";
+import React, { SyntheticEvent, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Button,
@@ -42,6 +42,7 @@ import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import localStorageService from "@/services/local-storage.service";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -57,9 +58,10 @@ export default function Send() {
   const [isSending, setIsSending] = useState(false);
   const wagmiConfig = useConfig();
   const { address, isConnected } = useAccount();
-  const [selectedFromNetwork, setSelectedFromNetwork] = useState<Chain>(ethereum);
-  const [selectedToNetwork, setSelectedToNetwork] = useState<Chain>(joc);
-  const [selectedToken, setSelectedToken] = useState<Token>(SEND_SUPPORT_TOKENS[0]);
+  const [pageState, setPageState] = useState(localStorageService.getPageState());
+  const selectedFromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.fromChainId)) || ethereum, [pageState, wagmiConfig]);
+  const selectedToNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.toChainId)) || joc, [pageState, wagmiConfig]);
+  const selectedToken = useMemo(() => pageState.send.token as Token, [pageState]);
   const [receiveAddress, setReceiveAddress] = useState("");
   const [fromNetworkChangePopoverAnchorEl, setFromNetworkChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
@@ -95,10 +97,13 @@ export default function Send() {
   );
 
   const swapFromAndToNetwork = useCallback(() => {
-    const tempSelectedFromNetwork = selectedFromNetwork;
-    setSelectedFromNetwork(selectedToNetwork);
-    setSelectedToNetwork(tempSelectedFromNetwork);
-  }, [setSelectedFromNetwork, setSelectedToNetwork, selectedFromNetwork, selectedToNetwork]);
+    // const tempSelectedFromNetwork = selectedFromNetwork;
+    const pageState = localStorageService.setPageState({
+      sendFromChainId: selectedToNetwork.id,
+      sendToChainId: selectedFromNetwork.id,
+    });
+    setPageState(pageState);
+  }, [selectedFromNetwork, selectedToNetwork]);
 
   const handleSetMaxAmount = useCallback(() => {
     if (fromTokenBalance) {
@@ -124,6 +129,8 @@ export default function Send() {
 
       event.preventDefault();
       setIsSending(true);
+
+      console.log(selectedFromNetwork.id, selectedToNetwork.id, selectedToken);
 
       try {
         await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
@@ -254,19 +261,40 @@ export default function Send() {
   }, []);
 
   const handleSelectFromNetwork = useCallback((network: Chain) => {
+    let anotherNetworkId = undefined;
+
     if(network.id === selectedToNetwork.id) {
-      setSelectedToNetwork(wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain);
+      const anotherNetwork = wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain;
+      anotherNetworkId = anotherNetwork.id;
     }
-    setSelectedFromNetwork(network);
+
+    const pageState = localStorageService.setPageState({
+      sendFromChainId: network.id,
+      sendToChainId: anotherNetworkId,
+    });
+    setPageState(pageState);
     resetSendAmount();
-  }, [setSelectedFromNetwork, resetSendAmount, selectedToNetwork, wagmiConfig]);
+  }, [resetSendAmount, selectedToNetwork, wagmiConfig]);
 
   const handleSelectToNetwork = useCallback((network: Chain) => {
+    let anotherNetworkId = undefined;
     if(network.id === selectedFromNetwork.id) {
-      setSelectedFromNetwork(wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain);
+      const anotherNetwork = wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain;
+      anotherNetworkId = anotherNetwork.id;
     }
-    setSelectedToNetwork(network);
-  }, [setSelectedToNetwork, selectedFromNetwork, wagmiConfig]);
+    const pageState = localStorageService.setPageState({
+      sendToChainId: network.id,
+      sendFromChainId: anotherNetworkId,
+    });
+    setPageState(pageState);
+  }, [selectedFromNetwork, wagmiConfig]);
+
+  const handleSelectToken = useCallback((token: Token) => {
+    const pageState = localStorageService.setPageState({
+      sendToken: token,
+    });
+    setPageState(pageState);
+  }, []);
 
   return (
     <Layout>
@@ -572,7 +600,7 @@ export default function Send() {
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
-        onChangeToken={(token: Token) => {setSelectedToken(token)}}
+        onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         currentNetwork={selectedFromNetwork.name}

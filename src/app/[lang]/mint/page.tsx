@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Button,
   TextField,
@@ -38,6 +38,7 @@ import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import localStorageService from "@/services/local-storage.service";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -54,8 +55,9 @@ export default function Mint() {
   const [isMinting, setIsMinting] = useState(false);
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const [selectedNetwork, setSelectedNetwork] = useState<Chain>(ethereum);
-  const [selectedToken, setSelectedToken] = useState<Token>(MINT_SUPPORT_TOKENS[0]);
+  const [pageState, setPageState] = useState(localStorageService.getPageState());
+  const selectedToken = useMemo(() => pageState.mint.token as Token, [pageState]);
+  const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
   const [networkChangePopoverAnchorEl, setNetworkChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
@@ -182,6 +184,21 @@ export default function Mint() {
   }, [setTokenChangePopoverAnchorEl]);
 
   const theme = useTheme();
+
+  const handleSelectToken = useCallback((token: Token) => {
+    const pageState = localStorageService.setPageState({
+      mintToken: token,
+    });
+    setPageState(pageState);
+  }, []);
+
+  const handleSelectNetwork = useCallback((network: Chain) => {
+    const pageState = localStorageService.setPageState({
+      mintToChainId: network.id,
+    });
+    setPageState(pageState);
+  }, []);
+
 
   return (
     <Layout>
@@ -405,7 +422,7 @@ export default function Mint() {
       <NetworkChangePopover
         open={Boolean(networkChangePopoverAnchorEl)}
         onClose={onCloseNetworkChangePopover}
-        onChangeNetwork={(network: Chain) => {setSelectedNetwork(network)}}
+        onChangeNetwork={handleSelectNetwork}
         anchorEl={networkChangePopoverAnchorEl}
         selectedNetwork={selectedNetwork}
         networks={wagmiConfig.chains.filter((chain) => chain.id === ethereum.id)}
@@ -413,7 +430,7 @@ export default function Mint() {
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
-        onChangeToken={(token: Token) => {setSelectedToken(token)}}
+        onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         currentNetwork={selectedNetwork.name}
