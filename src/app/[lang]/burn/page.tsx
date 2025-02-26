@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Button,
   TextField,
@@ -37,6 +37,7 @@ import Image from "next/image";
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import localStorageService from "@/services/local-storage.service";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -53,8 +54,9 @@ export default function Burn() {
   const { classes } = useStyles();
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const [selectedNetwork, setSelectedNetwork] = useState<Chain>(ethereum);
-  const [selectedToken, setSelectedToken] = useState<Token>(BURN_SUPPORT_TOKENS[0]);
+  const [pageState, setPageState] = useState(localStorageService.getPageState());
+  const selectedToken = useMemo(() => pageState.burn.token as Token, [pageState]);
+  const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
   const { data: currentTokenData, refetch: refetchCurrentTokenData } =
     useBalance({
       address,
@@ -221,6 +223,20 @@ export default function Burn() {
   }, [setTokenChangePopoverAnchorEl]);
 
   const theme = useTheme();
+
+  const handleSelectNetwork = useCallback((network: Chain) => {
+    const pageState = localStorageService.setPageState({
+      burnFromChainId: network.id,
+    });
+    setPageState(pageState);
+  }, []);
+
+  const handleSelectToken = useCallback((token: Token) => {
+    const pageState = localStorageService.setPageState({
+      burnToken: token,
+    });
+    setPageState(pageState);
+  }, []);
 
   return (
     <Layout>
@@ -445,7 +461,7 @@ export default function Burn() {
       <NetworkChangePopover
         open={Boolean(networkChangePopoverAnchorEl)}
         onClose={onCloseNetworkChangePopover}
-        onChangeNetwork={(network: Chain) => {setSelectedNetwork(network)}}
+        onChangeNetwork={handleSelectNetwork}
         anchorEl={networkChangePopoverAnchorEl}
         selectedNetwork={selectedNetwork}
         networks={wagmiConfig.chains as any}
@@ -453,7 +469,7 @@ export default function Burn() {
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
-        onChangeToken={(token: Token) => {setSelectedToken(token)}}
+        onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         currentNetwork={selectedNetwork.name}
