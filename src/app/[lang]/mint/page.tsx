@@ -344,7 +344,7 @@ export default function Mint() {
                               >
                                 <TokenWithChainIcon
                                   tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
-                                  chainIcon={CHAIN_ID_TO_ICON_MAP[toNetwork.id]}
+                                  chainIcon="/icons/ethereum.svg"
                                   width={24}
                                   height={24}
                                 />
@@ -452,7 +452,7 @@ export default function Mint() {
                               >
                                 <TokenWithChainIcon
                                   tokenIcon={selectedToken === Token.USDT ? TOKEN_TO_ICON_MAP[Token.USDTX] : TOKEN_TO_ICON_MAP[Token.USDCX]}
-                                  chainIcon="/icons/ethereum.svg"
+                                  chainIcon={CHAIN_ID_TO_ICON_MAP[toNetwork.id]}
                                   width={24}
                                   height={24}
                                 />
