@@ -87,13 +87,13 @@ export default function Header() {
             <Box display="flex" flexDirection="row">
               <Link
                 href={process.env.NEXT_PUBLIC_SWAP_URL || ""}
-                target="_blank"
+                target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.swap_title}</StyledLinkButton>
               </Link>
               <Link
                 href={process.env.NEXT_PUBLIC_POOL_URL || ""}
-                target="_blank"
+                target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
               </Link>
