@@ -4,7 +4,8 @@
     "mint_title": "Mint",
     "burn_title": "Burn",
     "swap_title": "Swap",
-    "pool_title": "Pool"
+    "pool_title": "Pool",
+    "transfer_title": "Transfer"
   },
   "header": {
     "connect_wallet": "Connect wallet"

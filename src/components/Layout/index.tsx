@@ -9,10 +9,11 @@ import { usePathname } from "next/navigation";
 
 const LinkButton = styled("div")<{ isActive?: boolean }>(
   ({ theme, isActive }) => ({
-    padding: `${theme.spacing(2)} ${theme.spacing(7)}`,
-    borderRadius: 25,
-    fontSize: 16,
-    fontWeight: "bold",
+    padding: `${theme.spacing(1.5)} ${theme.spacing(8)}`,
+    borderRadius: '9999px',
+    fontSize: '14px',
+    fontWeight: 550,
+    lineHeight: '24px',
     border: "none",
     cursor: "pointer",
     backgroundColor: isActive ? "white" : "none",
@@ -23,6 +24,7 @@ const LinkButton = styled("div")<{ isActive?: boolean }>(
     [theme.breakpoints.down("sm")]: {
       padding: `${theme.spacing(1.5)} ${theme.spacing(4)}`,
     },
+    boxShadow: isActive ? "0px 1px 2px 0px #0000000D" : "none",
   })
 );
 
@@ -61,7 +63,7 @@ export default function Layout(props: { children: React.ReactNode }) {
         justifyContent="center"
         height={"100vh"}
         sx={{
-          background: "radial-gradient(circle at top, #d9f3ff 0%, #e9f8ff 50%, #f5fcff 100%)",
+          background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
         }}
       >
         <ContentWrapper>
