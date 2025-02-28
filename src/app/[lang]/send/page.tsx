@@ -1,6 +1,6 @@
 "use client";
 
-import React, { SyntheticEvent, useCallback, useMemo, useState } from "react";
+import React, { SyntheticEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Button,
@@ -241,6 +241,16 @@ export default function Send() {
     setPageState(pageState);
   }, [setPageState]);
 
+  useEffect(() => {
+    if (selectedFromNetwork.id === selectedToNetwork.id) {
+      const anotherNetwork = wagmiConfig.chains.find((chain) => chain.id !== selectedFromNetwork.id);
+      const pageState = localStorageService.setPageState({
+        sendToChainId: anotherNetwork?.id,
+      });
+      setPageState(pageState);
+    }
+  }, [selectedFromNetwork, wagmiConfig, setPageState, selectedToNetwork]);
+
   return (
     <Layout>
       <form onSubmit={handleSubmit}>
@@ -299,10 +309,10 @@ export default function Send() {
                                     width={24}
                                     height={24}
                                   />
-                                <Box color="black">
+                                <Box paddingLeft="2px" color="black">
                                   {selectedToken}
                                 </Box>
-                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                <Box display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                             </div>
@@ -358,9 +368,6 @@ export default function Send() {
                   top: insufficientBalance ? "49%" : "45%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  "&:hover": {
-                    backgroundColor: "#96A0B8",
-                  },
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -388,9 +395,9 @@ export default function Send() {
               >
                 <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
                   <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
-                    <Box className={classes.inputTitle}>
-                    {dict.send_tab.to}
-                    </Box>
+                    <div className={classes.inputTitle}>
+                      {dict.send_tab.to}
+                    </div>
                     <Box className={classes.addressTitle}>
                       {address && ellipsifyText(address, 6, 4)}
                     </Box>
@@ -408,11 +415,15 @@ export default function Send() {
                           <div className={classes.recommendWrapper}>
                             <div className={classes.balanceWrapper}>
                               <Box
-                                border="1px solid #bdbdbd"
+                                border="1px solid #E2E8F0"
                                 borderRadius={8}
                                 display={"flex"}
                                 alignItems={"center"}
                                 padding={"8px 12px"}
+                                sx={{
+                                  cursor: "pointer",
+                                }}
+                                gap="2px"
                                 onClick={onOpenSelectToTokenNetworkChangePopover}
                               >
                                 <TokenWithChainIcon
@@ -421,10 +432,10 @@ export default function Send() {
                                     width={24}
                                     height={24}
                                   />
-                                <Box marginLeft="4px" color="black">
+                                <Box paddingLeft="2px" color="black">
                                   {selectedToken}
                                 </Box>
-                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                <Box display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </Box>
@@ -456,9 +467,9 @@ export default function Send() {
                   checked={isSendToAnotherWallet}
                   disabled={isSending}
                   label={
-                    <Box className={classes.inputTitle}>
+                    <div className={classes.inputTitle}>
                       {dict.send_tab.another_wallet_address}
-                    </Box>
+                    </div>
                   }
                   onChange={handleSendToAnotherWalletCheckboxChange}
                 />
@@ -688,8 +699,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     },
   },
   inputTitle: {
-    fontSize: "16px",
-    color: "#000000",
+    fontWeight: 500,
+    fontSize: "14px",
+    lineHeight: "20px",
+    letterSpacing: "0%",
+    color: "#020617",
   },
   addressTitle: {
     fontSize: "14px",
@@ -719,12 +733,12 @@ const useStyles = makeStyles()((theme: Theme) => ({
     },
   },
   selectedTokenWrapper: {
-    border: "1px solid #bdbdbd",
+    border: "1px solid #E2E8F0",
     borderRadius: "9999px",
     display: "flex",
     alignItems: "center",
     padding: "8px 12px",
-    gap: "4px",
+    gap: "2px",
     cursor: "pointer",
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",

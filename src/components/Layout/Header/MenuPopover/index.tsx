@@ -44,7 +44,10 @@ const MenuPopover: React.FC<IProps> = ({
     >
       <div className={classes.container}>
         <div className={classes.list}>
-          <Link href={process.env.NEXT_PUBLIC_SWAP_PAGE_LINK || ''} target="_blank">
+          <Link
+            href={process.env.NEXT_PUBLIC_SWAP_PAGE_LINK || ''}
+            target='_self'
+          >
             <div className={classes.listItem}>
               <div className={classes.tokenInfoWrapper}>
                 <Typography className={classes.tokenName}>{dict.dashboard.swap_title}</Typography>
@@ -52,7 +55,10 @@ const MenuPopover: React.FC<IProps> = ({
             </div>
           </Link>
           <div className={classes.divider} />
-          <Link href={process.env.NEXT_PUBLIC_POOL_PAGE_LINK || ''} target="_blank">
+          <Link
+            href={process.env.NEXT_PUBLIC_POOL_PAGE_LINK || ''}
+            target='_self'
+          >
             <div className={classes.listItem}>
               <div className={classes.tokenInfoWrapper}>
                 <Typography className={classes.tokenName}>{dict.dashboard.pool_title}</Typography>
