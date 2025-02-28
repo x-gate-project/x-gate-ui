@@ -22,33 +22,49 @@ export default function Header() {
   const dict = useDict();
   const wagmiConfig = useConfig();
   const { pageState, setPageState } = usePageState();
-  const fromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.fromChainId)) || ethereum, [pageState, wagmiConfig]);
+  const fromNetwork = useMemo(
+    () =>
+      wagmiConfig.chains.find(
+        (chain) => chain.id === pageState.send.fromChainId
+      ) || ethereum,
+    [pageState, wagmiConfig]
+  );
 
-  const [fromNetworkChangePopoverAnchorEl, setFromNetworkChangePopoverAnchorEl] = useState<HTMLElement | null>(null);
+  const [
+    fromNetworkChangePopoverAnchorEl,
+    setFromNetworkChangePopoverAnchorEl,
+  ] = useState<HTMLElement | null>(null);
   const onOpenFromNetworkChangePopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
       setFromNetworkChangePopoverAnchorEl(event.currentTarget);
     },
-    [setFromNetworkChangePopoverAnchorEl],
+    [setFromNetworkChangePopoverAnchorEl]
   );
   const onCloseFromNetworkChangePopover = useCallback(() => {
     setFromNetworkChangePopoverAnchorEl(null);
   }, [setFromNetworkChangePopoverAnchorEl]);
 
-  const handleSelectFromNetwork = useCallback(async (network: any) => {
-    await switchChain(wagmiConfig, { chainId: network.id });
-    setFromNetworkChangePopoverAnchorEl(null);
-    const pageState = localStorageService.setPageState({
-      sendFromChainId: network.id,
-      burnFromChainId: network.id,
-    });
-    setPageState(pageState);
-  }, [setPageState, wagmiConfig]);
+  const handleSelectFromNetwork = useCallback(
+    async (network: any) => {
+      await switchChain(wagmiConfig, { chainId: network.id });
+      setFromNetworkChangePopoverAnchorEl(null);
+      const pageState = localStorageService.setPageState({
+        sendFromChainId: network.id,
+        burnFromChainId: network.id,
+      });
+      setPageState(pageState);
+    },
+    [setPageState, wagmiConfig]
+  );
 
-  const [menuPopoverAnchorEl, setMenuPopoverAnchorEl] = useState<HTMLElement | null>(null);
-  const onOpenMenuPopover = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    setMenuPopoverAnchorEl(event.currentTarget);
-  }, [setMenuPopoverAnchorEl]);
+  const [menuPopoverAnchorEl, setMenuPopoverAnchorEl] =
+    useState<HTMLElement | null>(null);
+  const onOpenMenuPopover = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setMenuPopoverAnchorEl(event.currentTarget);
+    },
+    [setMenuPopoverAnchorEl]
+  );
   const onCloseMenuPopover = useCallback(() => {
     setMenuPopoverAnchorEl(null);
   }, [setMenuPopoverAnchorEl]);
@@ -69,41 +85,65 @@ export default function Header() {
               </StyledMenuItemDiv>
             </Link>
             <Box display="flex" flexDirection="row">
-              <Link href={process.env.NEXT_PUBLIC_SWAP_PAGE_LINK || ''} target="_blank">
-                <StyledLinkButton>
-                  {dict.dashboard.swap_title}
-                </StyledLinkButton>
+              <Link
+                href={process.env.NEXT_PUBLIC_SWAP_URL || ""}
+                target="_blank"
+              >
+                <StyledLinkButton>{dict.dashboard.swap_title}</StyledLinkButton>
               </Link>
-              <Link href={process.env.NEXT_PUBLIC_POOL_PAGE_LINK || ''} target="_blank">
-                <StyledLinkButton>
-                  {dict.dashboard.pool_title}
-                </StyledLinkButton>
+              <Link
+                href={process.env.NEXT_PUBLIC_POOL_URL || ""}
+                target="_blank"
+              >
+                <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
               </Link>
             </Box>
             <StyledMenuButton onClick={onOpenMenuPopover}>
-              <Image src="/icons/menu-icon.svg" alt="Menu" width={20} height={20} />
+              <Image
+                src="/icons/menu-icon.svg"
+                alt="Menu"
+                width={20}
+                height={20}
+              />
             </StyledMenuButton>
           </StyledLeftDiv>
           <StyledRightDiv>
             <StyledSwitchNetworkButton onClick={onOpenFromNetworkChangePopover}>
-              <Image src={CHAIN_ID_TO_ICON_MAP[fromNetwork.id]} alt={fromNetwork.name} width={16} height={16} />
+              <Image
+                src={CHAIN_ID_TO_ICON_MAP[fromNetwork.id]}
+                alt={fromNetwork.name}
+                width={16}
+                height={16}
+              />
               <StyledSelectedNetworkTitle>
                 {fromNetwork.name}
               </StyledSelectedNetworkTitle>
-              <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
+              <Image
+                src="/icons/arrow-down.svg"
+                alt="USDT"
+                width={16}
+                height={16}
+              />
             </StyledSwitchNetworkButton>
             <ConnectKitButton.Custom>
               {({ isConnected, show, truncatedAddress }) => (
                 <Button
                   variant="contained"
                   onClick={show}
-                  startIcon={<Image src="/icons/wallet-icon.svg" alt="Wallet" width={16} height={16} />}
+                  startIcon={
+                    <Image
+                      src="/icons/wallet-icon.svg"
+                      alt="Wallet"
+                      width={16}
+                      height={16}
+                    />
+                  }
                   sx={{
                     textTransform: "none",
                     borderRadius: "6px",
                     fontWeight: 500,
-                    fontSize: '14px',
-                    lineHeight: '24px',
+                    fontSize: "14px",
+                    lineHeight: "24px",
                     letterSpacing: 0,
                   }}
                 >
@@ -137,7 +177,8 @@ const StyledRootDiv = styled("div")(({ theme }) => ({
   left: 0,
   right: 0,
   zIndex: 1000,
-  background: "radial-gradient(circle at top, #d9f3ff 0%, #e9f8ff 50%, #f5fcff 100%)",
+  background:
+    "radial-gradient(circle at top, #d9f3ff 0%, #e9f8ff 50%, #f5fcff 100%)",
 }));
 
 const StyledContainerDiv = styled("div")(({ theme }) => ({
@@ -156,9 +197,7 @@ const StyledAppBarDiv = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  [theme.breakpoints.up("sm")]: {
-    height: 50,
-  },
+  height: 70,
   [theme.breakpoints.down("sm")]: {
     alignItems: "start",
     height: 60,
@@ -249,35 +288,32 @@ const StyledSelectedNetworkTitle = styled("div")(({ theme }) => ({
   maxWidth: "100px",
   [theme.breakpoints.down("sm")]: {
     display: "none",
-
   },
 }));
 
 const StyledLinkButton = styled("div")(({ theme }) => ({
   padding: `${theme.spacing(2)} ${theme.spacing(2)}`,
-  fontSize: '16px',
+  fontSize: "16px",
   fontWeight: "bold",
   cursor: "pointer",
   color: "#565A69",
   [theme.breakpoints.down("sm")]: {
     display: "none",
   },
-  })
-);
+}));
 
 const StyledDropdownItem = styled("div")(({ theme }) => ({
-  position: 'relative',
-  color: 'black',
+  position: "relative",
+  color: "black",
   fontSize: 16,
   paddingLeft: 20,
   paddingRight: 20,
-  textDecoration: 'none',
-  display: 'flex',
+  textDecoration: "none",
+  display: "flex",
   height: 50,
-  alignItems: 'center',
-  textAlign: 'left',
-  '&:hover': {
-    background: '#F1F5F9',
+  alignItems: "center",
+  textAlign: "left",
+  "&:hover": {
+    background: "#F1F5F9",
   },
 }));
-
