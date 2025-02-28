@@ -11,6 +11,7 @@ import theme from "../../theme.config";
 import { getWagmiConfig } from "../../wagmi.config";
 import { DictProvider } from "@/contexts/DictContext";
 import { SupportedLocale } from "../../dicts";
+import { PageStateProvider } from "@/contexts/PageStateContext";
 
 type Props = {
   children: ReactNode;
@@ -24,10 +25,11 @@ export function Providers({ children, initialWagmiState, params }: Props) {
 
   return (
     <AppRouterCacheProvider>
-      <DictProvider params={params}>
-        <ThemeProvider theme={theme}>
-          <SnackbarProvider
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      <PageStateProvider>
+        <DictProvider params={params}>
+          <ThemeProvider theme={theme}>
+            <SnackbarProvider
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             <WagmiProvider config={config} initialState={initialWagmiState}>
               <QueryClientProvider client={queryClient}>
@@ -35,8 +37,9 @@ export function Providers({ children, initialWagmiState, params }: Props) {
               </QueryClientProvider>
             </WagmiProvider>
           </SnackbarProvider>
-        </ThemeProvider>
-      </DictProvider>
+          </ThemeProvider>
+        </DictProvider>
+      </PageStateProvider>
     </AppRouterCacheProvider>
   );
 }

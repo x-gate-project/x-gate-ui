@@ -44,6 +44,7 @@ import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
+import { usePageState } from "@/contexts/PageStateContext";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -60,10 +61,10 @@ export default function Mint() {
   const [isMinting, setIsMinting] = useState(false);
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const [pageState, setPageState] = useState(localStorageService.getPageState());
+  const { pageState, setPageState } = usePageState();
   const selectedToken = useMemo(() => pageState.mint.token as Token, [pageState]);
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
-  const [networkChangePopoverAnchorEl, setNetworkChangePopoverAnchorEl] =
+  const [selectToTokenNetworkPopoverAnchorEl, setSelectToTokenNetworkPopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
@@ -95,14 +96,6 @@ export default function Mint() {
   const handleSetMaxAmount = useCallback(() => {
     if (usdtEthereumBalance) {
       setMintAmount(usdtEthereumBalance);
-    }
-  }, [usdtEthereumBalance]);
-
-  const handleSetHalfAmount = useCallback(() => {
-    if (usdtEthereumBalance) {
-      // Set half of the balance and format it to the token decimal
-      const halfAmount = (parseUnits(usdtEthereumBalance, 6) / BigInt(2));
-      setMintAmount(formatUnits(halfAmount, 6));
     }
   }, [usdtEthereumBalance]);
 
@@ -245,15 +238,15 @@ export default function Mint() {
     ]
   );
 
-  const onOpenNetworkChangePopover = useCallback(
+  const onOpenSelectToTokenNetworkPopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
-      setNetworkChangePopoverAnchorEl(event.currentTarget);
+      setSelectToTokenNetworkPopoverAnchorEl(event.currentTarget);
     },
-    [setNetworkChangePopoverAnchorEl],
+    [setSelectToTokenNetworkPopoverAnchorEl],
   );
-  const onCloseNetworkChangePopover = useCallback(() => {
-    setNetworkChangePopoverAnchorEl(null);
-  }, [setNetworkChangePopoverAnchorEl]);
+  const onCloseSelectToTokenNetworkPopover = useCallback(() => {
+    setSelectToTokenNetworkPopoverAnchorEl(null);
+  }, [setSelectToTokenNetworkPopoverAnchorEl]);
 
   const onOpenTokenChangePopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -272,14 +265,14 @@ export default function Mint() {
       mintToken: token,
     });
     setPageState(pageState);
-  }, []);
+  }, [setPageState]);
 
-  const handleSelectNetwork = useCallback((network: Chain) => {
+  const handleSelectToNetwork = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({
       mintToChainId: network.id,
     });
     setPageState(pageState);
-  }, []);
+  }, [setPageState]);
 
 
   return (
@@ -306,14 +299,6 @@ export default function Mint() {
                     {dict.mint_tab.mint}
                     </Box>
                   </Box>
-                  <div
-                    className={classes.madeNetworkWrapper}
-                  >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={toNetwork.name} width={16} height={16} />
-                    <div className={classes.selectedNetworkTitle}>
-                      {ethereum.name}
-                    </div>
-                  </div>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -329,11 +314,6 @@ export default function Mint() {
                               <Chip
                                 onClick={handleSetMaxAmount}
                                 label={dict.mint_tab.max}
-                                className={classes.chipButton}
-                              />
-                              <Chip
-                                onClick={handleSetHalfAmount}
-                                label={"50%"}
                                 className={classes.chipButton}
                               />
                             </div>
@@ -412,6 +392,7 @@ export default function Mint() {
                 flexDirection="column"
                 gap="8px"
                 border="1px solid #E2E8F0"
+                sx={{ backgroundColor: "#E2E8F0" }}
                 borderRadius="6px"
                 padding="16px"
               >
@@ -421,16 +402,6 @@ export default function Mint() {
                       {dict.mint_tab.made}
                     </Box>
                   </Box>
-                  <Button
-                    onClick={onOpenNetworkChangePopover}
-                    className={classes.switchNetworkButton}
-                  >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[toNetwork.id]} alt={toNetwork.name} width={16} height={16} />
-                    <div className={classes.selectedNetworkTitle}>
-                      {toNetwork.name}
-                    </div>
-                    <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
-                  </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -444,11 +415,16 @@ export default function Mint() {
                           <div className={classes.recommendWrapper}>
                             <div className={classes.balanceWrapper}>
                               <Box
-                                sx={{backgroundColor: "white"}}
-                                borderRadius={8}
-                                display={"flex"}
-                                alignItems={"center"}
-                                padding={"8px 12px"}
+                                sx={{
+                                  borderRadius: "9999px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "8px 12px",
+                                  gap: "4px",
+                                  cursor: "pointer",
+                                  backgroundColor: "white",
+                                }}
+                                onClick={onOpenSelectToTokenNetworkPopover}
                               >
                                 <TokenWithChainIcon
                                   tokenIcon={selectedToken === Token.USDT ? TOKEN_TO_ICON_MAP[Token.USDTX] : TOKEN_TO_ICON_MAP[Token.USDCX]}
@@ -458,6 +434,9 @@ export default function Mint() {
                                 />
                                 <Box marginLeft="4px" color="black">
                                   {selectedToken === Token.USDT ? Token.USDTX : Token.USDCX}
+                                </Box>
+                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                  <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </Box>
                             </div>
@@ -500,13 +479,15 @@ export default function Mint() {
             </Button>
         </div>
       </form>
-      <NetworkChangePopover
-        open={Boolean(networkChangePopoverAnchorEl)}
-        onClose={onCloseNetworkChangePopover}
-        onChangeNetwork={handleSelectNetwork}
-        anchorEl={networkChangePopoverAnchorEl}
+      <TokenChangePopover
+        open={Boolean(selectToTokenNetworkPopoverAnchorEl)}
+        onClose={onCloseSelectToTokenNetworkPopover}
+        onChangeToken={handleSelectToNetwork}
+        anchorEl={selectToTokenNetworkPopoverAnchorEl}
+        selectedToken={selectedToken}
+        networks={wagmiConfig.chains.filter((chain) => chain.id !== ethereum.id) as any}
+        tokens={[selectedToken === Token.USDT ? Token.USDTX : Token.USDCX]}
         selectedNetwork={toNetwork}
-        networks={wagmiConfig.chains as any}
       />
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
@@ -514,7 +495,7 @@ export default function Mint() {
         onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
-        currentNetwork={toNetwork.name}
+        networks={[ethereum]}
         tokens={MINT_SUPPORT_TOKENS}
       />
     </Layout>
@@ -525,7 +506,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   wrapper: {
     width: "100%",
     padding: "32px",
-    borderRadius: "8px",
+    borderRadius: "28px",
     display: "flex",
     flexDirection: "column",
     gap: "24px",
@@ -551,7 +532,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   },
   sendButton: {
     textTransform: "none",
-    padding: "12px",
+    padding: "14px 12px",
   },
   sendTitle: {
     fontSize: "16px",

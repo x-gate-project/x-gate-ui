@@ -2,7 +2,9 @@
   "dashboard": {
     "send_title": "送信",
     "mint_title": "ミント",
-    "burn_title": "バーン"
+    "burn_title": "バーン",
+    "swap_title": "スワップ",
+    "pool_title": "プール"
   },
   "header": {
     "connect_wallet": "ウォレットを接続"
@@ -14,7 +16,7 @@
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
-    "another_wallet_address": "または他のウォレットアドレス",
+    "another_wallet_address": "他のウォレットアドレスに送信",
     "invalid_receive_address": "受信アドレスが無効です！",
     "receive_address_placeholder": "受信アドレスを入力",
     "waiting_for_sending": "トークンが送信中です！少し待ってください...",
