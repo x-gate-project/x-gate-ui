@@ -265,10 +265,10 @@ export default function Burn() {
                                     width={24}
                                     height={24}
                                   />
-                                  <Box marginLeft="4px" color="black">
+                                  <Box paddingLeft="2px" color="black">
                                     {selectedToken}
                                   </Box>
-                                  <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                  <Box display="flex" alignItems="center" justifyContent="center">
                                     <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </div>
@@ -340,14 +340,6 @@ export default function Burn() {
                       {dict.burn_tab.out}
                     </Box>
                   </Box>
-                  <div
-                    className={classes.madeNetworkWrapper}
-                  >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[ethereum.id]} alt={selectedNetwork.name} width={16} height={16} />
-                    <div className={classes.selectedNetworkTitle}>
-                      {ethereum.name}
-                    </div>
-                  </div>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -366,6 +358,7 @@ export default function Burn() {
                                 display={"flex"}
                                 alignItems={"center"}
                                 padding={"8px 12px"}
+                                gap="2px"
                               >
                                 <TokenWithChainIcon
                                   tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
@@ -373,7 +366,7 @@ export default function Burn() {
                                   width={24}
                                   height={24}
                                 />
-                                <Box marginLeft="4px" color="black">
+                                <Box paddingLeft="2px" color="black">
                                   {selectedToken === Token.USDTX ? Token.USDT : Token.USDC}
                                 </Box>
                               </Box>
@@ -417,14 +410,6 @@ export default function Burn() {
           </Button>
         </div>
       </form>
-      {/* <NetworkChangePopover
-        open={Boolean(networkChangePopoverAnchorEl)}
-        onClose={onCloseNetworkChangePopover}
-        onChangeNetwork={handleSelectNetwork}
-        anchorEl={networkChangePopoverAnchorEl}
-        selectedNetwork={selectedNetwork}
-        networks={wagmiConfig.chains as any}
-      /> */}
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
@@ -595,12 +580,12 @@ const useStyles = makeStyles()((theme: Theme) => ({
     },
   },
   selectedTokenWrapper: {
-    border: "1px solid #bdbdbd",
+    border: "1px solid #E2E8F0",
     borderRadius: "9999px",
     display: "flex",
     alignItems: "center",
     padding: "8px 12px",
-    gap: "4px",
+    gap: "2px",
     cursor: "pointer",
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",

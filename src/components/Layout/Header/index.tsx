@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { styled } from "@mui/material/styles";
 import { ConnectKitButton } from "connectkit";
 import Image from "next/image";
@@ -8,7 +8,7 @@ import Button from "@mui/material/Button";
 import Link from "next/link";
 import { AppRoute } from "@/enums/route";
 import { CHAIN_ID_TO_ICON_MAP, ethereum } from "@/wagmi.config";
-import { useConfig } from "wagmi";
+import { useChainId, useConfig } from "wagmi";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
 import { usePageState } from "@/contexts/PageStateContext";
 import { switchChain } from "wagmi/actions";
@@ -17,11 +17,15 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import MenuPopover from "./MenuPopover";
 import localStorageService from "@/services/local-storage.service";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useSnackbar } from "notistack";
 
 export default function Header() {
   const dict = useDict();
   const wagmiConfig = useConfig();
+  const { enqueueSnackbar } = useSnackbar();
   const { pageState, setPageState } = usePageState();
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
   const fromNetwork = useMemo(
     () =>
       wagmiConfig.chains.find(
@@ -29,6 +33,8 @@ export default function Header() {
       ) || ethereum,
     [pageState, wagmiConfig]
   );
+
+  const chainId = useChainId();
 
   const [
     fromNetworkChangePopoverAnchorEl,
@@ -46,15 +52,22 @@ export default function Header() {
 
   const handleSelectFromNetwork = useCallback(
     async (network: any) => {
-      await switchChain(wagmiConfig, { chainId: network.id });
-      setFromNetworkChangePopoverAnchorEl(null);
-      const pageState = localStorageService.setPageState({
-        sendFromChainId: network.id,
-        burnFromChainId: network.id,
-      });
-      setPageState(pageState);
+      setIsSwitchingNetwork(true);
+      try {
+        await switchChain(wagmiConfig, { chainId: network.id });
+        setFromNetworkChangePopoverAnchorEl(null);
+        const pageState = localStorageService.setPageState({
+          sendFromChainId: network.id,
+          burnFromChainId: network.id,
+        });
+        setPageState(pageState);
+      } catch (error: any) {
+        enqueueSnackbar(error.message, { variant: "error" });
+      } finally {
+        setIsSwitchingNetwork(false);
+      }
     },
-    [setPageState, wagmiConfig]
+    [setPageState, wagmiConfig, enqueueSnackbar]
   );
 
   const [menuPopoverAnchorEl, setMenuPopoverAnchorEl] =
@@ -69,32 +82,27 @@ export default function Header() {
     setMenuPopoverAnchorEl(null);
   }, [setMenuPopoverAnchorEl]);
 
+  useEffect(() => {
+    if(chainId !== pageState.send.fromChainId) {
+      switchChain(wagmiConfig, { chainId: pageState.send.fromChainId });
+    }
+  }, [pageState, chainId, wagmiConfig]);
+
   return (
     <StyledRootDiv>
       <StyledContainerDiv>
         <StyledAppBarDiv>
           <StyledLeftDiv>
             <Link href={AppRoute.HOME}>
-              <StyledMenuItemDiv>
-                <Image
-                  alt="Icon"
-                  src="/icons/logo.svg"
-                  width={69}
-                  height={24}
-                />
-              </StyledMenuItemDiv>
+              <StyledTransferButton>{dict.dashboard.transfer_title}</StyledTransferButton>
             </Link>
             <Box display="flex" flexDirection="row">
               <Link
-                href={process.env.NEXT_PUBLIC_SWAP_URL || ""}
-                target="_blank"
-              >
+                href={process.env.NEXT_PUBLIC_SWAP_PAGE_LINK || ""} >
                 <StyledLinkButton>{dict.dashboard.swap_title}</StyledLinkButton>
               </Link>
               <Link
-                href={process.env.NEXT_PUBLIC_POOL_URL || ""}
-                target="_blank"
-              >
+                href={process.env.NEXT_PUBLIC_POOL_PAGE_LINK || ""}>
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
               </Link>
             </Box>
@@ -118,12 +126,12 @@ export default function Header() {
               <StyledSelectedNetworkTitle>
                 {fromNetwork.name}
               </StyledSelectedNetworkTitle>
-              <Image
+              {isSwitchingNetwork ? <CircularProgress size={16} color="inherit" /> : <Image
                 src="/icons/arrow-down.svg"
                 alt="USDT"
                 width={16}
                 height={16}
-              />
+              />}
             </StyledSwitchNetworkButton>
             <ConnectKitButton.Custom>
               {({ isConnected, show, truncatedAddress }) => (
@@ -178,12 +186,14 @@ const StyledRootDiv = styled("div")(({ theme }) => ({
   right: 0,
   zIndex: 1000,
   background:
-    "radial-gradient(circle at top, #d9f3ff 0%, #e9f8ff 50%, #f5fcff 100%)",
+    "radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)",
 }));
 
 const StyledContainerDiv = styled("div")(({ theme }) => ({
-  paddingLeft: 20,
-  paddingRight: 20,
+  paddingLeft: '24px',
+  paddingRight: '24px',
+  paddingTop: '15.25px',
+  paddingBottom: '15.25px',
   margin: "auto",
   position: "relative",
   [theme.breakpoints.up("md")]: {
@@ -197,10 +207,8 @@ const StyledAppBarDiv = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  height: 70,
   [theme.breakpoints.down("sm")]: {
     alignItems: "start",
-    height: 60,
   },
 }));
 
@@ -221,22 +229,6 @@ const StyledRightDiv = styled("div")(({ theme }) => ({
   [theme.breakpoints.down("sm")]: {
     paddingTop: "12px",
     justifyContent: "center",
-  },
-}));
-
-const StyledMenuItemDiv = styled("div")(({ theme }) => ({
-  color: "black",
-  paddingLeft: 25,
-  paddingRight: 25,
-  textDecoration: "none",
-  fontSize: 16,
-  height: "100%",
-  display: "flex",
-  alignItems: "center",
-  paddingTop: "12px",
-  paddingBottom: "12px",
-  [theme.breakpoints.down("sm")]: {
-    display: "none",
   },
 }));
 
@@ -292,9 +284,9 @@ const StyledSelectedNetworkTitle = styled("div")(({ theme }) => ({
 }));
 
 const StyledLinkButton = styled("div")(({ theme }) => ({
-  padding: `${theme.spacing(2)} ${theme.spacing(2)}`,
+  padding: `12px 16px`,
   fontSize: "16px",
-  fontWeight: "bold",
+  fontWeight: 500,
   cursor: "pointer",
   color: "#565A69",
   [theme.breakpoints.down("sm")]: {
@@ -302,18 +294,13 @@ const StyledLinkButton = styled("div")(({ theme }) => ({
   },
 }));
 
-const StyledDropdownItem = styled("div")(({ theme }) => ({
-  position: "relative",
+const StyledTransferButton = styled("div")(({ theme }) => ({
+  padding: `12px 16px`,
+  fontSize: "16px",
+  fontWeight: 700,
+  cursor: "pointer",
   color: "black",
-  fontSize: 16,
-  paddingLeft: 20,
-  paddingRight: 20,
-  textDecoration: "none",
-  display: "flex",
-  height: 50,
-  alignItems: "center",
-  textAlign: "left",
-  "&:hover": {
-    background: "#F1F5F9",
+  [theme.breakpoints.down("sm")]: {
+    display: "none",
   },
 }));

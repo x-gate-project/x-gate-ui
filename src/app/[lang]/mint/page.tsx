@@ -328,10 +328,10 @@ export default function Mint() {
                                   width={24}
                                   height={24}
                                 />
-                                <Box marginLeft="4px" color="black">
+                                <Box paddingLeft="2px" color="black">
                                   {selectedToken}
                                 </Box>
-                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                <Box display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </div>
@@ -392,7 +392,6 @@ export default function Mint() {
                 flexDirection="column"
                 gap="8px"
                 border="1px solid #E2E8F0"
-                sx={{ backgroundColor: "#E2E8F0" }}
                 borderRadius="6px"
                 padding="16px"
               >
@@ -420,9 +419,10 @@ export default function Mint() {
                                   display: "flex",
                                   alignItems: "center",
                                   padding: "8px 12px",
-                                  gap: "4px",
+                                  gap: "2px",
                                   cursor: "pointer",
                                   backgroundColor: "white",
+                                  border: "1px solid #E2E8F0",
                                 }}
                                 onClick={onOpenSelectToTokenNetworkPopover}
                               >
@@ -432,10 +432,10 @@ export default function Mint() {
                                   width={24}
                                   height={24}
                                 />
-                                <Box marginLeft="4px" color="black">
+                                <Box paddingLeft="2px" color="black">
                                   {selectedToken === Token.USDT ? Token.USDTX : Token.USDCX}
                                 </Box>
-                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                <Box display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </Box>
@@ -683,12 +683,12 @@ const useStyles = makeStyles()((theme: Theme) => ({
     },
   },
   selectedTokenWrapper: {
-    border: "1px solid #bdbdbd",
+    border: "1px solid #E2E8F0",
     borderRadius: "9999px",
     display: "flex",
     alignItems: "center",
     padding: "8px 12px",
-    gap: "4px",
+    gap: "2px",
     cursor: "pointer",
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
