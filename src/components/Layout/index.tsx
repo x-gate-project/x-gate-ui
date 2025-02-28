@@ -15,7 +15,7 @@ const LinkButton = styled("div")<{ isActive?: boolean }>(
     fontWeight: "bold",
     border: "none",
     cursor: "pointer",
-    backgroundColor: isActive ? "#f4f6f8" : "none",
+    backgroundColor: isActive ? "white" : "none",
     color: isActive ? "#000" : "#667085",
     display: "flex",
     alignItems: "center",
@@ -60,6 +60,9 @@ export default function Layout(props: { children: React.ReactNode }) {
         alignItems="center"
         justifyContent="center"
         height={"100vh"}
+        sx={{
+          background: "radial-gradient(circle at top, #d9f3ff 0%, #e9f8ff 50%, #f5fcff 100%)",
+        }}
       >
         <ContentWrapper>
           <TabWrapper>

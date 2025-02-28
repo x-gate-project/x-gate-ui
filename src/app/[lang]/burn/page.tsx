@@ -38,6 +38,7 @@ import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
+import { usePageState } from "@/contexts/PageStateContext";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -54,7 +55,7 @@ export default function Burn() {
   const { classes } = useStyles();
   const chainId = useChainId();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const [pageState, setPageState] = useState(localStorageService.getPageState());
+  const { pageState, setPageState } = usePageState();
   const selectedToken = useMemo(() => pageState.burn.token as Token, [pageState]);
   const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
   const { data: currentTokenData, refetch: refetchCurrentTokenData } =
@@ -63,8 +64,6 @@ export default function Burn() {
       token: selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any,
       chainId: selectedNetwork.id,
     });
-  const [networkChangePopoverAnchorEl, setNetworkChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
 
@@ -89,14 +88,6 @@ export default function Burn() {
   const handleSetMaxAmount = useCallback(() => {
     if (currentTokenBalance) {
       setBurnAmount(currentTokenBalance);
-    }
-  }, [currentTokenBalance]);
-
-  const handleSetHalfAmount = useCallback(() => {
-    if (currentTokenBalance) {
-      // Set half of the balance and format it to the token decimal
-      const halfAmount = (parseUnits(currentTokenBalance, 6) / BigInt(2));
-      setBurnAmount(formatUnits(halfAmount, 6));
     }
   }, [currentTokenBalance]);
 
@@ -202,16 +193,6 @@ export default function Burn() {
     ]
   );
 
-  const onOpenNetworkChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setNetworkChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setNetworkChangePopoverAnchorEl],
-  );
-  const onCloseNetworkChangePopover = useCallback(() => {
-    setNetworkChangePopoverAnchorEl(null);
-  }, [setNetworkChangePopoverAnchorEl]);
-
   const onOpenTokenChangePopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
       setTokenChangePopoverAnchorEl(event.currentTarget);
@@ -224,19 +205,12 @@ export default function Burn() {
 
   const theme = useTheme();
 
-  const handleSelectNetwork = useCallback((network: Chain) => {
-    const pageState = localStorageService.setPageState({
-      burnFromChainId: network.id,
-    });
-    setPageState(pageState);
-  }, []);
-
   const handleSelectToken = useCallback((token: Token) => {
     const pageState = localStorageService.setPageState({
       burnToken: token,
     });
     setPageState(pageState);
-  }, []);
+  }, [setPageState]);
 
   return (
     <Layout>
@@ -263,16 +237,6 @@ export default function Burn() {
                       {dict.burn_tab.burn}
                     </Box>
                   </Box>
-                  <Button
-                    onClick={onOpenNetworkChangePopover}
-                    className={classes.switchNetworkButton}
-                  >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]} alt={selectedNetwork.name} width={16} height={16} />
-                    <div className={classes.selectedNetworkTitle}>
-                      {selectedNetwork.name}
-                    </div>
-                    <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
-                  </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -287,11 +251,6 @@ export default function Burn() {
                               <Chip
                                 onClick={handleSetMaxAmount}
                                 label={dict.burn_tab.max}
-                                className={classes.chipButton}
-                              />
-                              <Chip
-                                onClick={handleSetHalfAmount}
-                                label={"50%"}
                                 className={classes.chipButton}
                               />
                             </div>
@@ -458,21 +417,21 @@ export default function Burn() {
           </Button>
         </div>
       </form>
-      <NetworkChangePopover
+      {/* <NetworkChangePopover
         open={Boolean(networkChangePopoverAnchorEl)}
         onClose={onCloseNetworkChangePopover}
         onChangeNetwork={handleSelectNetwork}
         anchorEl={networkChangePopoverAnchorEl}
         selectedNetwork={selectedNetwork}
         networks={wagmiConfig.chains as any}
-      />
+      /> */}
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
         onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
-        currentNetwork={selectedNetwork.name}
+        networks={[selectedNetwork]}
         tokens={BURN_SUPPORT_TOKENS}
       />
     </Layout>
@@ -483,7 +442,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   wrapper: {
     width: "100%",
     padding: "32px",
-    borderRadius: "8px",
+    borderRadius: "28px",
     display: "flex",
     flexDirection: "column",
     gap: "24px",
@@ -509,7 +468,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   },
   sendButton: {
     textTransform: "none",
-    padding: "12px",
+    padding: "14px 12px",
   },
   sendTitle: {
     fontSize: "16px",

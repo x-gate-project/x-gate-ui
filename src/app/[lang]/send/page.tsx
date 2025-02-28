@@ -10,12 +10,9 @@ import {
   Box,
   alpha,
   InputAdornment,
-  Divider,
-  IconButton,
-  Checkbox,
   FormControlLabel,
-  useTheme,
   Tooltip,
+  Checkbox,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -26,24 +23,23 @@ import { useAccount, useBalance, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
 import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP } from "@/wagmi.config";
 import {
-  switchChain,
   readContract,
   writeContract,
   waitForTransactionReceipt,
 } from "wagmi/actions";
 import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
-import { Chain, formatUnits, parseUnits } from "viem";
+import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
 import tokenAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import { ellipsifyText } from "@/utils/string.utils";
-import NetworkChangePopover from "@/components/NetworkChangePopover";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
-
+import { usePageState } from "@/contexts/PageStateContext";
+import { switchChain } from "wagmi/actions";
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
@@ -58,14 +54,12 @@ export default function Send() {
   const [isSending, setIsSending] = useState(false);
   const wagmiConfig = useConfig();
   const { address, isConnected } = useAccount();
-  const [pageState, setPageState] = useState(localStorageService.getPageState());
+  const { pageState, setPageState } = usePageState();
   const selectedFromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.fromChainId)) || ethereum, [pageState, wagmiConfig]);
   const selectedToNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.toChainId)) || joc, [pageState, wagmiConfig]);
   const selectedToken = useMemo(() => pageState.send.token as Token, [pageState]);
   const [receiveAddress, setReceiveAddress] = useState("");
-  const [fromNetworkChangePopoverAnchorEl, setFromNetworkChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
-  const [toNetworkChangePopoverAnchorEl, setToNetworkChangePopoverAnchorEl] =
+  const [toTokenAndNetworkChangePopoverAnchorEl, setToTokenAndNetworkChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
@@ -96,26 +90,9 @@ export default function Send() {
     []
   );
 
-  const swapFromAndToNetwork = useCallback(() => {
-    // const tempSelectedFromNetwork = selectedFromNetwork;
-    const pageState = localStorageService.setPageState({
-      sendFromChainId: selectedToNetwork.id,
-      sendToChainId: selectedFromNetwork.id,
-    });
-    setPageState(pageState);
-  }, [selectedFromNetwork, selectedToNetwork]);
-
   const handleSetMaxAmount = useCallback(() => {
     if (fromTokenBalance) {
       setSendAmount(fromTokenBalance);
-    }
-  }, [fromTokenBalance]);
-
-  const handleSetHalfAmount = useCallback(() => {
-    if (fromTokenBalance) {
-      // Set half of the balance and format it to the token decimal
-      const halfAmount = (parseUnits(fromTokenBalance, 6) / BigInt(2));
-      setSendAmount(formatUnits(halfAmount, 6));
     }
   }, [fromTokenBalance]);
 
@@ -130,10 +107,10 @@ export default function Send() {
       event.preventDefault();
       setIsSending(true);
 
-      console.log(selectedFromNetwork.id, selectedToNetwork.id, selectedToken);
-
       try {
-        await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
+        if (selectedFromNetwork.id !== ethereum.id) {
+          await switchChain(wagmiConfig, { chainId: ethereum.id });
+        }
 
         const isFromETH = selectedFromNetwork.id === ethereum.id;
 
@@ -222,25 +199,15 @@ export default function Send() {
     ]
   );
 
-  const onOpenFromNetworkChangePopover = useCallback(
+  const onOpenSelectToTokenNetworkChangePopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
-      setFromNetworkChangePopoverAnchorEl(event.currentTarget);
+      setToTokenAndNetworkChangePopoverAnchorEl(event.currentTarget);
     },
-    [setFromNetworkChangePopoverAnchorEl],
+    [setToTokenAndNetworkChangePopoverAnchorEl],
   );
-  const onCloseFromNetworkChangePopover = useCallback(() => {
-    setFromNetworkChangePopoverAnchorEl(null);
-  }, [setFromNetworkChangePopoverAnchorEl]);
-
-  const onOpenToNetworkChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setToNetworkChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setToNetworkChangePopoverAnchorEl],
-  );
-  const onCloseToNetworkChangePopover = useCallback(() => {
-    setToNetworkChangePopoverAnchorEl(null);
-  }, [setToNetworkChangePopoverAnchorEl]);
+  const onCloseToTokenAndNetworkChangePopover = useCallback(() => {
+    setToTokenAndNetworkChangePopoverAnchorEl(null);
+  }, [setToTokenAndNetworkChangePopoverAnchorEl]);
 
   const onOpenTokenChangePopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -260,41 +227,19 @@ export default function Send() {
     setReceiveAddress(event.target.value);
   }, []);
 
-  const handleSelectFromNetwork = useCallback((network: Chain) => {
-    let anotherNetworkId = undefined;
-
-    if(network.id === selectedToNetwork.id) {
-      const anotherNetwork = wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain;
-      anotherNetworkId = anotherNetwork.id;
-    }
-
-    const pageState = localStorageService.setPageState({
-      sendFromChainId: network.id,
-      sendToChainId: anotherNetworkId,
-    });
-    setPageState(pageState);
-    resetSendAmount();
-  }, [resetSendAmount, selectedToNetwork, wagmiConfig]);
-
-  const handleSelectToNetwork = useCallback((network: Chain) => {
-    let anotherNetworkId = undefined;
-    if(network.id === selectedFromNetwork.id) {
-      const anotherNetwork = wagmiConfig.chains.find((chain) => chain.id !== network.id) as Chain;
-      anotherNetworkId = anotherNetwork.id;
-    }
+  const handleSelectToNetwork = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({
       sendToChainId: network.id,
-      sendFromChainId: anotherNetworkId,
     });
     setPageState(pageState);
-  }, [selectedFromNetwork, wagmiConfig]);
+  }, [setPageState]);
 
   const handleSelectToken = useCallback((token: Token) => {
     const pageState = localStorageService.setPageState({
       sendToken: token,
     });
     setPageState(pageState);
-  }, []);
+  }, [setPageState]);
 
   return (
     <Layout>
@@ -324,16 +269,6 @@ export default function Send() {
                       {address && ellipsifyText(address, 6, 4)}
                     </Box>
                   </Box>
-                  <Button
-                    onClick={onOpenFromNetworkChangePopover}
-                    className={classes.switchNetworkButton}
-                  >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedFromNetwork.id]} alt={selectedFromNetwork.name} width={16} height={16} />
-                    <div className={classes.selectedNetworkTitle}>
-                      {selectedFromNetwork.name}
-                    </div>
-                    <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
-                  </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -351,11 +286,6 @@ export default function Send() {
                               <Chip
                                 onClick={handleSetMaxAmount}
                                 label={dict.send_tab.max}
-                                className={classes.chipButton}
-                              />
-                              <Chip
-                                onClick={handleSetHalfAmount}
-                                label={"50%"}
                                 className={classes.chipButton}
                               />
                             </div>
@@ -418,29 +348,31 @@ export default function Send() {
               </Box>
             </div>
 
-            <IconButton
-                onClick={swapFromAndToNetwork}
+            <Box
                 sx={{
                   borderRadius: "6px",
                   backgroundColor: "#E2E8F0",
-                  width: "40px",
-                  height: "40px",
+                  width: "32px",
+                  height: "32px",
                   position: "absolute",
-                  top: insufficientBalance ? "46%" : "40%",
+                  top: insufficientBalance ? "49%" : "45%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                   "&:hover": {
                     backgroundColor: "#96A0B8",
                   },
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
             >
               <Image
                 alt="Icon"
-                src={"/icons/arrow-up-down.svg"}
+                src={"/icons/arrow-forward-down.svg"}
                 width={16}
                 height={16}
               />
-            </IconButton>
+            </Box>
 
             <div className={classes.itemWrapper}>
               <Box
@@ -463,16 +395,6 @@ export default function Send() {
                       {address && ellipsifyText(address, 6, 4)}
                     </Box>
                   </Box>
-                  <Button
-                    onClick={onOpenToNetworkChangePopover}
-                    className={classes.switchNetworkButton}
-                  >
-                    <Image src={CHAIN_ID_TO_ICON_MAP[selectedToNetwork.id]} alt={selectedToNetwork.name} width={16} height={16} />
-                    <div className={classes.selectedNetworkTitle}>
-                      {selectedToNetwork.name}
-                    </div>
-                    <Image src="/icons/arrow-down.svg" alt="USDT" width={16} height={16} />
-                  </Button>
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -491,6 +413,7 @@ export default function Send() {
                                 display={"flex"}
                                 alignItems={"center"}
                                 padding={"8px 12px"}
+                                onClick={onOpenSelectToTokenNetworkChangePopover}
                               >
                                 <TokenWithChainIcon
                                     tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
@@ -500,6 +423,9 @@ export default function Send() {
                                   />
                                 <Box marginLeft="4px" color="black">
                                   {selectedToken}
+                                </Box>
+                                <Box padding="4px" display="flex" alignItems="center" justifyContent="center">
+                                  <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
                                 </Box>
                               </Box>
                             </div>
@@ -523,7 +449,7 @@ export default function Send() {
             </div>
 
             <div className={classes.itemWrapper}>
-              <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
+              <Box>
                 <FormControlLabel
                   data-testid="agree-check-box-label"
                   control={<Checkbox data-testid="agree-check-box" />}
@@ -537,7 +463,7 @@ export default function Send() {
                   onChange={handleSendToAnotherWalletCheckboxChange}
                 />
               </Box>
-              <TextField
+              {isSendToAnotherWallet && <TextField
                 fullWidth
                 placeholder={dict.send_tab.receive_address_placeholder}
                 variant="outlined"
@@ -558,7 +484,7 @@ export default function Send() {
                 inputProps={{ "data-testid": "address-input" }}
                 error={!ethers.isAddress(receiveAddress) && receiveAddress !== ""}
                 helperText={!ethers.isAddress(receiveAddress) && receiveAddress !== "" && dict.send_tab.invalid_receive_address}
-              />
+              />}
             </div>
           </div>
           <Button
@@ -572,6 +498,7 @@ export default function Send() {
               insufficientBalance ||
               !isConnected ||
               (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))
+              || selectedFromNetwork.id === selectedToNetwork.id
             }
             endIcon={
               isSending && <CircularProgress size={20} color="inherit" />
@@ -581,30 +508,24 @@ export default function Send() {
           </Button>
         </div>
       </form>
-      <NetworkChangePopover
-        open={Boolean(fromNetworkChangePopoverAnchorEl)}
-        onClose={onCloseFromNetworkChangePopover}
-        onChangeNetwork={handleSelectFromNetwork}
-        anchorEl={fromNetworkChangePopoverAnchorEl}
-        selectedNetwork={selectedFromNetwork}
-        networks={wagmiConfig.chains as any}
-      />
-      <NetworkChangePopover
-        open={Boolean(toNetworkChangePopoverAnchorEl)}
-        onClose={onCloseToNetworkChangePopover}
-        onChangeNetwork={handleSelectToNetwork}
-        anchorEl={toNetworkChangePopoverAnchorEl}
-        selectedNetwork={selectedToNetwork}
-        networks={wagmiConfig.chains as any}
-      />
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
         onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
-        currentNetwork={selectedFromNetwork.name}
+        networks={[selectedFromNetwork]}
         tokens={SEND_SUPPORT_TOKENS}
+      />
+      <TokenChangePopover
+        open={Boolean(toTokenAndNetworkChangePopoverAnchorEl)}
+        onClose={onCloseToTokenAndNetworkChangePopover}
+        onChangeToken={handleSelectToNetwork}
+        anchorEl={toTokenAndNetworkChangePopoverAnchorEl}
+        selectedToken={selectedToken}
+        tokens={SEND_SUPPORT_TOKENS.filter((token) => token === selectedToken)}
+        selectedNetwork={selectedToNetwork}
+        networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedFromNetwork.id)}
       />
     </Layout>
   );
@@ -614,7 +535,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   wrapper: {
     width: "100%",
     padding: '32px',
-    borderRadius: "8px",
+    borderRadius: "28px",
     display: "flex",
     flexDirection: "column",
     gap: "24px",
@@ -623,6 +544,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: '24px',
     },
+    backgroundColor: "white",
   },
   infoWrapper: {
     width: "100%",
@@ -639,7 +561,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   },
   sendButton: {
     textTransform: "none",
-    padding: "12px",
+    padding: "14px 12px",
   },
   sendTitle: {
     fontSize: "16px",
