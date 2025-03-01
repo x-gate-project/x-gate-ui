@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Box from "@mui/material/Box";
 import Header from "./Header";
 import Link from "next/link";
 import { useDict } from "../../contexts/DictContext";
 import { AppRoute } from "@/enums/route";
 import { styled } from "@mui/material/styles";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useChainId, useConfig } from "wagmi";
+import { useSnackbar } from "notistack";
+import { ethereum } from "@/wagmi.config";
+import { switchChain } from "wagmi/actions";
+import localStorageService from "@/services/local-storage.service";
+import { usePageState } from "@/contexts/PageStateContext";
 import Footer from "./Footer";
 
 const LinkButton = styled("div")<{ isActive?: boolean }>(
@@ -65,6 +71,35 @@ const ContentContainer = styled("div")(({ theme }) => ({
 export default function Layout(props: { children: React.ReactNode }) {
   const dict = useDict();
   const pathname = usePathname();
+  const router = useRouter();
+  const chainId = useChainId();
+  const wagmiConfig = useConfig();
+  const { enqueueSnackbar } = useSnackbar();
+  const { setPageState } = usePageState();
+  const { setIsSwitchingNetwork } = usePageState();
+
+  const handleNavigateToMintPage = useCallback(async () => {
+    if(chainId === ethereum.id) {
+      router.push(AppRoute.MINT);
+      return;
+    }
+
+    try {
+      setIsSwitchingNetwork(true);
+      await switchChain(wagmiConfig, { chainId: ethereum.id });
+      const pageState = localStorageService.setPageState({
+        sendFromChainId: ethereum.id,
+        burnFromChainId: ethereum.id,
+      });
+      setPageState(pageState);
+      router.push(AppRoute.MINT);
+    } catch (error: any) {
+      enqueueSnackbar(error.message, { variant: "error" });
+    } finally {
+      setIsSwitchingNetwork(false);
+    }
+  }, [router, chainId, wagmiConfig, enqueueSnackbar, setPageState, setIsSwitchingNetwork]);
+
 
   return (
     <Box>
@@ -81,11 +116,11 @@ export default function Layout(props: { children: React.ReactNode }) {
               </Link>
             </LinkButtonWrapper>
             <LinkButtonWrapper>
-              <Link href={AppRoute.MINT}>
+              <Box onClick={handleNavigateToMintPage}>
                 <LinkButton isActive={pathname?.includes(AppRoute.MINT) ?? false}>
                   {dict.dashboard.mint_title}
                 </LinkButton>
-              </Link>
+              </Box>
             </LinkButtonWrapper>
             <LinkButtonWrapper>
               <Link href={AppRoute.BURN}>
