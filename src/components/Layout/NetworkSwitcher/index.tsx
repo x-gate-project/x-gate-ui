@@ -16,7 +16,8 @@ import { useSnackbar } from "notistack";
 export default function NetworkSwitcher() {
   const wagmiConfig = useConfig();
   const { enqueueSnackbar } = useSnackbar();
-  const { pageState, setPageState, setIsSwitchingNetwork, isSwitchingNetwork } = usePageState();
+  const { pageState, setPageState } = usePageState();
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
   const fromNetwork = useMemo(
     () =>
       wagmiConfig.chains.find(
