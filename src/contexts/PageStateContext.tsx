@@ -12,6 +12,8 @@ import localStorageService, { PageState } from "@/services/local-storage.service
 type PageStateContextType = {
   pageState: PageState;
   setPageState: (pageState: PageState) => void;
+  isSwitchingNetwork: boolean;
+  setIsSwitchingNetwork: (isSwitchingNetwork: boolean) => void;
 };
 
 const PageStateContext = createContext<PageStateContextType>({} as PageStateContextType);
@@ -22,9 +24,10 @@ export const PageStateProvider = ({
   children: ReactNode;
 }) => {
   const [pageState, setPageState] = useState<PageState>(localStorageService.getPageState());
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
 
   return (
-    <PageStateContext.Provider value={{ pageState, setPageState }}>{children}</PageStateContext.Provider>
+    <PageStateContext.Provider value={{ pageState, setPageState, isSwitchingNetwork, setIsSwitchingNetwork }}>{children}</PageStateContext.Provider>
   );
 };
 
