@@ -19,7 +19,7 @@ export default function Header() {
         <StyledAppBarDiv>
           <StyledLeftDiv>
             <Link href={AppRoute.HOME}>
-              <StyledTransferButton>{dict.dashboard.transfer_title}</StyledTransferButton>
+              <StyledLeftTransferButton>{dict.dashboard.transfer_title}</StyledLeftTransferButton>
             </Link>
             <StyledLeftNavigationDiv>
               <Link
@@ -59,6 +59,7 @@ export default function Header() {
                   </ConnectKitButton.Custom>
               </StyledWalletSwitcherContainerDiv>
             <StyledRightNavigationDiv>
+              <StyledRightTransferButton>{dict.dashboard.transfer_title}</StyledRightTransferButton>
               <Link
                 href={process.env.NEXT_PUBLIC_SWAP_URL || ""}
                 target='_self'
@@ -85,22 +86,23 @@ const StyledRootDiv = styled("div")(({ theme }) => ({
   left: 0,
   right: 0,
   zIndex: 1000,
-  background:
-    "radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)",
+  background: "transparent",
 }));
 
 const StyledContainerDiv = styled("div")(({ theme }) => ({
-  paddingLeft: '24px',
-  paddingRight: '24px',
-  paddingTop: '15.25px',
-  paddingBottom: '15.25px',
+  paddingLeft: '12px',
+  paddingRight: '12px',
+  paddingTop: '13.5px',
+  paddingBottom: '13.5px',
   margin: "auto",
   position: "relative",
   '@media (max-width: 960px)': {
-    paddingTop: '12px',
-    paddingBottom: '12px',
-    paddingLeft: '12px',
-    paddingRight: '12px',
+    paddingTop: '5px',
+    paddingBottom: '5px',
+  },
+  '@media (max-width: 500px)': {
+    paddingTop: '12.5px',
+    paddingBottom: '12.5px',
   },
   borderBottom: "1px solid #0000001A",
 }));
@@ -133,7 +135,7 @@ const StyledLinkButton = styled("div")(({ theme }) => ({
   color: "#565A69",
 }));
 
-const StyledTransferButton = styled("div")(({ theme }) => ({
+const StyledLeftTransferButton = styled("div")(({ theme }) => ({
   padding: `12px 16px`,
   fontSize: "16px",
   fontWeight: 700,
@@ -141,6 +143,18 @@ const StyledTransferButton = styled("div")(({ theme }) => ({
   color: "black",
   '@media (max-width: 960px)': {
     display: "none",
+  },
+}));
+
+const StyledRightTransferButton = styled("div")(({ theme }) => ({
+  padding: `12px 16px`,
+  fontSize: "16px",
+  fontWeight: 700,
+  cursor: "pointer",
+  color: "black",
+  display: "none",
+  '@media (max-width: 960px)': {
+    display: "block",
   },
 }));
 

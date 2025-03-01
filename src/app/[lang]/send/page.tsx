@@ -343,8 +343,6 @@ export default function Send() {
                         display="flex"
                         alignItems="baseline"
                         justifyContent="start"
-                        overflow="hidden"
-                        maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
                         gap={1}
                         width="100%"
                       >
@@ -366,7 +364,7 @@ export default function Send() {
                   width: "32px",
                   height: "32px",
                   position: "absolute",
-                  top: insufficientBalance ? "49%" : "45%",
+                  top: insufficientBalance ? (isSendToAnotherWallet ? "43.4%" : "50%") : (isSendToAnotherWallet ? "39%" : "45.5%"),
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                   display: "flex",
@@ -724,9 +722,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
   helperText: {
     marginLeft: 0,
     textAlign: "left",
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: "140px",
-    },
   },
   selectedTokenWrapper: {
     border: "1px solid #E2E8F0",

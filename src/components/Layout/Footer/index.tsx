@@ -35,7 +35,9 @@ export default function Footer() {
             </ConnectKitButton.Custom>
           </StyledLeftDiv>
           <StyledRightDiv>
-            <NetworkSwitcher />
+            <NetworkSwitcher buttonStyles={{
+              background: "#E2E8F0",
+            }} />
           </StyledRightDiv>
         </StyledAppBarDiv>
       </StyledContainerDiv>
@@ -51,7 +53,7 @@ const StyledRootDiv = styled("div")(({ theme }) => ({
   zIndex: 1000,
   borderRadius: "12px 12px 0 0",
   background:
-    "radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)",
+    "white",
   display: "none",
   '@media (max-width: 960px)': {
     display: "block",
@@ -60,18 +62,12 @@ const StyledRootDiv = styled("div")(({ theme }) => ({
 }));
 
 const StyledContainerDiv = styled("div")(({ theme }) => ({
-  paddingLeft: '24px',
-  paddingRight: '24px',
-  paddingTop: '15.25px',
-  paddingBottom: '15.25px',
+  paddingLeft: '12px',
+  paddingRight: '12px',
+  paddingTop: '18px',
+  paddingBottom: '18px',
   margin: "auto",
   position: "relative",
-  '@media (max-width: 960px)': {
-    paddingTop: '12px',
-    paddingBottom: '12px',
-    paddingLeft: '12px',
-    paddingRight: '12px',
-  },
 }));
 
 const StyledAppBarDiv = styled("div")(({ theme }) => ({

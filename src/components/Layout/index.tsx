@@ -22,7 +22,10 @@ const LinkButton = styled("div")<{ isActive?: boolean }>(
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    [theme.breakpoints.down("sm")]: {
+    '@media (max-width: 500px)': {
+      padding: `${theme.spacing(1.5)} ${theme.spacing(6)}`,
+    },
+    '@media (max-width: 375px)': {
       padding: `${theme.spacing(1.5)} ${theme.spacing(4)}`,
     },
     boxShadow: isActive ? "0px 1px 2px 0px #0000000D" : "none",
@@ -45,9 +48,8 @@ const LinkButtonWrapper = styled("div")(({ theme }) => ({
 
 const ContentWrapper = styled("div")(({ theme }) => ({
   maxWidth: "500px",
-  '@media (max-width: 720px)': {
-    paddingLeft: theme.spacing(4),
-    paddingRight: theme.spacing(4),
+  '@media (max-width: 500px)': {
+    maxWidth: "412px",
   },
   '@media (max-width: 375px)': {
     paddingLeft: theme.spacing(2),
@@ -61,9 +63,15 @@ const ContentContainer = styled("div")(({ theme }) => ({
   justifyContent: "center",
   height: "100vh",
   background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
-  paddingTop: '120px',
+  paddingTop: '110.5px',
+  '@media (max-width: 960px)': {
+    paddingTop: '92.5px',
+  },
   '@media (max-width: 720px)': {
-    paddingTop: '84px',
+    paddingTop: '62.5px',
+  },
+  '@media (max-width: 500px)': {
+    paddingTop: '78.5px',
   },
 }));
 
