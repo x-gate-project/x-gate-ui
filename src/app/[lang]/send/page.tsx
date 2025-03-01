@@ -19,7 +19,7 @@ import { Theme } from "@mui/material/styles";
 import theme from "@/theme.config";
 import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
-import { useAccount, useBalance, useConfig } from "wagmi";
+import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
 import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP } from "@/wagmi.config";
 import {
@@ -70,6 +70,7 @@ export default function Send() {
       CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any,
     chainId: selectedFromNetwork.id,
   });
+  const chainId = useChainId();
 
   const fromTokenBalance = fromTokenData?.formatted;
   const insufficientBalance = sendAmount
@@ -108,8 +109,8 @@ export default function Send() {
       setIsSending(true);
 
       try {
-        if (selectedFromNetwork.id !== ethereum.id) {
-          await switchChain(wagmiConfig, { chainId: ethereum.id });
+        if (selectedFromNetwork.id !== chainId) {
+          await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
         }
 
         const isFromETH = selectedFromNetwork.id === ethereum.id;

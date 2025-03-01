@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import Button from "@mui/material/Button";
-import { CHAIN_ID_TO_ICON_MAP, ethereum } from "@/wagmi.config";
-import { useConfig } from "wagmi";
+import { CHAIN_ID_TO_ICON_MAP, ethereum, joc } from "@/wagmi.config";
+import { useChainId, useConfig } from "wagmi";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
 import { usePageState } from "@/contexts/PageStateContext";
 import { switchChain } from "wagmi/actions";
@@ -25,6 +25,7 @@ export default function NetworkSwitcher() {
       ) || ethereum,
     [pageState, wagmiConfig]
   );
+  const chainId = useChainId();
 
   const [
     fromNetworkChangePopoverAnchorEl,
@@ -59,6 +60,21 @@ export default function NetworkSwitcher() {
     },
     [setPageState, wagmiConfig, enqueueSnackbar]
   );
+
+  useEffect(() => {
+    const supportedChainIds = wagmiConfig.chains.map((chain) => chain.id);
+    let sourceChainId = undefined;
+    if(!supportedChainIds.includes(chainId)) {
+      sourceChainId = joc.id;
+    } else {
+      sourceChainId = chainId;
+    }
+    const pageState = localStorageService.setPageState({
+      sendFromChainId: sourceChainId,
+      burnFromChainId: sourceChainId,
+    });
+    setPageState(pageState);
+  }, [setPageState, chainId, wagmiConfig]);
 
   return (
     <StyledRootDiv>
