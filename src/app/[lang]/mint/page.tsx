@@ -143,7 +143,24 @@ export default function Mint() {
             args: [address, process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS!],
           });
 
-          if((allowance as bigint) < parseUnits(mintAmount, 6)) {
+          if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
+            if(allowance !== BigInt(0)) {
+              console.log('approveTokenToZeroTxHash');
+              const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
+                abi: erc20Abi,
+                address: sourceTokenAddress as `0x${string}`,
+                functionName: "approve",
+                args: [
+                  process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as any,
+                  0,
+                ],
+              });
+
+              await waitForTransactionReceipt(wagmiConfig, {
+                hash: approveTokenToZeroTxHash,
+              });
+            }
+
             const approveTokenTxHash = await writeContract(wagmiConfig, {
               abi: erc20Abi,
               address: sourceTokenAddress as `0x${string}`,
@@ -178,8 +195,23 @@ export default function Mint() {
             functionName: "allowance",
             args: [address, destinationTokenAddress],
           });
+          if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
+            if(allowance !== BigInt(0)) {
+              console.log('approveTokenToZeroTxHash');
+              const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
+                abi: erc20Abi,
+                address: sourceTokenAddress as `0x${string}`,
+                functionName: "approve",
+                args: [
+                  destinationTokenAddress,
+                  0,
+                ],
+              });
+              await waitForTransactionReceipt(wagmiConfig, {
+                hash: approveTokenToZeroTxHash,
+              });
+            }
 
-          if((allowance as bigint) < parseUnits(mintAmount, 6)) {
             const approveTokenTxHash = await writeContract(wagmiConfig, {
               abi: erc20Abi,
               address: sourceTokenAddress as `0x${string}`,
