@@ -71,34 +71,6 @@ const ContentContainer = styled("div")(({ theme }) => ({
 export default function Layout(props: { children: React.ReactNode }) {
   const dict = useDict();
   const pathname = usePathname();
-  const router = useRouter();
-  const chainId = useChainId();
-  const wagmiConfig = useConfig();
-  const { enqueueSnackbar } = useSnackbar();
-  const { setPageState } = usePageState();
-  const { setIsSwitchingNetwork } = usePageState();
-
-  const handleNavigateToMintPage = useCallback(async () => {
-    if(chainId === ethereum.id) {
-      router.push(AppRoute.MINT);
-      return;
-    }
-
-    try {
-      setIsSwitchingNetwork(true);
-      await switchChain(wagmiConfig, { chainId: ethereum.id });
-      const pageState = localStorageService.setPageState({
-        sendFromChainId: ethereum.id,
-        burnFromChainId: ethereum.id,
-      });
-      setPageState(pageState);
-      router.push(AppRoute.MINT);
-    } catch (error: any) {
-      enqueueSnackbar(error.message, { variant: "error" });
-    } finally {
-      setIsSwitchingNetwork(false);
-    }
-  }, [router, chainId, wagmiConfig, enqueueSnackbar, setPageState, setIsSwitchingNetwork]);
 
 
   return (
@@ -116,11 +88,11 @@ export default function Layout(props: { children: React.ReactNode }) {
               </Link>
             </LinkButtonWrapper>
             <LinkButtonWrapper>
-              <Box onClick={handleNavigateToMintPage}>
+              <Link href={AppRoute.MINT}>
                 <LinkButton isActive={pathname?.includes(AppRoute.MINT) ?? false}>
                   {dict.dashboard.mint_title}
                 </LinkButton>
-              </Box>
+              </Link>
             </LinkButtonWrapper>
             <LinkButtonWrapper>
               <Link href={AppRoute.BURN}>
