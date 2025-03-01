@@ -50,7 +50,7 @@ const MenuPopover: React.FC<IProps> = ({
           >
             <div className={classes.listItem}>
               <div className={classes.tokenInfoWrapper}>
-                <Typography className={classes.tokenName}>{dict.dashboard.swap_title}</Typography>
+                <Typography className={classes.contentName}>{dict.dashboard.swap_title}</Typography>
               </div>
             </div>
           </Link>
@@ -61,7 +61,7 @@ const MenuPopover: React.FC<IProps> = ({
           >
             <div className={classes.listItem}>
               <div className={classes.tokenInfoWrapper}>
-                <Typography className={classes.tokenName}>{dict.dashboard.pool_title}</Typography>
+                <Typography className={classes.contentName}>{dict.dashboard.pool_title}</Typography>
               </div>
             </div>
           </Link>
@@ -93,7 +93,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '6px 8px',
+    padding: '3px 4px',
     width: '100%',
     '&:hover': {
       cursor: 'pointer',
@@ -110,9 +110,9 @@ const useStyles = makeStyles()((theme: Theme) => ({
     letterSpacing: 0,
     color: '#64748B',
   },
-  tokenName: {
+  contentName: {
     fontSize: '16px',
-    fontWeight: "bold",
+    fontWeight: 500,
     color: "#565A69",
   },
   divider: {

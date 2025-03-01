@@ -579,17 +579,12 @@ const useStyles = makeStyles()((theme: Theme) => ({
     alignItems: "center",
     gap: "8px",
     [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      alignItems: "center",
       gap: "4px",
     },
   },
   chipWrapper: {
     display: "flex",
     gap: "4px",
-    [theme.breakpoints.down("sm")]: {
-      paddingTop: "24px",
-    },
   },
   chipButton: {
     background: alpha(theme.palette.primary.main, 0.1),
@@ -678,9 +673,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
   helperText: {
     marginLeft: 0,
     textAlign: "left",
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: "140px",
-    },
   },
   selectedTokenWrapper: {
     border: "1px solid #E2E8F0",

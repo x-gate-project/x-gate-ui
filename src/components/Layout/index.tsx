@@ -50,6 +50,17 @@ const ContentWrapper = styled("div")(({ theme }) => ({
   },
 }));
 
+const ContentContainer = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "100vh",
+  background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
+  [theme.breakpoints.down("sm")]: {
+    paddingTop: '32px',
+  },
+}));
+
 export default function Layout(props: { children: React.ReactNode }) {
   const dict = useDict();
   const pathname = usePathname();
@@ -57,15 +68,7 @@ export default function Layout(props: { children: React.ReactNode }) {
   return (
     <Box>
       <Header />
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        height={"100vh"}
-        sx={{
-          background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
-        }}
-      >
+      <ContentContainer>
         <ContentWrapper>
           <TabWrapper>
             <LinkButtonWrapper>
@@ -92,7 +95,7 @@ export default function Layout(props: { children: React.ReactNode }) {
           </TabWrapper>
           <Box marginTop={2}>{props.children}</Box>
         </ContentWrapper>
-      </Box>
+      </ContentContainer>
     </Box>
   );
 }

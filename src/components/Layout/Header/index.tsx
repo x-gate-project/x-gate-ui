@@ -200,9 +200,11 @@ const StyledContainerDiv = styled("div")(({ theme }) => ({
   paddingBottom: '15.25px',
   margin: "auto",
   position: "relative",
-  [theme.breakpoints.up("md")]: {
-    paddingLeft: 50,
-    paddingRight: 50,
+  [theme.breakpoints.down("sm")]: {
+    paddingTop: '12px',
+    paddingBottom: '12px',
+    paddingLeft: '12px',
+    paddingRight: '12px',
   },
   borderBottom: "1px solid #0000001A",
 }));
@@ -219,7 +221,6 @@ const StyledAppBarDiv = styled("div")(({ theme }) => ({
 const StyledLeftDiv = styled("div")(({ theme }) => ({
   display: "flex",
   [theme.breakpoints.down("sm")]: {
-    paddingTop: "12px",
     justifyContent: "center",
   },
 }));
@@ -231,7 +232,6 @@ const StyledRightDiv = styled("div")(({ theme }) => ({
   alignItems: "center",
   gap: "8px",
   [theme.breakpoints.down("sm")]: {
-    paddingTop: "12px",
     justifyContent: "center",
   },
 }));
