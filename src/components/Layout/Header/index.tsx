@@ -8,7 +8,7 @@ import Button from "@mui/material/Button";
 import Link from "next/link";
 import { AppRoute } from "@/enums/route";
 import { CHAIN_ID_TO_ICON_MAP, ethereum } from "@/wagmi.config";
-import { useChainId, useConfig } from "wagmi";
+import { useConfig } from "wagmi";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
 import { usePageState } from "@/contexts/PageStateContext";
 import { switchChain } from "wagmi/actions";
@@ -33,8 +33,6 @@ export default function Header() {
       ) || ethereum,
     [pageState, wagmiConfig]
   );
-
-  const chainId = useChainId();
 
   const [
     fromNetworkChangePopoverAnchorEl,
@@ -81,12 +79,6 @@ export default function Header() {
   const onCloseMenuPopover = useCallback(() => {
     setMenuPopoverAnchorEl(null);
   }, [setMenuPopoverAnchorEl]);
-
-  useEffect(() => {
-    if(chainId !== pageState.send.fromChainId) {
-      switchChain(wagmiConfig, { chainId: pageState.send.fromChainId });
-    }
-  }, [pageState, chainId, wagmiConfig]);
 
   return (
     <StyledRootDiv>
