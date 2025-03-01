@@ -485,7 +485,7 @@ export default function Mint() {
         onChangeToken={handleSelectToNetwork}
         anchorEl={selectToTokenNetworkPopoverAnchorEl}
         selectedToken={selectedToken}
-        networks={wagmiConfig.chains.filter((chain) => chain.id !== ethereum.id) as any}
+        networks={wagmiConfig.chains as any}
         tokens={[selectedToken === Token.USDT ? Token.USDTX : Token.USDCX]}
         selectedNetwork={toNetwork}
       />
