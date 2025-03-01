@@ -579,17 +579,12 @@ const useStyles = makeStyles()((theme: Theme) => ({
     alignItems: "center",
     gap: "8px",
     [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      alignItems: "center",
       gap: "4px",
     },
   },
   chipWrapper: {
     display: "flex",
     gap: "4px",
-    [theme.breakpoints.down("sm")]: {
-      paddingTop: "24px",
-    },
   },
   chipButton: {
     background: alpha(theme.palette.primary.main, 0.1),
