@@ -125,12 +125,7 @@ const StyledSwitchNetworkButton = styled(Button)(({ theme }) => ({
   padding: "4px 12px",
   gap: "4px",
   background: "white",
-  maxWidth: "200px",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
   [theme.breakpoints.down("sm")]: {
-    maxWidth: "115px",
     padding: "8px 8px",
   },
 }));
@@ -140,10 +135,6 @@ const StyledSelectedNetworkTitle = styled("div")(({ theme }) => ({
   fontSize: "12px",
   lineHeight: "24px",
   letterSpacing: "0%",
-  maxLines: 1,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  maxWidth: "100px",
   [theme.breakpoints.down("sm")]: {
     display: "none",
   },

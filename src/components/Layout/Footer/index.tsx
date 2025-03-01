@@ -53,7 +53,7 @@ const StyledRootDiv = styled("div")(({ theme }) => ({
   background:
     "radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)",
   display: "none",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     display: "block",
   },
   borderTop: "1px solid #0000001A",
@@ -66,7 +66,7 @@ const StyledContainerDiv = styled("div")(({ theme }) => ({
   paddingBottom: '15.25px',
   margin: "auto",
   position: "relative",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     paddingTop: '12px',
     paddingBottom: '12px',
     paddingLeft: '12px',
