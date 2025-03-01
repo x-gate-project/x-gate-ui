@@ -300,10 +300,6 @@ export default function Burn() {
                       display="flex"
                       alignItems="baseline"
                       justifyContent="start"
-                      overflow="hidden"
-                      maxWidth={theme.breakpoints.down("sm") ? 120 : "100%"}
-                      textOverflow="ellipsis"
-                      whiteSpace="nowrap"
                       gap={1}
                       width="100%"
                     >
@@ -570,9 +566,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
   helperText: {
     marginLeft: 0,
     textAlign: "left",
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: "140px",
-    },
   },
   selectedTokenWrapper: {
     border: "1px solid #E2E8F0",

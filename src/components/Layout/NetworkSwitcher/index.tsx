@@ -13,7 +13,11 @@ import localStorageService from "@/services/local-storage.service";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useSnackbar } from "notistack";
 
-export default function NetworkSwitcher() {
+interface NetworkSwitcherProps {
+  buttonStyles?: React.CSSProperties; // Optional prop
+}
+
+export default function NetworkSwitcher({ buttonStyles }: NetworkSwitcherProps) {
   const wagmiConfig = useConfig();
   const { enqueueSnackbar } = useSnackbar();
   const { pageState, setPageState } = usePageState();
@@ -78,7 +82,7 @@ export default function NetworkSwitcher() {
 
   return (
     <StyledRootDiv>
-      <StyledSwitchNetworkButton onClick={onOpenFromNetworkChangePopover}>
+      <StyledSwitchNetworkButton onClick={onOpenFromNetworkChangePopover} style={buttonStyles}>
         <Image
           src={CHAIN_ID_TO_ICON_MAP[fromNetwork.id]}
           alt={fromNetwork.name}
