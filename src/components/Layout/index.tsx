@@ -5,13 +5,7 @@ import Link from "next/link";
 import { useDict } from "../../contexts/DictContext";
 import { AppRoute } from "@/enums/route";
 import { styled } from "@mui/material/styles";
-import { usePathname, useRouter } from "next/navigation";
-import { useChainId, useConfig } from "wagmi";
-import { useSnackbar } from "notistack";
-import { ethereum } from "@/wagmi.config";
-import { switchChain } from "wagmi/actions";
-import localStorageService from "@/services/local-storage.service";
-import { usePageState } from "@/contexts/PageStateContext";
+import { usePathname } from "next/navigation";
 import Footer from "./Footer";
 
 const LinkButton = styled("div")<{ isActive?: boolean }>(
@@ -51,27 +45,31 @@ const LinkButtonWrapper = styled("div")(({ theme }) => ({
 
 const ContentWrapper = styled("div")(({ theme }) => ({
   maxWidth: "500px",
-  [theme.breakpoints.down("sm")]: {
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
+  '@media (max-width: 720px)': {
+    paddingLeft: theme.spacing(4),
+    paddingRight: theme.spacing(4),
+  },
+  '@media (max-width: 375px)': {
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
   },
 }));
 
 const ContentContainer = styled("div")(({ theme }) => ({
   display: "flex",
-  alignItems: "center",
+  alignItems: "start",
   justifyContent: "center",
   height: "100vh",
   background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
-  [theme.breakpoints.down("sm")]: {
-    paddingTop: '16px',
+  paddingTop: '120px',
+  '@media (max-width: 720px)': {
+    paddingTop: '84px',
   },
 }));
 
 export default function Layout(props: { children: React.ReactNode }) {
   const dict = useDict();
   const pathname = usePathname();
-
 
   return (
     <Box>

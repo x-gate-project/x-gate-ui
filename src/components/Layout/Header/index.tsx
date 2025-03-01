@@ -96,7 +96,7 @@ const StyledContainerDiv = styled("div")(({ theme }) => ({
   paddingBottom: '15.25px',
   margin: "auto",
   position: "relative",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     paddingTop: '12px',
     paddingBottom: '12px',
     paddingLeft: '12px',
@@ -139,21 +139,21 @@ const StyledTransferButton = styled("div")(({ theme }) => ({
   fontWeight: 700,
   cursor: "pointer",
   color: "black",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     display: "none",
   },
 }));
 
 const StyledLeftNavigationDiv = styled("div")(({ theme }) => ({
   display: "flex",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     display: "none",
   },
 }));
 
 const StyledRightNavigationDiv = styled("div")(({ theme }) => ({
   display: "none",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     display: "flex",
     flexDirection: "row",
   },
@@ -165,7 +165,7 @@ const StyledWalletSwitcherContainerDiv = styled("div")(({ theme }) => ({
   justifyContent: "center",
   alignItems: "center",
   gap: "8px",
-  [theme.breakpoints.down("sm")]: {
+  '@media (max-width: 960px)': {
     display: "none",
   },
 }));
