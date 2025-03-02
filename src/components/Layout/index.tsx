@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Box from "@mui/material/Box";
 import Header from "./Header";
 import Link from "next/link";
@@ -6,23 +6,29 @@ import { useDict } from "../../contexts/DictContext";
 import { AppRoute } from "@/enums/route";
 import { styled } from "@mui/material/styles";
 import { usePathname } from "next/navigation";
+import Footer from "./Footer";
 
 const LinkButton = styled("div")<{ isActive?: boolean }>(
   ({ theme, isActive }) => ({
-    padding: `${theme.spacing(2)} ${theme.spacing(7)}`,
-    borderRadius: 25,
-    fontSize: 16,
-    fontWeight: "bold",
+    padding: `${theme.spacing(1.5)} ${theme.spacing(8)}`,
+    borderRadius: '9999px',
+    fontSize: '14px',
+    fontWeight: 550,
+    lineHeight: '24px',
     border: "none",
     cursor: "pointer",
-    backgroundColor: isActive ? "#f4f6f8" : "none",
+    backgroundColor: isActive ? "white" : "none",
     color: isActive ? "#000" : "#667085",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    [theme.breakpoints.down("sm")]: {
+    '@media (max-width: 500px)': {
+      padding: `${theme.spacing(1.5)} ${theme.spacing(6)}`,
+    },
+    '@media (max-width: 375px)': {
       padding: `${theme.spacing(1.5)} ${theme.spacing(4)}`,
     },
+    boxShadow: isActive ? "0px 1px 2px 0px #0000000D" : "none",
   })
 );
 
@@ -42,9 +48,30 @@ const LinkButtonWrapper = styled("div")(({ theme }) => ({
 
 const ContentWrapper = styled("div")(({ theme }) => ({
   maxWidth: "500px",
-  [theme.breakpoints.down("sm")]: {
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
+  '@media (max-width: 500px)': {
+    maxWidth: "412px",
+  },
+  '@media (max-width: 375px)': {
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+  },
+}));
+
+const ContentContainer = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "start",
+  justifyContent: "center",
+  height: "100vh",
+  background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
+  paddingTop: '110.5px',
+  '@media (max-width: 960px)': {
+    paddingTop: '92.5px',
+  },
+  '@media (max-width: 720px)': {
+    paddingTop: '62.5px',
+  },
+  '@media (max-width: 500px)': {
+    paddingTop: '78.5px',
   },
 }));
 
@@ -55,12 +82,8 @@ export default function Layout(props: { children: React.ReactNode }) {
   return (
     <Box>
       <Header />
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        height={"100vh"}
-      >
+      <Footer />
+      <ContentContainer>
         <ContentWrapper>
           <TabWrapper>
             <LinkButtonWrapper>
@@ -87,7 +110,7 @@ export default function Layout(props: { children: React.ReactNode }) {
           </TabWrapper>
           <Box marginTop={2}>{props.children}</Box>
         </ContentWrapper>
-      </Box>
+      </ContentContainer>
     </Box>
   );
 }

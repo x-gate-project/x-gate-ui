@@ -7,7 +7,7 @@ import { EndpointId } from "@layerzerolabs/lz-definitions";
 export const joc = isProduction
   ? defineChain({
       id: 81,
-      name: "Japan Open Chain Mainnet",
+      name: "Japan Open Chain",
       nativeCurrency: {
         name: "Japan Open Chain Token",
         symbol: "JOC",
@@ -61,7 +61,7 @@ export const baseNet = isProduction ? base : baseSepolia;
 export const avalancheNet = isProduction ? avalanche : avalancheFuji;
 export function getWagmiConfig() {
   return createConfig({
-    chains: [ethereum, joc, arbitrumNet, avalancheNet],
+    chains: [ethereum, joc, arbitrumNet, baseNet, avalancheNet],
     ssr: true,
     storage: createStorage({
       storage: cookieStorage,
@@ -90,6 +90,14 @@ export const CHAIN_ID_TO_USDTX_ADDRESS_MAP = {
   [arbitrumNet.id]: process.env.NEXT_PUBLIC_USDTX_ARBITRUM_ADDRESS,
   [avalancheNet.id]: process.env.NEXT_PUBLIC_USDTX_AVALANCHE_ADDRESS,
   [baseNet.id]: process.env.NEXT_PUBLIC_USDTX_BASE_ADDRESS,
+}
+
+export const CHAIN_ID_TO_USDCX_ADDRESS_MAP = {
+  [ethereum.id]: process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS,
+  [joc.id]: process.env.NEXT_PUBLIC_USDCX_JOC_ADDRESS,
+  [arbitrumNet.id]: process.env.NEXT_PUBLIC_USDCX_ARBITRUM_ADDRESS,
+  [avalancheNet.id]: process.env.NEXT_PUBLIC_USDCX_AVALANCHE_ADDRESS,
+  [baseNet.id]: process.env.NEXT_PUBLIC_USDCX_BASE_ADDRESS,
 }
 
 export const CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP = {

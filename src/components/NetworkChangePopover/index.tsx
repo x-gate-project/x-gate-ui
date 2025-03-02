@@ -18,7 +18,7 @@ interface IProps {
   onChangeNetwork: (selectedNetwork: Chain) => void;
   anchorEl: PopoverProps['anchorEl'];
   popoverProps?: PopoverProps;
-  selectedNetwork: Chain;
+  selectedNetwork?: Chain;
   networks: Chain[];
 }
 
@@ -97,7 +97,7 @@ const NetworkChangePopover: React.FC<IProps> = ({
           {filteredNetworks.map((network) => (
             <div
               key={network.name}
-              className={clsx(classes.listItem, network.name === selectedNetwork.name && classes.listItemSelected)}
+              className={clsx(classes.listItem, (selectedNetwork && network.name === selectedNetwork.name) && classes.listItemSelected)}
               onClick={() => onChangeNetworkClick(network)}
             >
               <Image src={CHAIN_ID_TO_ICON_MAP[network.id]} alt={network.name} width={16} height={16} />

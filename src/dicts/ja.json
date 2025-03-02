@@ -2,7 +2,10 @@
   "dashboard": {
     "send_title": "送信",
     "mint_title": "ミント",
-    "burn_title": "バーン"
+    "burn_title": "バーン",
+    "swap_title": "スワップ",
+    "pool_title": "プール",
+    "transfer_title": "トランスファー"
   },
   "header": {
     "connect_wallet": "ウォレットを接続"
@@ -14,9 +17,12 @@
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
-    "another_wallet_address": "または他のウォレットアドレス",
+    "another_wallet_address": "他のウォレットアドレスに送信",
     "invalid_receive_address": "受信アドレスが無効です！",
-    "receive_address_placeholder": "受信アドレスを入力"
+    "receive_address_placeholder": "受信アドレスを入力",
+    "waiting_for_sending": "トークンが送信中です！少し待ってください...",
+    "send_success": "{{token}}を送信しました！",
+    "send_failed": "{{token}}を送信に失敗しました！もう一度試してください。"
   },
   "mint_tab": {
     "mint": "をミントする",
@@ -24,7 +30,9 @@
     "button": "をミント",
     "max": "最大",
     "balance": "残高",
-    "invalid_amount": "金額が無効または総残高を超えています！"
+    "invalid_amount": "金額が無効または総残高を超えています！",
+    "mint_success": "{{token}}をミントしました！",
+    "mint_failed": "{{token}}をミントに失敗しました！もう一度試してください。"
   },
   "burn_tab": {
     "burn": "をバーン",
@@ -33,8 +41,9 @@
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
-    "mint_success": "USDTXをミントしました！",
-    "burn_success": "USDTXをバーンしました！"
+    "burn_success": "{{token}}をバーンしました！",
+    "burn_failed": "{{token}}をバーンに失敗しました！もう一度試してください。",
+    "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください..."
   },
   "account_detail_popover": {
     "disconnect": "切断"

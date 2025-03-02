@@ -24,10 +24,10 @@ export function Providers({ children, initialWagmiState, params }: Props) {
 
   return (
     <AppRouterCacheProvider>
-      <DictProvider params={params}>
-        <ThemeProvider theme={theme}>
-          <SnackbarProvider
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        <DictProvider params={params}>
+          <ThemeProvider theme={theme}>
+            <SnackbarProvider
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             <WagmiProvider config={config} initialState={initialWagmiState}>
               <QueryClientProvider client={queryClient}>
@@ -35,8 +35,8 @@ export function Providers({ children, initialWagmiState, params }: Props) {
               </QueryClientProvider>
             </WagmiProvider>
           </SnackbarProvider>
-        </ThemeProvider>
-      </DictProvider>
+          </ThemeProvider>
+        </DictProvider>
     </AppRouterCacheProvider>
   );
 }

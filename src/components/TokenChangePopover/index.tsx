@@ -10,20 +10,19 @@ import { Theme } from "@mui/material/styles";
 import { debounce, InputAdornment, TextField } from '@mui/material';
 import clsx from 'clsx';
 import Image from 'next/image';
-
-export type Token = {
-  name: string;
-  icon: string;
-}
+import { Token } from '@/enums/token';
+import { TOKEN_TO_ICON_MAP } from '@/utils/token.utils';
+import { Chain } from 'viem';
 
 interface IProps {
   open: boolean;
   onClose: () => void;
-  onChangeToken: (token: Token) => void;
+  onChangeToken: (token: Token, network: Chain) => void;
   anchorEl: PopoverProps['anchorEl'];
   popoverProps?: PopoverProps;
   selectedToken: Token;
-  currentNetwork: string;
+  selectedNetwork: Chain;
+  networks: Chain[];
   tokens: Token[];
 }
 
@@ -34,32 +33,29 @@ const TokenChangePopover: React.FC<IProps> = ({
   anchorEl,
   popoverProps,
   selectedToken,
-  currentNetwork,
+  selectedNetwork,
+  networks,
   tokens,
 }) => {
   const dict = useDict();
 
   const { classes } = useStyles();
 
+  const allTokens = networks.flatMap((network) => {
+    return tokens.map((token) => {
+      return {
+        token,
+        network,
+      };
+    });
+  });
+
   const [searchText, setSearchText] = useState('');
 
-  const onChangeTokenClick = useCallback((token: Token) => {
+  const onSelectToken = useCallback((t: { token: Token, network: Chain }) => {
     onClose();
-    onChangeToken(token);
+    onChangeToken(t.token, t.network);
   }, [onClose, onChangeToken]);
-
-  const networks = useMemo(() => {
-    return [
-      {
-        name: 'Japan Open Chain',
-        icon: '/icons/japan-open-chain.svg',
-      },
-      {
-        name: 'Ethereum',
-        icon: '/icons/ethereum.svg',
-      },
-    ];
-  }, []);
 
   const changeHandler = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
@@ -71,13 +67,14 @@ const TokenChangePopover: React.FC<IProps> = ({
 
   const filteredTokens = useMemo(() => {
     if (!searchText) {
-      return tokens;
+      return allTokens;
     }
-    return tokens.filter(
-      (token) =>
-        token.name.toLowerCase().includes(searchText.toLowerCase()),
+    return allTokens.filter(
+      (t) =>
+        t.token.toLowerCase().includes(searchText.toLowerCase()) ||
+        t.network.name.toLowerCase().includes(searchText.toLowerCase()),
     );
-  }, [searchText, tokens]);
+  }, [searchText, allTokens]);
 
   return (
     <Popover
@@ -113,17 +110,17 @@ const TokenChangePopover: React.FC<IProps> = ({
           <div className={classes.listItem}>
             <Typography className={classes.selectNetworkTitle}>{dict.token_change_popover.select_token}</Typography>
           </div>
-          {filteredTokens.map((token) => (
+          {filteredTokens.map((t) => (
             <div
-              key={token.name}
-              className={clsx(classes.listItem, token.name === selectedToken.name && classes.listItemSelected)}
-              onClick={() => onChangeTokenClick(token)}
+              key={`${t.token}-${t.network.id}`}
+              className={clsx(classes.listItem, (selectedNetwork && t.network.id === selectedNetwork.id && t.token === selectedToken) && classes.listItemSelected)}
+              onClick={() => onSelectToken(t)}
             >
               <div className={classes.tokenInfoWrapper}>
-                <Image src={token.icon} alt={token.name} width={16} height={16} />
-                <Typography className={classes.tokenName}>{token.name}</Typography>
+                <Image src={TOKEN_TO_ICON_MAP[t.token]} alt={t.token} width={16} height={16} />
+                <Typography className={classes.tokenName}>{t.token}</Typography>
               </div>
-              <Typography className={classes.networkName}>{currentNetwork}</Typography>
+              <Typography className={classes.networkName}>{t.network.name}</Typography>
             </div>
           ))}
         </div>
@@ -136,7 +133,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
   popoverPaper: {
     marginTop: 3,
     borderRadius: '8px',
-    // maxWidth: '271px',
     boxShadow: `
       0px 2px 4px -2px rgba(0, 0, 0, 0.1),
       0px 4px 6px -1px rgba(0, 0, 0, 0.1)

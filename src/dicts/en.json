@@ -2,7 +2,10 @@
   "dashboard": {
     "send_title": "Send",
     "mint_title": "Mint",
-    "burn_title": "Burn"
+    "burn_title": "Burn",
+    "swap_title": "Swap",
+    "pool_title": "Pool",
+    "transfer_title": "Transfer"
   },
   "header": {
     "connect_wallet": "Connect wallet"
@@ -14,9 +17,12 @@
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
-    "another_wallet_address": "or Another Wallet address",
+    "another_wallet_address": "Send to another address",
     "invalid_receive_address": "Invalid receive address!",
-    "receive_address_placeholder": "Enter a receive address"
+    "receive_address_placeholder": "Enter a receive address",
+    "waiting_for_sending": "Your token is being sent to the destination network! Please wait a moment...",
+    "send_success": "Send {{token}} successfully!",
+    "send_failed": "Send {{token}} failed! Please try again."
   },
   "mint_tab": {
     "mint": "Mint Using",
@@ -25,7 +31,8 @@
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
-    "mint_success": "Mint USDTX successfully!"
+    "mint_success": "Mint {{token}} successfully!",
+    "mint_failed": "Mint {{token}} failed! Please try again."
   },
   "burn_tab": {
     "burn": "Burn",
@@ -34,7 +41,9 @@
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
-    "burn_success": "Burn USDTX successfully!"
+    "burn_success": "Burn {{token}} successfully!",
+    "burn_failed": "Burn {{token}} failed! Please try again.",
+    "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment..."
   },
   "account_detail_popover": {
     "disconnect": "Disconnect"
