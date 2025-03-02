@@ -38,7 +38,6 @@ import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
-import { usePageState } from "@/contexts/PageStateContext";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -53,9 +52,9 @@ export default function Burn() {
   const resetBurnAmount = useCallback(() => setBurnAmount(""), []);
   const [isBurning, setIsBurning] = useState(false);
   const { classes } = useStyles();
-  const chainId = useChainId();
+  const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const { pageState, setPageState } = usePageState();
+  const [pageState, setPageState] = useState(localStorageService.getPageState());
   const selectedToken = useMemo(() => pageState.burn.token as Token, [pageState]);
   const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
   const { data: currentTokenData, refetch: refetchCurrentTokenData } =
@@ -203,11 +202,10 @@ export default function Burn() {
     setTokenChangePopoverAnchorEl(null);
   }, [setTokenChangePopoverAnchorEl]);
 
-  const theme = useTheme();
-
-  const handleSelectToken = useCallback((token: Token) => {
+  const handleSelectToken = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({
       burnToken: token,
+      burnFromChainId: network.id,
     });
     setPageState(pageState);
   }, [setPageState]);
@@ -412,8 +410,9 @@ export default function Burn() {
         onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
-        networks={[selectedNetwork]}
+        networks={wagmiConfig.chains as any}
         tokens={BURN_SUPPORT_TOKENS}
+        selectedNetwork={selectedNetwork}
       />
     </Layout>
   );

@@ -21,7 +21,7 @@ interface IProps {
   anchorEl: PopoverProps['anchorEl'];
   popoverProps?: PopoverProps;
   selectedToken: Token;
-  selectedNetwork?: Chain;
+  selectedNetwork: Chain;
   networks: Chain[];
   tokens: Token[];
 }
@@ -71,7 +71,8 @@ const TokenChangePopover: React.FC<IProps> = ({
     }
     return allTokens.filter(
       (t) =>
-        t.token.toLowerCase().includes(searchText.toLowerCase()),
+        t.token.toLowerCase().includes(searchText.toLowerCase()) ||
+        t.network.name.toLowerCase().includes(searchText.toLowerCase()),
     );
   }, [searchText, allTokens]);
 
@@ -112,7 +113,7 @@ const TokenChangePopover: React.FC<IProps> = ({
           {filteredTokens.map((t) => (
             <div
               key={`${t.token}-${t.network.id}`}
-              className={clsx(classes.listItem, (selectedNetwork ? (t.network.id === selectedNetwork.id && t.token === selectedToken) : t.token === selectedToken) && classes.listItemSelected)}
+              className={clsx(classes.listItem, (selectedNetwork && t.network.id === selectedNetwork.id && t.token === selectedToken) && classes.listItemSelected)}
               onClick={() => onSelectToken(t)}
             >
               <div className={classes.tokenInfoWrapper}>

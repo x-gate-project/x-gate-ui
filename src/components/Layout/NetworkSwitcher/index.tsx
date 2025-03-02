@@ -1,15 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import Button from "@mui/material/Button";
-import { CHAIN_ID_TO_ICON_MAP, ethereum, joc } from "@/wagmi.config";
-import { useChainId, useConfig } from "wagmi";
+import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi.config";
+import { useAccount, useConfig } from "wagmi";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
-import { usePageState } from "@/contexts/PageStateContext";
 import { switchChain } from "wagmi/actions";
-import localStorageService from "@/services/local-storage.service";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useSnackbar } from "notistack";
 
@@ -19,17 +17,10 @@ interface NetworkSwitcherProps {
 
 export default function NetworkSwitcher({ buttonStyles }: NetworkSwitcherProps) {
   const wagmiConfig = useConfig();
+  const { chainId } = useAccount();
   const { enqueueSnackbar } = useSnackbar();
-  const { pageState, setPageState } = usePageState();
   const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
-  const fromNetwork = useMemo(
-    () =>
-      wagmiConfig.chains.find(
-        (chain) => chain.id === pageState.send.fromChainId
-      ) || ethereum,
-    [pageState, wagmiConfig]
-  );
-  const chainId = useChainId();
+  const currentNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === chainId), [wagmiConfig, chainId]);
 
   const [
     fromNetworkChangePopoverAnchorEl,
@@ -51,46 +42,26 @@ export default function NetworkSwitcher({ buttonStyles }: NetworkSwitcherProps) 
       try {
         await switchChain(wagmiConfig, { chainId: network.id });
         setFromNetworkChangePopoverAnchorEl(null);
-        const pageState = localStorageService.setPageState({
-          sendFromChainId: network.id,
-          burnFromChainId: network.id,
-        });
-        setPageState(pageState);
       } catch (error: any) {
         enqueueSnackbar(error.message, { variant: "error" });
       } finally {
         setIsSwitchingNetwork(false);
       }
     },
-    [setPageState, wagmiConfig, enqueueSnackbar]
+    [wagmiConfig, enqueueSnackbar]
   );
-
-  useEffect(() => {
-    const supportedChainIds = wagmiConfig.chains.map((chain) => chain.id);
-    let sourceChainId = undefined;
-    if(!supportedChainIds.includes(chainId)) {
-      sourceChainId = joc.id;
-    } else {
-      sourceChainId = chainId;
-    }
-    const pageState = localStorageService.setPageState({
-      sendFromChainId: sourceChainId,
-      burnFromChainId: sourceChainId,
-    });
-    setPageState(pageState);
-  }, [setPageState, chainId, wagmiConfig]);
 
   return (
     <StyledRootDiv>
       <StyledSwitchNetworkButton onClick={onOpenFromNetworkChangePopover} style={buttonStyles}>
-        <Image
-          src={CHAIN_ID_TO_ICON_MAP[fromNetwork.id]}
-          alt={fromNetwork.name}
+        {currentNetwork && <Image
+          src={CHAIN_ID_TO_ICON_MAP[currentNetwork.id]}
+          alt={currentNetwork.name}
           width={16}
           height={16}
-        />
+        />}
         <StyledSelectedNetworkTitle>
-          {fromNetwork.name}
+          {currentNetwork ? currentNetwork.name : 'Unsupported Network'}
           </StyledSelectedNetworkTitle>
                 {isSwitchingNetwork ? <CircularProgress size={16} color="inherit" /> : <Image
                 src="/icons/arrow-down.svg"
@@ -104,7 +75,7 @@ export default function NetworkSwitcher({ buttonStyles }: NetworkSwitcherProps) 
         onClose={onCloseFromNetworkChangePopover}
         onChangeNetwork={handleSelectFromNetwork}
         anchorEl={fromNetworkChangePopoverAnchorEl}
-        selectedNetwork={fromNetwork}
+        selectedNetwork={currentNetwork}
         networks={wagmiConfig.chains as any}
       />
     </StyledRootDiv>
