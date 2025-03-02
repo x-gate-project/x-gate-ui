@@ -142,7 +142,7 @@ export default function Mint() {
           });
 
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
-            if(allowance !== BigInt(0)) {
+            if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
               console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
@@ -194,7 +194,7 @@ export default function Mint() {
             args: [address, destinationTokenAddress],
           });
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
-            if(allowance !== BigInt(0)) {
+            if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
               console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
