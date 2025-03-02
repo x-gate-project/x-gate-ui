@@ -11,7 +11,6 @@ import theme from "../../theme.config";
 import { getWagmiConfig } from "../../wagmi.config";
 import { DictProvider } from "@/contexts/DictContext";
 import { SupportedLocale } from "../../dicts";
-import { PageStateProvider } from "@/contexts/PageStateContext";
 
 type Props = {
   children: ReactNode;
@@ -25,7 +24,6 @@ export function Providers({ children, initialWagmiState, params }: Props) {
 
   return (
     <AppRouterCacheProvider>
-      <PageStateProvider>
         <DictProvider params={params}>
           <ThemeProvider theme={theme}>
             <SnackbarProvider
@@ -39,7 +37,6 @@ export function Providers({ children, initialWagmiState, params }: Props) {
           </SnackbarProvider>
           </ThemeProvider>
         </DictProvider>
-      </PageStateProvider>
     </AppRouterCacheProvider>
   );
 }

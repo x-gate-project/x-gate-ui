@@ -30,11 +30,10 @@ import {
   readContract,
 } from "wagmi/actions";
 import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, ethereum } from "@/wagmi.config";
-import { Chain, formatUnits, parseUnits } from "viem";
+import { Chain, parseUnits } from "viem";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
 import Layout from "@/components/Layout";
-import NetworkChangePopover from "@/components/NetworkChangePopover";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
 import { Token } from "@/enums/token";
@@ -44,7 +43,6 @@ import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
-import { usePageState } from "@/contexts/PageStateContext";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -59,9 +57,9 @@ export default function Mint() {
   const resetMintAmount = useCallback(() => setMintAmount(""), []);
   const { classes } = useStyles();
   const [isMinting, setIsMinting] = useState(false);
-  const chainId = useChainId();
+  const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
-  const { pageState, setPageState } = usePageState();
+  const [pageState, setPageState] = useState(localStorageService.getPageState());
   const selectedToken = useMemo(() => pageState.mint.token as Token, [pageState]);
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
   const [selectToTokenNetworkPopoverAnchorEl, setSelectToTokenNetworkPopoverAnchorEl] =
@@ -144,7 +142,7 @@ export default function Mint() {
           });
 
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
-            if(allowance !== BigInt(0)) {
+            if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
               console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
@@ -196,7 +194,7 @@ export default function Mint() {
             args: [address, destinationTokenAddress],
           });
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
-            if(allowance !== BigInt(0)) {
+            if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
               console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
@@ -289,8 +287,6 @@ export default function Mint() {
   const onCloseTokenChangePopover = useCallback(() => {
     setTokenChangePopoverAnchorEl(null);
   }, [setTokenChangePopoverAnchorEl]);
-
-  const theme = useTheme();
 
   const handleSelectToken = useCallback((token: Token) => {
     const pageState = localStorageService.setPageState({
@@ -512,7 +508,7 @@ export default function Mint() {
         onClose={onCloseSelectToTokenNetworkPopover}
         onChangeToken={handleSelectToNetwork}
         anchorEl={selectToTokenNetworkPopoverAnchorEl}
-        selectedToken={selectedToken}
+        selectedToken={selectedToken === Token.USDT ? Token.USDTX : Token.USDCX}
         networks={wagmiConfig.chains as any}
         tokens={[selectedToken === Token.USDT ? Token.USDTX : Token.USDCX]}
         selectedNetwork={toNetwork}
@@ -525,6 +521,7 @@ export default function Mint() {
         selectedToken={selectedToken}
         networks={[ethereum]}
         tokens={MINT_SUPPORT_TOKENS}
+        selectedNetwork={ethereum}
       />
     </Layout>
   );
