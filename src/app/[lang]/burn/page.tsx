@@ -171,8 +171,8 @@ export default function Burn() {
       } catch (error) {
         console.log("Burn failded with error: ", error);
         enqueueSnackbar(
-          dict.burn_tab.burn_failed.replace("{{token}}", selectedToken),
-          { variant: "error" }
+          `${dict.burn_tab.burn_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          { variant: "error", style: { whiteSpace: "pre-line" } }
         );
       } finally {
         setIsBurning(false);

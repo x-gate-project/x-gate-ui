@@ -247,8 +247,8 @@ export default function Mint() {
       } catch (error) {
         console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed with error: ${error}`);
         enqueueSnackbar(
-          dict.mint_tab.mint_failed.replace("{{token}}", selectedToken),
-          { variant: "error" }
+          `${dict.mint_tab.mint_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          { variant: "error", style: { whiteSpace: "pre-line" } }
         );
       } finally {
         setIsMinting(false);

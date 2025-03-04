@@ -22,7 +22,7 @@
     "receive_address_placeholder": "受信アドレスを入力",
     "waiting_for_sending": "トークンが送信中です！少し待ってください...",
     "send_success": "{{token}}を送信しました！",
-    "send_failed": "{{token}}を送信に失敗しました！もう一度試してください。"
+    "send_failed": "{{token}}を送信に失敗しましたエラー:\n {{error}}\n もう一度試してください！"
   },
   "mint_tab": {
     "mint": "をミントする",
@@ -32,7 +32,7 @@
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
     "mint_success": "{{token}}をミントしました！",
-    "mint_failed": "{{token}}をミントに失敗しました！もう一度試してください。"
+    "mint_failed": "{{token}}をミントに失敗しましたエラー:\n {{error}}\n もう一度試してください！"
   },
   "burn_tab": {
     "burn": "をバーン",
@@ -42,7 +42,7 @@
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
     "burn_success": "{{token}}をバーンしました！",
-    "burn_failed": "{{token}}をバーンに失敗しました！もう一度試してください。",
+    "burn_failed": "{{token}}をバーンに失敗しましたエラー:\n {{error}}\n もう一度試してください！",
     "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください..."
   },
   "account_detail_popover": {
@@ -51,7 +51,8 @@
   "error_page": {
     "404_message": "お探しのページは存在しないか、移動されました。",
     "500_message": "システムエラーが発生しました。数分後に再試行してください。",
-    "click_here_to_contact_us": "こちらをクリックしてお問い合わせください"
+    "click_here_to_contact_us": "こちらをクリックしてお問い合わせください",
+    "unknown_error": "不明なエラー"
   },
   "network_change_popover": {
     "search_placeholder": "ネットワークを検索",
