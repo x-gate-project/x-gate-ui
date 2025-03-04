@@ -175,8 +175,8 @@ export default function Send() {
       } catch (error) {
         console.log(`Send ${selectedToken} failded with error: ${error}`);
         enqueueSnackbar(
-          dict.send_tab.send_failed.replace("{{token}}", selectedToken),
-          { variant: "error" }
+          `${dict.send_tab.send_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          { variant: "error", style: { whiteSpace: "pre-line" } }
         );
       } finally {
         setIsSending(false);
