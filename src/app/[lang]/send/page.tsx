@@ -13,6 +13,7 @@ import {
   FormControlLabel,
   Tooltip,
   Checkbox,
+  IconButton,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -88,6 +89,14 @@ export default function Send() {
     },
     []
   );
+
+  const swapFromAndToNetwork = useCallback(() => {
+    const pageState = localStorageService.setPageState({
+      sendFromChainId: selectedToNetwork.id,
+      sendToChainId: selectedFromNetwork.id,
+    });
+    setPageState(pageState);
+  }, [selectedFromNetwork, selectedToNetwork]);
 
   const handleSetMaxAmount = useCallback(() => {
     if (fromTokenBalance) {
@@ -357,7 +366,7 @@ export default function Send() {
               </Box>
             </div>
 
-            <Box
+            <IconButton
                 sx={{
                   width: "32px",
                   height: "32px",
@@ -365,6 +374,7 @@ export default function Send() {
                   alignItems: "center",
                   justifyContent: "center",
                 }}
+                onClick={swapFromAndToNetwork}
             >
               <Image
                 alt="Icon"
@@ -372,7 +382,7 @@ export default function Send() {
                 width={16}
                 height={16}
               />
-            </Box>
+            </IconButton>
 
             <div className={classes.itemWrapper}>
               <Box
