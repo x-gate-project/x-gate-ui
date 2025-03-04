@@ -266,8 +266,8 @@ export default function Send() {
                 justifyContent="center"
                 flexDirection="column"
                 gap="8px"
-                border="1px solid #E2E8F0"
-                borderRadius="6px"
+                border="1px solid rgb(247, 248, 250)"
+                borderRadius="20px"
                 padding="16px"
                 paddingBottom={fromTokenBalance ? "16px" : "32px"}
               >
@@ -359,14 +359,8 @@ export default function Send() {
 
             <Box
                 sx={{
-                  borderRadius: "6px",
-                  backgroundColor: "#E2E8F0",
                   width: "32px",
                   height: "32px",
-                  position: "absolute",
-                  top: insufficientBalance ? (isSendToAnotherWallet ? "43.4%" : "50%") : (isSendToAnotherWallet ? "39%" : "45.5%"),
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -388,8 +382,8 @@ export default function Send() {
                 justifyContent="center"
                 flexDirection="column"
                 gap="8px"
-                border="1px solid #E2E8F0"
-                borderRadius="6px"
+                border="1px solid rgb(247, 248, 250)"
+                borderRadius="20px"
                 padding="16px"
               >
                 <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
@@ -459,10 +453,19 @@ export default function Send() {
             </div>
 
             <div className={classes.itemWrapper}>
-              <Box>
+              <Box width="100%" display="flex" justifyContent="start" flexDirection="column">
                 <FormControlLabel
                   data-testid="agree-check-box-label"
-                  control={<Checkbox data-testid="agree-check-box" />}
+                  control={
+                    <Checkbox
+                      sx={{
+                        margin: 0,
+                        padding: 0,
+                        gap: 0,
+                      }}
+                      data-testid="agree-check-box"
+                    />
+                  }
                   checked={isSendToAnotherWallet}
                   disabled={isSending}
                   label={
@@ -471,30 +474,35 @@ export default function Send() {
                     </div>
                   }
                   onChange={handleSendToAnotherWalletCheckboxChange}
+                  sx={{
+                    margin: '0px',
+                    gap: '4px',
+                  }}
                 />
+                {isSendToAnotherWallet && <TextField
+                  fullWidth
+                  placeholder={dict.send_tab.receive_address_placeholder}
+                  variant="outlined"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "6px",
+                    },
+                    "& .MuiInputBase-input": {
+                      paddingLeft: "24px",
+                    },
+                    paddingTop: '6px',
+                  }}
+                  disabled={!isSendToAnotherWallet}
+                  className={classes.addressTextField}
+                  onChange={handleReceiveAddressChange}
+                  size="small"
+                  value={receiveAddress}
+                  name="to"
+                  inputProps={{ "data-testid": "address-input" }}
+                  error={!ethers.isAddress(receiveAddress) && receiveAddress !== ""}
+                  helperText={!ethers.isAddress(receiveAddress) && receiveAddress !== "" && dict.send_tab.invalid_receive_address}
+                />}
               </Box>
-              {isSendToAnotherWallet && <TextField
-                fullWidth
-                placeholder={dict.send_tab.receive_address_placeholder}
-                variant="outlined"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                  "& .MuiInputBase-input": {
-                    paddingLeft: "24px",
-                  },
-                }}
-                disabled={!isSendToAnotherWallet}
-                className={classes.addressTextField}
-                onChange={handleReceiveAddressChange}
-                size="small"
-                value={receiveAddress}
-                name="to"
-                inputProps={{ "data-testid": "address-input" }}
-                error={!ethers.isAddress(receiveAddress) && receiveAddress !== ""}
-                helperText={!ethers.isAddress(receiveAddress) && receiveAddress !== "" && dict.send_tab.invalid_receive_address}
-              />}
             </div>
           </div>
           <Button
@@ -545,16 +553,13 @@ export default function Send() {
 const useStyles = makeStyles()((theme: Theme) => ({
   wrapper: {
     width: "100%",
-    padding: '32px',
-    borderRadius: "28px",
+    padding: '16px',
+    borderRadius: "30px",
     display: "flex",
     flexDirection: "column",
     gap: "24px",
-    boxShadow: "0px 1px 3px 0px #0000001A, 0px 1px 2px -1px #0000001A",
-    border: `1px solid ${theme.palette.divider}`,
-    [theme.breakpoints.down("sm")]: {
-      padding: '24px',
-    },
+    boxShadow: "rgba(0, 0, 0, 0.01)  0px 0px 1px, rgba(0, 0, 0, 0.04)  0px 4px 8px, rgba(0, 0, 0, 0.04)  0px 16px 24px, rgba(0, 0, 0, 0.01)  0px 24px 32px",
+    border: `none`,
     backgroundColor: "white",
   },
   infoWrapper: {
@@ -563,16 +568,19 @@ const useStyles = makeStyles()((theme: Theme) => ({
     flexDirection: "column",
     gap: "2px",
     position: "relative",
+    alignItems: "center",
   },
   itemWrapper: {
     display: "flex",
     flexDirection: "column",
     gap: "6px",
     alignItems: "start",
+    width: "100%",
   },
   sendButton: {
     textTransform: "none",
     padding: "14px 12px",
+    borderRadius: "12px",
   },
   sendTitle: {
     fontSize: "16px",

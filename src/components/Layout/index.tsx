@@ -10,7 +10,7 @@ import Footer from "./Footer";
 
 const LinkButton = styled("div")<{ isActive?: boolean }>(
   ({ theme, isActive }) => ({
-    padding: `${theme.spacing(1.5)} ${theme.spacing(8)}`,
+    padding: `6px 12px`,
     borderRadius: '9999px',
     fontSize: '14px',
     fontWeight: 550,
@@ -19,15 +19,6 @@ const LinkButton = styled("div")<{ isActive?: boolean }>(
     cursor: "pointer",
     backgroundColor: isActive ? "white" : "none",
     color: isActive ? "#000" : "#667085",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    '@media (max-width: 500px)': {
-      padding: `${theme.spacing(1.5)} ${theme.spacing(6)}`,
-    },
-    '@media (max-width: 375px)': {
-      padding: `${theme.spacing(1.5)} ${theme.spacing(4)}`,
-    },
     boxShadow: isActive ? "0px 1px 2px 0px #0000000D" : "none",
   })
 );
@@ -35,23 +26,16 @@ const LinkButton = styled("div")<{ isActive?: boolean }>(
 const TabWrapper = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: "space-between",
   paddingLeft: 1,
   paddingRight: 1,
 }));
 
-const LinkButtonWrapper = styled("div")(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
 const ContentWrapper = styled("div")(({ theme }) => ({
-  maxWidth: "500px",
+  maxWidth: "420px",
   '@media (max-width: 500px)': {
     maxWidth: "412px",
   },
-  '@media (max-width: 375px)': {
+  '@media (max-width: 400px)': {
     paddingLeft: theme.spacing(2),
     paddingRight: theme.spacing(2),
   },
@@ -86,27 +70,21 @@ export default function Layout(props: { children: React.ReactNode }) {
       <ContentContainer>
         <ContentWrapper>
           <TabWrapper>
-            <LinkButtonWrapper>
-              <Link href={AppRoute.SEND}>
-                <LinkButton isActive={pathname?.includes(AppRoute.SEND) ?? false}>
-                  {dict.dashboard.send_title}
-                </LinkButton>
+            <Link href={AppRoute.SEND}>
+              <LinkButton isActive={pathname?.includes(AppRoute.SEND) ?? false}>
+                {dict.dashboard.send_title}
+              </LinkButton>
               </Link>
-            </LinkButtonWrapper>
-            <LinkButtonWrapper>
-              <Link href={AppRoute.MINT}>
-                <LinkButton isActive={pathname?.includes(AppRoute.MINT) ?? false}>
-                  {dict.dashboard.mint_title}
-                </LinkButton>
-              </Link>
-            </LinkButtonWrapper>
-            <LinkButtonWrapper>
-              <Link href={AppRoute.BURN}>
-                <LinkButton isActive={pathname?.includes(AppRoute.BURN) ?? false}>
-                  {dict.dashboard.burn_title}
-                </LinkButton>
-              </Link>
-            </LinkButtonWrapper>
+            <Link href={AppRoute.MINT}>
+              <LinkButton isActive={pathname?.includes(AppRoute.MINT) ?? false}>
+                {dict.dashboard.mint_title}
+              </LinkButton>
+            </Link>
+            <Link href={AppRoute.BURN}>
+              <LinkButton isActive={pathname?.includes(AppRoute.BURN) ?? false}>
+                {dict.dashboard.burn_title}
+              </LinkButton>
+            </Link>
           </TabWrapper>
           <Box marginTop={2}>{props.children}</Box>
         </ContentWrapper>

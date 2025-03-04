@@ -5,7 +5,8 @@
     "burn_title": "バーン",
     "swap_title": "スワップ",
     "pool_title": "プール",
-    "transfer_title": "トランスファー"
+    "transfer_title": "トランスファー",
+    "help_title": "ヘルプ"
   },
   "header": {
     "connect_wallet": "ウォレットを接続"

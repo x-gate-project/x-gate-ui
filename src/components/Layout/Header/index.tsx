@@ -34,6 +34,12 @@ export default function Header() {
               >
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
               </Link>
+              <Link
+                href={"#"}
+                target='_blank'
+              >
+                <StyledLinkButton>{dict.dashboard.help_title}</StyledLinkButton>
+              </Link>
             </StyledLeftNavigationDiv>
           </StyledLeftDiv>
           <StyledRightDiv>
@@ -71,6 +77,12 @@ export default function Header() {
                 target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
+              </Link>
+              <Link
+                href={"#"}
+                target='_blank'
+              >
+                <StyledLinkButton>{dict.dashboard.help_title}</StyledLinkButton>
               </Link>
             </StyledRightNavigationDiv>
           </StyledRightDiv>
