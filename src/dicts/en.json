@@ -22,7 +22,7 @@
     "receive_address_placeholder": "Enter a receive address",
     "waiting_for_sending": "Your token is being sent to the destination network! Please wait a moment...",
     "send_success": "Send {{token}} successfully!",
-    "send_failed": "Send {{token}} failed! Please try again."
+    "send_failed": "Send {{token}} failed with error:\n {{error}}\n Please try again!"
   },
   "mint_tab": {
     "mint": "Mint Using",
@@ -32,7 +32,7 @@
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
     "mint_success": "Mint {{token}} successfully!",
-    "mint_failed": "Mint {{token}} failed! Please try again."
+    "mint_failed": "Mint {{token}} failed with error:\n {{error}}\n Please try again!"
   },
   "burn_tab": {
     "burn": "Burn",
@@ -42,7 +42,7 @@
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
     "burn_success": "Burn {{token}} successfully!",
-    "burn_failed": "Burn {{token}} failed! Please try again.",
+    "burn_failed": "Burn {{token}} failed with error:\n {{error}}\n Please try again!",
     "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment..."
   },
   "account_detail_popover": {
@@ -51,7 +51,8 @@
   "error_page": {
     "404_message": "The page you are looking for doesn't exist or has been moved.",
     "500_message": "A system error has occurred. Please try again in a few minutes.",
-    "click_here_to_contact_us": "Click here to contact us"
+    "click_here_to_contact_us": "Click here to contact us",
+    "unknown_error": "Unknown error"
   },
   "network_change_popover": {
     "search_placeholder": "Search Network",
