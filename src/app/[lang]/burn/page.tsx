@@ -38,6 +38,7 @@ import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
+import { isProduction } from "@/utils/system";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -116,8 +117,9 @@ export default function Burn() {
             [1, ethers.zeroPadValue(address, 32)]
           );
 
+          const destEndpointId = isProduction ? EndpointId.ETHEREUM_V2_MAINNET : EndpointId.SEPOLIA_V2_TESTNET;
           const sendParam = [
-            EndpointId.SEPOLIA_V2_TESTNET,
+            destEndpointId,
             ethers.zeroPadValue(ethereumTokenAddress, 32),
             ethers.parseUnits(burnAmount, 6),
             ethers.parseUnits(burnAmount, 6),
