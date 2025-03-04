@@ -35,7 +35,7 @@ export default function Header() {
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
               </Link>
               <Link
-                href={"#"}
+                href={"https://docs.x-gate.org/"}
                 target='_blank'
               >
                 <StyledLinkButton>{dict.dashboard.help_title}</StyledLinkButton>
@@ -79,7 +79,7 @@ export default function Header() {
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
               </Link>
               <Link
-                href={"#"}
+                href={"https://docs.x-gate.org/"}
                 target='_blank'
               >
                 <StyledLinkButton>{dict.dashboard.help_title}</StyledLinkButton>
