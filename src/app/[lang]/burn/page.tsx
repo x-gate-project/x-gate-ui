@@ -224,8 +224,8 @@ export default function Burn() {
                 justifyContent="center"
                 flexDirection="column"
                 gap="8px"
-                border="1px solid #E2E8F0"
-                borderRadius="6px"
+                border="1px solid rgb(247, 248, 250)"
+                borderRadius="20px"
                 padding="16px"
                 paddingBottom={currentTokenBalance ? "16px" : "32px"}
               >
@@ -323,8 +323,7 @@ export default function Burn() {
                 justifyContent="center"
                 flexDirection="column"
                 gap="8px"
-                border="1px solid #E2E8F0"
-                borderRadius="6px"
+                borderRadius="20px"
                 padding="16px"
                 sx={{ backgroundColor: "#E2E8F0" }}
               >
@@ -421,18 +420,14 @@ export default function Burn() {
 const useStyles = makeStyles()((theme: Theme) => ({
   wrapper: {
     width: "100%",
-    padding: "32px",
-    borderRadius: "28px",
+    padding: '16px',
+    borderRadius: "30px",
     display: "flex",
     flexDirection: "column",
     gap: "24px",
+    boxShadow: "rgba(0, 0, 0, 0.01)  0px 0px 1px, rgba(0, 0, 0, 0.04)  0px 4px 8px, rgba(0, 0, 0, 0.04)  0px 16px 24px, rgba(0, 0, 0, 0.01)  0px 24px 32px",
+    border: `none`,
     backgroundColor: "white",
-    boxShadow:
-      "0px 1px 2px -1px rgba(0, 0, 0, 0.10), 0px 1px 3px 0px rgba(0, 0, 0, 0.10)",
-    border: `1px solid ${theme.palette.divider}`,
-    [theme.breakpoints.down("sm")]: {
-      padding: "24px",
-    },
   },
   infoWrapper: {
     width: "100%",
@@ -449,6 +444,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   sendButton: {
     textTransform: "none",
     padding: "14px 12px",
+    borderRadius: "12px",
   },
   sendTitle: {
     fontSize: "16px",
