@@ -23,7 +23,9 @@
     "receive_address_placeholder": "Enter a receive address",
     "waiting_for_sending": "Your token is being sent to the destination network! Please wait a moment...",
     "send_success": "Send {{token}} successfully!",
-    "send_failed": "Send {{token}} failed with error:\n {{error}}\n Please try again!"
+    "send_failed": "Send {{token}} failed with error:\n {{error}}\n Please try again!",
+    "layer_zero_tx_title": "Click here for more details about the transaction",
+    "waiting_message": "It will take about 3 to 5 minutes to complete."
   },
   "mint_tab": {
     "mint": "Mint Using",

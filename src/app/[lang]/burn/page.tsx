@@ -39,6 +39,9 @@ import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
+import { usePendingState } from "@/contexts/PendingStateContext";
+import { getLayerZeroTxLink } from "@/utils/string.utils";
+import Link from "next/link";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -51,13 +54,14 @@ export default function Burn() {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [burnAmount, setBurnAmount] = useState("");
   const resetBurnAmount = useCallback(() => setBurnAmount(""), []);
-  const [isBurning, setIsBurning] = useState(false);
   const { classes } = useStyles();
   const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
   const selectedToken = useMemo(() => pageState.burn.token as Token, [pageState]);
   const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
+  const { isBurning, setIsBurning, layerZeroTxBurningHash, setLayerZeroTxBurningHash } = usePendingState();
+
   const { data: currentTokenData, refetch: refetchCurrentTokenData } =
     useBalance({
       address,
@@ -149,6 +153,7 @@ export default function Burn() {
             dict.burn_tab.waiting_for_sending.replace("{{token}}", selectedToken).replace("{{destination}}", ethereum.name),
             { variant: "info" }
           );
+          setLayerZeroTxBurningHash(sendTokenTxHash);
 
           await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
         } else {
@@ -191,6 +196,8 @@ export default function Burn() {
       wagmiConfig,
       address,
       selectedToken,
+      setIsBurning,
+      setLayerZeroTxBurningHash,
     ]
   );
 
@@ -237,6 +244,19 @@ export default function Burn() {
                       {dict.burn_tab.burn}
                     </Box>
                   </Box>
+                  {currentTokenBalance &&
+                    <Tooltip title={currentTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {currentTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                    }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -294,25 +314,6 @@ export default function Burn() {
                       className: classes.helperText,
                     }}
                   />
-                  {currentTokenBalance &&
-                  <Tooltip title={currentTokenBalance}>
-                    <Box
-                      display="flex"
-                      alignItems="baseline"
-                      justifyContent="start"
-                      gap={1}
-                      width="100%"
-                    >
-                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                      <Box color="#64748B"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        whiteSpace="nowrap">
-                        {currentTokenBalance}
-                      </Box>
-                    </Box>
-                  </Tooltip>
-                  }
                 </Box>
               </Box>
             </div>
@@ -385,24 +386,30 @@ export default function Burn() {
               </Box>
             </div>
           </div>
-          <Button
-              variant="contained"
-              className={classes.sendButton}
-              type="submit"
-              color="primary"
-              disabled={
-                isBurning ||
-                !burnAmount ||
-                insufficientBalance ||
-                isDisconnected ||
-                isConnecting
-              }
-              endIcon={
-                isBurning && <CircularProgress size={20} color="inherit" />
-              }
-            >
-              {dict.burn_tab.button}
-          </Button>
+          <div className={classes.itemWrapper}>
+            <Button
+                variant="contained"
+                className={classes.sendButton}
+                type="submit"
+                color="primary"
+                disabled={
+                  isBurning ||
+                  !burnAmount ||
+                  insufficientBalance ||
+                  isDisconnected ||
+                  isConnecting
+                }
+                startIcon={
+                  isBurning && <CircularProgress size={20} color="primary" />
+                }
+              >
+                {isBurning && layerZeroTxBurningHash ? dict.send_tab.waiting_message : dict.burn_tab.button}
+            </Button>
+            {layerZeroTxBurningHash && <Link
+              href={getLayerZeroTxLink(layerZeroTxBurningHash)} target="_blank" className={classes.layerZeroTxTitle}>
+              {dict.send_tab.layer_zero_tx_title}
+            </Link>}
+          </div>
         </div>
       </form>
       <TokenChangePopover
@@ -447,6 +454,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
+    width: "100%",
+    "&.Mui-disabled": {
+      color: "#020617",
+    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -575,6 +586,28 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
       gap: "2px",
+    },
+  },
+  layerZeroTxTitle: {
+    fontSize: "14px",
+    color: theme.palette.primary.main,
+    cursor: "pointer",
+    textAlign: "center",
+    paddingLeft: "6px",
+    paddingTop: "6px",
+    paddingBottom: "8px",
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  },
+  topBalanceWrapper: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "end",
+    gap: "4px",
+    '@media (max-width: 400px)': {
+      maxWidth: "200px",
     },
   },
 }));

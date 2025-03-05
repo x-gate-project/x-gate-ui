@@ -23,7 +23,9 @@
     "receive_address_placeholder": "受信アドレスを入力",
     "waiting_for_sending": "トークンが送信中です！少し待ってください...",
     "send_success": "{{token}}を送信しました！",
-    "send_failed": "{{token}}を送信に失敗しましたエラー:\n {{error}}\n もう一度試してください！"
+    "send_failed": "{{token}}を送信に失敗しましたエラー:\n {{error}}\n もう一度試してください！",
+    "layer_zero_tx_title": "トランザクションの詳細についてはこちらをクリック",
+    "waiting_message": "完了するまでに約 3 ～ 5 分かかります。"
   },
   "mint_tab": {
     "mint": "をミントする",

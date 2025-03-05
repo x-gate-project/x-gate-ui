@@ -43,6 +43,9 @@ import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
+import { usePendingState } from "@/contexts/PendingStateContext";
+import Link from "next/link";
+import { getLayerZeroTxLink } from "@/utils/string.utils";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -56,12 +59,13 @@ export default function Mint() {
   const [mintAmount, setMintAmount] = useState("");
   const resetMintAmount = useCallback(() => setMintAmount(""), []);
   const { classes } = useStyles();
-  const [isMinting, setIsMinting] = useState(false);
   const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
   const selectedToken = useMemo(() => pageState.mint.token as Token, [pageState]);
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
+  const { isMinting, setIsMinting, layerZeroTxMintingHash, setLayerZeroTxMintingHash } = usePendingState();
+
   const [selectToTokenNetworkPopoverAnchorEl, setSelectToTokenNetworkPopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
@@ -143,7 +147,6 @@ export default function Mint() {
 
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
             if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
-              console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
                 address: sourceTokenAddress as `0x${string}`,
@@ -181,6 +184,9 @@ export default function Mint() {
             value: fee.nativeFee,
           });
 
+          enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
+          setLayerZeroTxMintingHash(mintTokenTxHash);
+
           await waitForTransactionReceipt(wagmiConfig, {
             hash: mintTokenTxHash,
           });
@@ -195,7 +201,6 @@ export default function Mint() {
           });
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
             if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
-              console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
                 address: sourceTokenAddress as `0x${string}`,
@@ -232,6 +237,7 @@ export default function Mint() {
             functionName: "mint",
             args: [parseUnits(mintAmount, 6)],
           });
+
           await waitForTransactionReceipt(wagmiConfig, {
             hash: mintTokenTxHash,
           });
@@ -265,6 +271,8 @@ export default function Mint() {
       dict,
       toNetwork,
       address,
+      setIsMinting,
+      setLayerZeroTxMintingHash,
     ]
   );
 
@@ -327,6 +335,19 @@ export default function Mint() {
                     {dict.mint_tab.mint}
                     </Box>
                   </Box>
+                  {usdtEthereumBalance &&
+                    <Tooltip title={usdtEthereumBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {usdtEthereumBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -384,25 +405,6 @@ export default function Mint() {
                       className: classes.helperText,
                     }}
                   />
-                  {usdtEthereumBalance &&
-                    <Tooltip title={usdtEthereumBalance}>
-                      <Box
-                        display="flex"
-                        alignItems="baseline"
-                        justifyContent="start"
-                        gap={1}
-                        width="100%"
-                      >
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B"
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          whiteSpace="nowrap">
-                          {usdtEthereumBalance}
-                        </Box>
-                      </Box>
-                    </Tooltip>
-                  }
                 </Box>
               </Box>
             </div>
@@ -483,24 +485,30 @@ export default function Mint() {
               </Box>
             </div>
           </div>
-          <Button
-              variant="contained"
-              className={classes.sendButton}
-              type="submit"
-              color="primary"
-              disabled={
-                isMinting ||
-                !mintAmount ||
-                insufficientBalance ||
-                isDisconnected ||
-                isConnecting
-              }
-              endIcon={
-                isMinting && <CircularProgress size={20} color="inherit" />
-              }
-            >
-              {dict.mint_tab.button}
-            </Button>
+          <div className={classes.itemWrapper}>
+            <Button
+                variant="contained"
+                className={classes.sendButton}
+                type="submit"
+                color="primary"
+                disabled={
+                  isMinting ||
+                  !mintAmount ||
+                  insufficientBalance ||
+                  isDisconnected ||
+                  isConnecting
+                }
+                startIcon={
+                  isMinting && <CircularProgress size={20} color="primary" />
+                }
+              >
+                {isMinting && layerZeroTxMintingHash ? dict.send_tab.waiting_message : dict.mint_tab.button}
+              </Button>
+              {layerZeroTxMintingHash && <Link
+                href={getLayerZeroTxLink(layerZeroTxMintingHash)} target="_blank" className={classes.layerZeroTxTitle}>
+                  {dict.send_tab.layer_zero_tx_title}
+              </Link>}
+          </div>
         </div>
       </form>
       <TokenChangePopover
@@ -555,6 +563,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
+    width: "100%",
+    "&.Mui-disabled": {
+      color: "#020617",
+    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -707,6 +719,28 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
       gap: "2px",
+    },
+  },
+  layerZeroTxTitle: {
+    fontSize: "14px",
+    color: theme.palette.primary.main,
+    cursor: "pointer",
+    textAlign: "center",
+    paddingLeft: "6px",
+    paddingTop: "6px",
+    paddingBottom: "8px",
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  },
+  topBalanceWrapper: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "end",
+    gap: "4px",
+    '@media (max-width: 400px)': {
+      maxWidth: "200px",
     },
   },
 }));

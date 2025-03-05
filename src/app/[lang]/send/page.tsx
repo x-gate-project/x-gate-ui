@@ -32,13 +32,16 @@ import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
 import tokenAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
-import { ellipsifyText } from "@/utils/string.utils";
+import { ellipsifyText, getLayerZeroTxLink } from "@/utils/string.utils";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
+import { usePendingState } from "@/contexts/PendingStateContext";
+import Link from "next/link";
+
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
@@ -50,7 +53,6 @@ export default function Send() {
   const resetSendAmount = useCallback(() => setSendAmount(""), []);
   const { classes } = useStyles();
   const { enqueueSnackbar } = useSnackbar();
-  const [isSending, setIsSending] = useState(false);
   const wagmiConfig = useConfig();
   const { address, isConnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
@@ -70,6 +72,7 @@ export default function Send() {
     chainId: selectedFromNetwork.id,
   });
   const { chainId } = useAccount();
+  const { isSending, setIsSending, layerZeroTxSendingHash, setLayerZeroTxSendingHash } = usePendingState();
 
   const fromTokenBalance = fromTokenData?.formatted;
   const insufficientBalance = sendAmount
@@ -114,6 +117,7 @@ export default function Send() {
 
       event.preventDefault();
       setIsSending(true);
+      setLayerZeroTxSendingHash("");
 
       try {
         if (selectedFromNetwork.id !== chainId) {
@@ -172,6 +176,7 @@ export default function Send() {
         });
 
         enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
+        setLayerZeroTxSendingHash(sendTokenTxHash);
 
         await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendTokenTxHash);
 
@@ -181,6 +186,7 @@ export default function Send() {
           dict.send_tab.send_success.replace("{{token}}", selectedToken),
           { variant: "success" }
         );
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       } catch (error) {
         console.log(`Send ${selectedToken} failded with error: ${error}`);
         enqueueSnackbar(
@@ -205,6 +211,8 @@ export default function Send() {
       selectedToken,
       dict,
       chainId,
+      setIsSending,
+      setLayerZeroTxSendingHash,
     ]
   );
 
@@ -285,10 +293,17 @@ export default function Send() {
                     <Box className={classes.inputTitle}>
                       {dict.send_tab.from}
                     </Box>
-                    <Box className={classes.addressTitle}>
-                      {address && ellipsifyText(address, 6, 4)}
-                    </Box>
                   </Box>
+                  {fromTokenBalance &&
+                    <Tooltip title={fromTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B">
+                          {fromTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -346,22 +361,6 @@ export default function Send() {
                       className: classes.helperText,
                     }}
                   />
-                  {fromTokenBalance &&
-                    <Tooltip title={fromTokenBalance}>
-                      <Box
-                        display="flex"
-                        alignItems="baseline"
-                        justifyContent="start"
-                        gap={1}
-                        width="100%"
-                      >
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B">
-                          {fromTokenBalance}
-                        </Box>
-                      </Box>
-                    </Tooltip>
-                  }
                 </Box>
               </Box>
             </div>
@@ -515,25 +514,31 @@ export default function Send() {
               </Box>
             </div>
           </div>
-          <Button
-            variant="contained"
-            className={classes.sendButton}
-            type="submit"
-            color="primary"
-            disabled={
-              isSending ||
-              !sendAmount ||
-              insufficientBalance ||
-              !isConnected ||
-              (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))
-              || selectedFromNetwork.id === selectedToNetwork.id
-            }
-            endIcon={
-              isSending && <CircularProgress size={20} color="inherit" />
-            }
-          >
-            {dict.send_tab.button}
-          </Button>
+          <div className={classes.itemWrapper}>
+            <Button
+              variant="contained"
+              className={classes.sendButton}
+              type="submit"
+              color="primary"
+              disabled={
+                isSending ||
+                !sendAmount ||
+                insufficientBalance ||
+                !isConnected ||
+                (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))
+                || selectedFromNetwork.id === selectedToNetwork.id
+              }
+              startIcon={
+                isSending && <CircularProgress size={20} color="primary" />
+              }
+            >
+              {isSending && layerZeroTxSendingHash ? dict.send_tab.waiting_message : dict.send_tab.button}
+            </Button>
+            {layerZeroTxSendingHash && <Link
+              href={getLayerZeroTxLink(layerZeroTxSendingHash)} target="_blank" className={classes.layerZeroTxTitle}>
+                {dict.send_tab.layer_zero_tx_title}
+            </Link>}
+          </div>
         </div>
       </form>
       <TokenChangePopover
@@ -591,6 +596,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
+    width: "100%",
+    "&.Mui-disabled": {
+      color: "#020617",
+    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -753,6 +762,28 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
       gap: "2px",
+    },
+  },
+  layerZeroTxTitle: {
+    fontSize: "14px",
+    color: theme.palette.primary.main,
+    cursor: "pointer",
+    textAlign: "center",
+    paddingLeft: "6px",
+    paddingTop: "6px",
+    paddingBottom: "8px",
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  },
+  topBalanceWrapper: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "end",
+    gap: "4px",
+    '@media (max-width: 400px)': {
+      maxWidth: "200px",
     },
   },
 }));
