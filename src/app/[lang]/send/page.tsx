@@ -32,16 +32,15 @@ import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
 import tokenAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
-import { ellipsifyText, getLayerZeroTxLink } from "@/utils/string.utils";
+import { ellipsifyText } from "@/utils/string.utils";
 import TokenChangePopover from "@/components/TokenChangePopover";
-import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import localStorageService from "@/services/local-storage.service";
+import localStorageService, { } from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
-import { usePendingState } from "@/contexts/PendingStateContext";
-import Link from "next/link";
-
+import { useTransactionState } from "@/contexts/TransactionStateContext";
+import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { TransactionMethod } from "@/enums/transactionMethod";
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
@@ -72,8 +71,7 @@ export default function Send() {
     chainId: selectedFromNetwork.id,
   });
   const { chainId } = useAccount();
-  const { isSending, setIsSending, layerZeroTxSendingHash, setLayerZeroTxSendingHash } = usePendingState();
-
+  const { addTransaction } = useTransactionState();
   const fromTokenBalance = fromTokenData?.formatted;
   const insufficientBalance = sendAmount
     ? Number(sendAmount) >
@@ -116,8 +114,6 @@ export default function Send() {
       const receiverAddress = isSendToAnotherWallet ? receiveAddress : address;
 
       event.preventDefault();
-      setIsSending(true);
-      setLayerZeroTxSendingHash("");
 
       try {
         if (selectedFromNetwork.id !== chainId) {
@@ -171,30 +167,46 @@ export default function Send() {
           args: [sendParam, [fee.nativeFee, 0], address],
           value: fee.nativeFee,
         });
+        enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
         await waitForTransactionReceipt(wagmiConfig, {
           hash: sendTokenTxHash,
         });
 
-        enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
-        setLayerZeroTxSendingHash(sendTokenTxHash);
-
-        await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendTokenTxHash);
+        await addTransaction({
+          hash: sendTokenTxHash,
+          summary: `Send ${sendAmount} ${selectedToken} from ${selectedFromNetwork.name} to ${selectedToNetwork.name}`,
+          fromAddress: address,
+          toAddress: receiverAddress,
+          fromChainId: selectedFromNetwork.id,
+          toChainId: selectedToNetwork.id,
+          amount: sendAmount,
+          method: TransactionMethod.SEND,
+          token: selectedToken,
+          lzEndPointId: destChain,
+          createdAt: Date.now(),
+        }, async () => {
+          await waitForMessageReceived(destChain, sendTokenTxHash);
+        });
 
         resetSendAmount();
         refetchFromTokenBalance();
         enqueueSnackbar(
-          dict.send_tab.send_success.replace("{{token}}", selectedToken),
+          dict.send_tab.send_success
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedFromNetwork.name)
+            .replace("{{to}}", selectedToNetwork.name),
           { variant: "success" }
         );
-        await new Promise((resolve) => setTimeout(resolve, 3000));
       } catch (error) {
         console.log(`Send ${selectedToken} failded with error: ${error}`);
         enqueueSnackbar(
-          `${dict.send_tab.send_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          dict.send_tab.send_failed
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedFromNetwork.name)
+            .replace("{{to}}", selectedToNetwork.name)
+            .replace("{{error}}", (error as any).shortMessage || "Unknown error"),
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
-      } finally {
-        setIsSending(false);
       }
     },
     [
@@ -211,8 +223,7 @@ export default function Send() {
       selectedToken,
       dict,
       chainId,
-      setIsSending,
-      setLayerZeroTxSendingHash,
+      addTransaction,
     ]
   );
 
@@ -476,7 +487,6 @@ export default function Send() {
                     />
                   }
                   checked={isSendToAnotherWallet}
-                  disabled={isSending}
                   label={
                     <div className={classes.inputTitle}>
                       {dict.send_tab.another_wallet_address}
@@ -521,23 +531,15 @@ export default function Send() {
               type="submit"
               color="primary"
               disabled={
-                isSending ||
                 !sendAmount ||
                 insufficientBalance ||
                 !isConnected ||
                 (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))
                 || selectedFromNetwork.id === selectedToNetwork.id
               }
-              startIcon={
-                isSending && <CircularProgress size={20} color="primary" />
-              }
             >
-              {isSending && layerZeroTxSendingHash ? dict.send_tab.waiting_message : dict.send_tab.button}
+              {dict.send_tab.button}
             </Button>
-            {layerZeroTxSendingHash && <Link
-              href={getLayerZeroTxLink(layerZeroTxSendingHash)} target="_blank" className={classes.layerZeroTxTitle}>
-                {dict.send_tab.layer_zero_tx_title}
-            </Link>}
           </div>
         </div>
       </form>

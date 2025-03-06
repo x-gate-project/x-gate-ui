@@ -17,7 +17,7 @@ import { Theme } from "@mui/material/styles";
 import { useDict } from "@/contexts/DictContext";
 import { useSnackbar } from "notistack";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
-import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
+import { useAccount, useBalance, useConfig } from "wagmi";
 import {
   switchChain,
   writeContract,
@@ -25,10 +25,9 @@ import {
   readContract,
 } from "wagmi/actions";
 import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
-import { Chain, formatUnits, parseUnits } from "viem";
+import { Chain, parseUnits } from "viem";
 import tokenContractAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
-import NetworkChangePopover from "@/components/NetworkChangePopover";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { ethers } from "ethers";
@@ -36,12 +35,11 @@ import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
-import localStorageService from "@/services/local-storage.service";
+import localStorageService, { } from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
-import { usePendingState } from "@/contexts/PendingStateContext";
-import { getLayerZeroTxLink } from "@/utils/string.utils";
-import Link from "next/link";
+import { useTransactionState } from "@/contexts/TransactionStateContext";
+import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { TransactionMethod } from "@/enums/transactionMethod";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -60,7 +58,7 @@ export default function Burn() {
   const [pageState, setPageState] = useState(localStorageService.getPageState());
   const selectedToken = useMemo(() => pageState.burn.token as Token, [pageState]);
   const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
-  const { isBurning, setIsBurning, layerZeroTxBurningHash, setLayerZeroTxBurningHash } = usePendingState();
+  const { addTransaction } = useTransactionState();
 
   const { data: currentTokenData, refetch: refetchCurrentTokenData } =
     useBalance({
@@ -98,18 +96,16 @@ export default function Burn() {
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
-      setIsBurning(true);
       try {
         if (chainId !== selectedNetwork.id) {
           await switchChain(wagmiConfig, { chainId: selectedNetwork.id });
         }
 
         const isFromETH = selectedNetwork.id === ethereum.id;
+        const ethereumTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[ethereum.id] as any;
+        const sourceTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any;
 
         if(!isFromETH && address) {
-          const ethereumTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[ethereum.id] as any;
-          const sourceTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any;
-
           const options = Options.newOptions()
             .addExecutorLzReceiveOption(200000, 0)
             .addExecutorComposeOption(0, 500000, 0)
@@ -146,16 +142,29 @@ export default function Burn() {
             args: [sendParam, [fee.nativeFee, 0], address],
             value: fee.nativeFee,
           });
-          await waitForTransactionReceipt(wagmiConfig, {
-            hash: sendTokenTxHash,
-          });
           enqueueSnackbar(
             dict.burn_tab.waiting_for_sending.replace("{{token}}", selectedToken).replace("{{destination}}", ethereum.name),
             { variant: "info" }
           );
-          setLayerZeroTxBurningHash(sendTokenTxHash);
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: sendTokenTxHash,
+          });
 
-          await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
+          await addTransaction({
+            hash: sendTokenTxHash,
+            summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
+            fromAddress: address as string,
+            toAddress: address as string,
+            fromChainId: selectedNetwork.id,
+            toChainId: ethereum.id,
+            amount: burnAmount,
+            method: TransactionMethod.BURN,
+            token: selectedToken,
+            lzEndPointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id],
+            createdAt: Date.now(),
+          }, async () => {
+            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
+          });
         } else {
           const hash = await writeContract(wagmiConfig, {
             abi: tokenContractAbi,
@@ -163,26 +172,42 @@ export default function Burn() {
             functionName: "burn",
             args: [parseUnits(burnAmount, 6)],
           });
-
-          await waitForTransactionReceipt(wagmiConfig, {
-            hash,
+          await addTransaction({
+            hash: hash,
+            summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
+            fromAddress: address as string,
+            toAddress: address as string,
+            fromChainId: selectedNetwork.id,
+            toChainId: ethereum.id,
+            amount: burnAmount,
+            method: TransactionMethod.BURN,
+            token: selectedToken,
+            createdAt: Date.now(),
+          }, async () => {
+            await waitForTransactionReceipt(wagmiConfig, {
+              hash,
+            });
           });
         }
 
         resetBurnAmount();
         refetchCurrentTokenData();
         enqueueSnackbar(
-          dict.burn_tab.burn_success.replace("{{token}}", selectedToken),
+          dict.burn_tab.burn_success
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedNetwork.name)
+            .replace("{{to}}", ethereum.name),
           { variant: "success" }
         );
       } catch (error) {
         console.log("Burn failded with error: ", error);
         enqueueSnackbar(
-          `${dict.burn_tab.burn_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          `${dict.burn_tab.burn_failed.replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedNetwork.name)
+            .replace("{{to}}", ethereum.name)
+            .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
-      } finally {
-        setIsBurning(false);
       }
     },
     [
@@ -196,8 +221,7 @@ export default function Burn() {
       wagmiConfig,
       address,
       selectedToken,
-      setIsBurning,
-      setLayerZeroTxBurningHash,
+      addTransaction,
     ]
   );
 
@@ -393,22 +417,14 @@ export default function Burn() {
                 type="submit"
                 color="primary"
                 disabled={
-                  isBurning ||
                   !burnAmount ||
                   insufficientBalance ||
                   isDisconnected ||
                   isConnecting
                 }
-                startIcon={
-                  isBurning && <CircularProgress size={20} color="primary" />
-                }
               >
-                {isBurning && layerZeroTxBurningHash ? dict.send_tab.waiting_message : dict.burn_tab.button}
+                {dict.burn_tab.button}
             </Button>
-            {layerZeroTxBurningHash && <Link
-              href={getLayerZeroTxLink(layerZeroTxBurningHash)} target="_blank" className={classes.layerZeroTxTitle}>
-              {dict.send_tab.layer_zero_tx_title}
-            </Link>}
           </div>
         </div>
       </form>

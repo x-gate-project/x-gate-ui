@@ -22,8 +22,8 @@
     "invalid_receive_address": "Invalid receive address!",
     "receive_address_placeholder": "Enter a receive address",
     "waiting_for_sending": "Your token is being sent to the destination network! Please wait a moment...",
-    "send_success": "Send {{token}} successfully!",
-    "send_failed": "Send {{token}} failed with error:\n {{error}}\n Please try again!",
+    "send_success": "Send {{token}} from {{from}} to {{to}} successfully!",
+    "send_failed": "Send {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
     "layer_zero_tx_title": "Click here for more details about the transaction",
     "waiting_message": "It will take about 3 to 5 minutes to complete."
   },
@@ -34,8 +34,8 @@
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
-    "mint_success": "Mint {{token}} successfully!",
-    "mint_failed": "Mint {{token}} failed with error:\n {{error}}\n Please try again!"
+    "mint_success": "Mint {{token}} from {{from}} to {{to}} successfully!",
+    "mint_failed": "Mint {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!"
   },
   "burn_tab": {
     "burn": "Burn",
@@ -44,8 +44,8 @@
     "max": "Max",
     "balance": "Balance",
     "invalid_amount": "Amount is invalid or bigger than total balance!",
-    "burn_success": "Burn {{token}} successfully!",
-    "burn_failed": "Burn {{token}} failed with error:\n {{error}}\n Please try again!",
+    "burn_success": "Burn {{token}} from {{from}} to {{to}} successfully!",
+    "burn_failed": "Burn {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
     "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment..."
   },
   "account_detail_popover": {
@@ -64,5 +64,15 @@
   "token_change_popover": {
     "search_placeholder": "Search Tokens",
     "select_token": "Select a Token"
+  },
+  "recent_transaction_dialog": {
+    "title": "Recent Transactions",
+    "clear_all": "Clear all",
+    "transactions": "Transactions",
+    "no_transactions": "No transactions"
+  },
+  "wallet_button_popover": {
+    "profile": "Profile",
+    "transactions": "Transactions"
   }
 }

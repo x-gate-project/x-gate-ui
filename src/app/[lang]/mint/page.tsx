@@ -20,7 +20,6 @@ import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import {
   useAccount,
   useBalance,
-  useChainId,
   useConfig,
 } from "wagmi";
 import {
@@ -38,14 +37,13 @@ import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import localStorageService from "@/services/local-storage.service";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import localStorageService, { } from "@/services/local-storage.service";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
-import { usePendingState } from "@/contexts/PendingStateContext";
-import Link from "next/link";
-import { getLayerZeroTxLink } from "@/utils/string.utils";
+import { useTransactionState } from "@/contexts/TransactionStateContext";
+import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { TransactionMethod } from "@/enums/transactionMethod";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -64,7 +62,8 @@ export default function Mint() {
   const [pageState, setPageState] = useState(localStorageService.getPageState());
   const selectedToken = useMemo(() => pageState.mint.token as Token, [pageState]);
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
-  const { isMinting, setIsMinting, layerZeroTxMintingHash, setLayerZeroTxMintingHash } = usePendingState();
+  const { addTransaction } = useTransactionState();
+  const [isMinting, setIsMinting] = useState(false);
 
   const [selectToTokenNetworkPopoverAnchorEl, setSelectToTokenNetworkPopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
@@ -104,19 +103,19 @@ export default function Mint() {
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
-      setIsMinting(true);
 
       if(!address) {
         return;
       }
 
+      const sourceTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS!
+      const destinationTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS!
+      const destinationToken = selectedToken === Token.USDT ? Token.USDTX : Token.USDCX;
+
       try {
         if (chainId !== ethereum.id) {
           await switchChain(wagmiConfig, { chainId: ethereum.id });
         }
-
-        const sourceTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS!
-        const destinationTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS!
 
         if (toNetwork.id !== ethereum.id) {
           const options = Options.newOptions().addExecutorLzReceiveOption(200000, 0).toHex().toString()
@@ -145,6 +144,7 @@ export default function Mint() {
             args: [address, process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS!],
           });
 
+          setIsMinting(true);
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
             if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
@@ -175,6 +175,7 @@ export default function Mint() {
               hash: approveTokenTxHash,
             });
           }
+          setIsMinting(false);
 
           const mintTokenTxHash = await writeContract(wagmiConfig, {
             abi: oftxHelperAbi,
@@ -183,15 +184,26 @@ export default function Mint() {
             args: [destinationTokenAddress, sendParam, [fee.nativeFee, 0], address],
             value: fee.nativeFee,
           });
-
           enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
-          setLayerZeroTxMintingHash(mintTokenTxHash);
-
           await waitForTransactionReceipt(wagmiConfig, {
             hash: mintTokenTxHash,
           });
 
-          await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id], mintTokenTxHash);
+          await addTransaction({
+            hash: mintTokenTxHash,
+            summary: `Mint ${mintAmount} ${destinationToken} from ${ethereum.name} to ${toNetwork.name}`,
+            fromAddress: address,
+            toAddress: address,
+            fromChainId: ethereum.id,
+            toChainId: toNetwork.id,
+            amount: mintAmount,
+            method: TransactionMethod.MINT,
+            token: destinationToken,
+            lzEndPointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id],
+            createdAt: Date.now(),
+          }, async () => {
+            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id], mintTokenTxHash);
+          });
         } else {
           const allowance = await readContract(wagmiConfig, {
             address: sourceTokenAddress as `0x${string}`,
@@ -199,6 +211,8 @@ export default function Mint() {
             functionName: "allowance",
             args: [address, destinationTokenAddress],
           });
+
+          setIsMinting(true);
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
             if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
@@ -228,8 +242,8 @@ export default function Mint() {
               hash: approveTokenTxHash,
             });
           }
-
-          console.log(`Approved ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully. Minting ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} ...`);
+          setIsMinting(false);
+          console.log(`Approved ${destinationToken} successfully. Minting ${destinationToken} ...`);
 
           const mintTokenTxHash = await writeContract(wagmiConfig, {
             abi: usdtxAbi,
@@ -241,19 +255,43 @@ export default function Mint() {
           await waitForTransactionReceipt(wagmiConfig, {
             hash: mintTokenTxHash,
           });
+
+          await addTransaction({
+            hash: mintTokenTxHash,
+            summary: `Mint ${mintAmount} ${destinationToken} from ${ethereum.name} to ${toNetwork.name}`,
+            fromAddress: address,
+            toAddress: address,
+            fromChainId: ethereum.id,
+            toChainId: toNetwork.id,
+            amount: mintAmount,
+            method: TransactionMethod.MINT,
+            token: destinationToken,
+            createdAt: Date.now(),
+          }, async () => {
+            await waitForTransactionReceipt(wagmiConfig, {
+              hash: mintTokenTxHash,
+            });
+          });
         }
-        console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully.`);
+        console.log(`Mint ${destinationToken} successfully.`);
 
         resetMintAmount();
         refetchUsdtEthereumData();
         enqueueSnackbar(
-          dict.mint_tab.mint_success.replace("{{token}}", selectedToken),
+          dict.mint_tab.mint_success
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", ethereum.name)
+            .replace("{{to}}", toNetwork.name),
           { variant: "success" }
         );
       } catch (error) {
-        console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed with error: ${error}`);
+        console.log(`Mint ${destinationToken} failed with error: ${error}`);
         enqueueSnackbar(
-          `${dict.mint_tab.mint_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          `${dict.mint_tab.mint_failed
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", ethereum.name)
+            .replace("{{to}}", toNetwork.name)
+            .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
       } finally {
@@ -271,8 +309,7 @@ export default function Mint() {
       dict,
       toNetwork,
       address,
-      setIsMinting,
-      setLayerZeroTxMintingHash,
+      addTransaction,
     ]
   );
 
@@ -498,16 +535,10 @@ export default function Mint() {
                   isDisconnected ||
                   isConnecting
                 }
-                startIcon={
-                  isMinting && <CircularProgress size={20} color="primary" />
-                }
+                startIcon={isMinting && <CircularProgress size={20} color="primary"/>}
               >
-                {isMinting && layerZeroTxMintingHash ? dict.send_tab.waiting_message : dict.mint_tab.button}
+                {dict.mint_tab.button}
               </Button>
-              {layerZeroTxMintingHash && <Link
-                href={getLayerZeroTxLink(layerZeroTxMintingHash)} target="_blank" className={classes.layerZeroTxTitle}>
-                  {dict.send_tab.layer_zero_tx_title}
-              </Link>}
           </div>
         </div>
       </form>
