@@ -29,7 +29,10 @@
     "react-hook-form": "^7.54.2",
     "tss-react": "^4.9.15",
     "viem": "^2.23.1",
-    "wagmi": "^2.14.11"
+    "wagmi": "^2.14.11",
+    "toformat": "2.0.0",
+    "decimal.js-light": "2.5.0",
+    "jsbi": "3.1.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
