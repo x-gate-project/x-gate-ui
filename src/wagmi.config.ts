@@ -3,6 +3,7 @@ import { mainnet, sepolia, arbitrum, base, arbitrumSepolia, baseSepolia, avalanc
 import { defineChain } from "viem";
 import { isProduction } from "./utils/system";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
+import { walletConnect } from "wagmi/connectors";
 
 export const joc = isProduction
   ? defineChain({
@@ -73,6 +74,12 @@ export function getWagmiConfig() {
       [avalancheNet.id]: http(),
       [baseNet.id]: http()
     } as any,
+    connectors: [
+      walletConnect({
+        showQrModal: false,
+        projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || '',
+      })
+    ],
   });
 }
 
