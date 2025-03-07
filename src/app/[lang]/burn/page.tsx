@@ -238,7 +238,6 @@ export default function Burn() {
                 border="1px solid rgb(247, 248, 250)"
                 borderRadius="20px"
                 padding="16px"
-                paddingBottom={currentTokenBalance ? "16px" : "32px"}
               >
                 <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
                   <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
@@ -247,17 +246,15 @@ export default function Burn() {
                     </Box>
                   </Box>
                   {currentTokenBalance &&
-                    <Tooltip title={currentTokenBalance}>
-                      <div className={classes.topBalanceWrapper}>
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B"
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          whiteSpace="nowrap">
-                          {currentTokenBalance}
-                        </Box>
-                      </div>
-                    </Tooltip>
+                    <div className={classes.topBalanceWrapper}>
+                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                      <Box color="#64748B"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap">
+                        {currentTokenBalance}
+                      </Box>
+                    </div>
                   }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -339,17 +336,15 @@ export default function Burn() {
                     </Box>
                   </Box>
                   {toTokenBalance &&
-                    <Tooltip title={toTokenBalance}>
-                      <div className={classes.topBalanceWrapper}>
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B"
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          whiteSpace="nowrap">
-                          {toTokenBalance}
-                        </Box>
-                      </div>
-                    </Tooltip>
+                    <div className={classes.topBalanceWrapper}>
+                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                      <Box color="#64748B"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap">
+                        {toTokenBalance}
+                      </Box>
+                    </div>
                   }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
