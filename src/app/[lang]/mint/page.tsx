@@ -29,7 +29,7 @@ import {
   waitForTransactionReceipt,
   readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, ethereum } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
 import { Chain, parseUnits } from "viem";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
@@ -72,8 +72,14 @@ export default function Mint() {
       token: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
       chainId: ethereum.id,
     });
+  const { data: toTokenData, refetch: refetchToTokenBalance } = useBalance({
+    address,
+    token: selectedToken === Token.USDT ?
+      CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any,
+    chainId: toNetwork.id,
+  });
   const usdtEthereumBalance = usdtEthereumData?.formatted;
-
+  const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = mintAmount
     ? Number(mintAmount) > Number(usdtEthereumBalance)
     : false;
@@ -240,6 +246,7 @@ export default function Mint() {
 
         resetMintAmount();
         refetchUsdtEthereumData();
+        refetchToTokenBalance();
         enqueueSnackbar(
           dict.mint_tab.mint_success.replace("{{token}}", selectedToken),
           { variant: "success" }
@@ -265,6 +272,7 @@ export default function Mint() {
       dict,
       toNetwork,
       address,
+      refetchToTokenBalance,
     ]
   );
 
@@ -327,6 +335,19 @@ export default function Mint() {
                     {dict.mint_tab.mint}
                     </Box>
                   </Box>
+                  {usdtEthereumBalance &&
+                    <Tooltip title={usdtEthereumBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {usdtEthereumBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -384,25 +405,6 @@ export default function Mint() {
                       className: classes.helperText,
                     }}
                   />
-                  {usdtEthereumBalance &&
-                    <Tooltip title={usdtEthereumBalance}>
-                      <Box
-                        display="flex"
-                        alignItems="baseline"
-                        justifyContent="start"
-                        gap={1}
-                        width="100%"
-                      >
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B"
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          whiteSpace="nowrap">
-                          {usdtEthereumBalance}
-                        </Box>
-                      </Box>
-                    </Tooltip>
-                  }
                 </Box>
               </Box>
             </div>
@@ -425,6 +427,16 @@ export default function Mint() {
                       {dict.mint_tab.made}
                     </Box>
                   </Box>
+                  {toTokenBalance &&
+                    <Tooltip title={toTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B">
+                          {toTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -555,6 +567,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
+    width: "100%",
+    "&.Mui-disabled": {
+      color: "#020617",
+    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -707,6 +723,15 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
       gap: "2px",
+    },
+  },
+  topBalanceWrapper: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "end",
+    gap: "4px",
+    '@media (max-width: 400px)': {
+      maxWidth: "200px",
     },
   },
 }));

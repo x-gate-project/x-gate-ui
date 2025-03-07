@@ -4,12 +4,9 @@ import React from "react";
 import { styled } from "@mui/material/styles";
 import NetworkSwitcher from "../NetworkSwitcher";
 import { ConnectKitButton } from "connectkit";
-import Button from "@mui/material/Button";
-import Image from "next/image";
-import { useDict } from "@/contexts/DictContext";
+import WalletButton from "../WalletButton";
 
 export default function Footer() {
-  const dict = useDict();
   return (
     <StyledRootDiv>
       <StyledContainerDiv>
@@ -17,27 +14,12 @@ export default function Footer() {
           <StyledLeftDiv>
             <ConnectKitButton.Custom>
               {({ isConnected, show, truncatedAddress }) => (
-                <Button
-                  variant="contained"
-                  onClick={show}
-                  startIcon={<Image src="/icons/wallet-icon.svg" alt="Wallet" width={16} height={16} />}
-                  sx={{
-                    textTransform: "none",
-                    borderRadius: "6px",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "24px",
-                    letterSpacing: 0,
-                  }}
-                  >
-                  {isConnected ? truncatedAddress : dict.header.connect_wallet}
-              </Button>)}
+                <WalletButton isConnected={isConnected} show={show} truncatedAddress={truncatedAddress} />
+              )}
             </ConnectKitButton.Custom>
           </StyledLeftDiv>
           <StyledRightDiv>
-            <NetworkSwitcher buttonStyles={{
-              background: "#E2E8F0",
-            }} />
+            <NetworkSwitcher />
           </StyledRightDiv>
         </StyledAppBarDiv>
       </StyledContainerDiv>
@@ -74,9 +56,6 @@ const StyledAppBarDiv = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  [theme.breakpoints.down("sm")]: {
-    alignItems: "start",
-  },
 }));
 
 const StyledLeftDiv = styled("div")(({ theme }) => ({
