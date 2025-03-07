@@ -63,11 +63,18 @@ export default function Burn() {
       address,
       token: selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any,
       chainId: selectedNetwork.id,
-    });
+  });
+  const { data: toTokenData, refetch: refetchToTokenData } =
+    useBalance({
+      address,
+      token: selectedToken === Token.USDTX ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
+      chainId: ethereum.id,
+  });
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
 
   const currentTokenBalance = currentTokenData?.formatted;
+  const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = burnAmount
     ? Number(burnAmount) > Number(currentTokenBalance)
     : false;
@@ -166,6 +173,7 @@ export default function Burn() {
 
         resetBurnAmount();
         refetchCurrentTokenData();
+        refetchToTokenData();
         enqueueSnackbar(
           dict.burn_tab.burn_success.replace("{{token}}", selectedToken),
           { variant: "success" }
@@ -191,6 +199,7 @@ export default function Burn() {
       wagmiConfig,
       address,
       selectedToken,
+      refetchToTokenData,
     ]
   );
 
@@ -237,6 +246,19 @@ export default function Burn() {
                       {dict.burn_tab.burn}
                     </Box>
                   </Box>
+                  {currentTokenBalance &&
+                    <Tooltip title={currentTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {currentTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -294,25 +316,6 @@ export default function Burn() {
                       className: classes.helperText,
                     }}
                   />
-                  {currentTokenBalance &&
-                  <Tooltip title={currentTokenBalance}>
-                    <Box
-                      display="flex"
-                      alignItems="baseline"
-                      justifyContent="start"
-                      gap={1}
-                      width="100%"
-                    >
-                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                      <Box color="#64748B"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        whiteSpace="nowrap">
-                        {currentTokenBalance}
-                      </Box>
-                    </Box>
-                  </Tooltip>
-                  }
                 </Box>
               </Box>
             </div>
@@ -335,6 +338,19 @@ export default function Burn() {
                       {dict.burn_tab.out}
                     </Box>
                   </Box>
+                  {toTokenBalance &&
+                    <Tooltip title={toTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {toTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -447,6 +463,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
+    width: "100%",
+    "&.Mui-disabled": {
+      color: "#020617",
+    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -575,6 +595,15 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
       gap: "2px",
+    },
+  },
+  topBalanceWrapper: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "end",
+    gap: "4px",
+    '@media (max-width: 400px)': {
+      maxWidth: "200px",
     },
   },
 }));

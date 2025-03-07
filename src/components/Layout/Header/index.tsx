@@ -1,15 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { styled } from "@mui/material/styles";
-import Button from "@mui/material/Button";
 import Link from "next/link";
 import { AppRoute } from "@/enums/route";
 import { useDict } from "@/contexts/DictContext";
 import { ConnectKitButton } from "connectkit";
-import Image from "next/image";
 import NetworkSwitcher from "../NetworkSwitcher";
-
+import WalletButton from "../WalletButton";
 export default function Header() {
   const dict = useDict();
 
@@ -47,22 +45,9 @@ export default function Header() {
                 <NetworkSwitcher />
                 <ConnectKitButton.Custom>
                   {({ isConnected, show, truncatedAddress }) => (
-                    <Button
-                      variant="contained"
-                      onClick={show}
-                      startIcon={<Image src="/icons/wallet-icon.svg" alt="Wallet" width={16} height={16} />}
-                      sx={{
-                        textTransform: "none",
-                        borderRadius: "6px",
-                        fontWeight: 500,
-                        fontSize: "14px",
-                        lineHeight: "24px",
-                        letterSpacing: 0,
-                      }}
-                      >
-                        {isConnected ? truncatedAddress : dict.header.connect_wallet}
-                    </Button>)}
-                  </ConnectKitButton.Custom>
+                    <WalletButton isConnected={isConnected} show={show} truncatedAddress={truncatedAddress} />
+                  )}
+                </ConnectKitButton.Custom>
               </StyledWalletSwitcherContainerDiv>
             <StyledRightNavigationDiv>
               <StyledRightTransferButton>{dict.dashboard.transfer_title}</StyledRightTransferButton>

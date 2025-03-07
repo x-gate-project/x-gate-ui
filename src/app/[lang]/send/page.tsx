@@ -69,9 +69,16 @@ export default function Send() {
       CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any,
     chainId: selectedFromNetwork.id,
   });
+  const { data: toTokenData, refetch: refetchToTokenBalance } = useBalance({
+    address,
+    token: selectedToken === Token.USDTX ?
+      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedToNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedToNetwork.id] as any,
+    chainId: selectedToNetwork.id,
+  });
   const { chainId } = useAccount();
 
   const fromTokenBalance = fromTokenData?.formatted;
+  const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = sendAmount
     ? Number(sendAmount) >
       Number(fromTokenBalance)
@@ -177,6 +184,7 @@ export default function Send() {
 
         resetSendAmount();
         refetchFromTokenBalance();
+        refetchToTokenBalance();
         enqueueSnackbar(
           dict.send_tab.send_success.replace("{{token}}", selectedToken),
           { variant: "success" }
@@ -205,6 +213,7 @@ export default function Send() {
       selectedToken,
       dict,
       chainId,
+      refetchToTokenBalance,
     ]
   );
 
@@ -285,10 +294,17 @@ export default function Send() {
                     <Box className={classes.inputTitle}>
                       {dict.send_tab.from}
                     </Box>
-                    <Box className={classes.addressTitle}>
-                      {address && ellipsifyText(address, 6, 4)}
-                    </Box>
                   </Box>
+                  {fromTokenBalance &&
+                    <Tooltip title={fromTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B">
+                          {fromTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -346,22 +362,6 @@ export default function Send() {
                       className: classes.helperText,
                     }}
                   />
-                  {fromTokenBalance &&
-                    <Tooltip title={fromTokenBalance}>
-                      <Box
-                        display="flex"
-                        alignItems="baseline"
-                        justifyContent="start"
-                        gap={1}
-                        width="100%"
-                      >
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B">
-                          {fromTokenBalance}
-                        </Box>
-                      </Box>
-                    </Tooltip>
-                  }
                 </Box>
               </Box>
             </div>
@@ -401,10 +401,17 @@ export default function Send() {
                     <div className={classes.inputTitle}>
                       {dict.send_tab.to}
                     </div>
-                    <Box className={classes.addressTitle}>
-                      {address && ellipsifyText(address, 6, 4)}
-                    </Box>
                   </Box>
+                  {toTokenBalance &&
+                    <Tooltip title={toTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B">
+                          {toTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
+                  }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
                   <TextField
@@ -591,6 +598,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
+    width: "100%",
+    "&.Mui-disabled": {
+      color: "#020617",
+    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -753,6 +764,15 @@ const useStyles = makeStyles()((theme: Theme) => ({
     [theme.breakpoints.down("sm")]: {
       padding: "8px 4px",
       gap: "2px",
+    },
+  },
+  topBalanceWrapper: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "end",
+    gap: "4px",
+    '@media (max-width: 400px)': {
+      maxWidth: "200px",
     },
   },
 }));
