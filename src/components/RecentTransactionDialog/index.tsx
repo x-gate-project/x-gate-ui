@@ -27,7 +27,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
   const { classes } = useStyles();
   const { transactions, clearConfirmedTransactions } = useTransactionState();
 
-  const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined).sort((a, b) => a.createdAt - b.createdAt), [transactions]);
+  const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const confirmedTransactions = useMemo(() => transactions.filter((tx) => (tx.confirmedAt !== undefined || tx.isFailed !== undefined)).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const allTransactions = [...pendingTransactions, ...confirmedTransactions];
 
