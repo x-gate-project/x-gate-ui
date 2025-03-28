@@ -1,6 +1,7 @@
 import { LocalStorageKey } from '@/consts/local-storage-key';
 import { Token } from '@/enums/token';
-import { load, save } from '@/utils/local.storage.utils';
+import { TransactionMethod } from '@/enums/transaction-method';
+import { load, remove, save } from '@/utils/local.storage.utils';
 import { ethereum, joc } from '@/wagmi.config';
 
 export type PageState = {
@@ -35,7 +36,69 @@ const INITIAL_PAGE_STATE: PageState = {
   },
 };
 
+export type Transaction = {
+  hash: string;
+  summary: string;
+  fromAddress: string;
+  toAddress: string;
+  fromChainId: number;
+  toChainId: number;
+  amount: string;
+  method: TransactionMethod;
+  token: Token;
+  lzEndpointId?: number;
+  createdAt: number;
+  confirmedAt?: number;
+  isFailed?: boolean;
+};
+
 class LocalStorageService {
+
+  getAllTransactions (): Transaction[] {
+    const transactions = load(LocalStorageKey.TRANSACTIONS);
+    return transactions !== null ? JSON.parse(transactions) : [];
+  };
+
+  getTransactionsByWalletAddress (walletAddress: string): Transaction[] {
+    const transactions = this.getAllTransactions();
+    return transactions.filter((transaction: Transaction) => transaction.fromAddress === walletAddress);
+  };
+
+  addTransaction (transaction: Transaction) {
+    const transactions = this.getAllTransactions();
+    transactions.push(transaction);
+    save(LocalStorageKey.TRANSACTIONS, JSON.stringify(transactions));
+    return transactions;
+  };
+
+  confirmTransaction (hash: string, confirmedAt: number) {
+    const transactions = this.getAllTransactions();
+    const index = transactions.findIndex((t: Transaction) => t.hash === hash);
+    if (index !== -1) {
+      transactions[index].confirmedAt = confirmedAt;
+      save(LocalStorageKey.TRANSACTIONS, JSON.stringify(transactions));
+    }
+    return transactions;
+  };
+
+  setTransactionFailed (hash: string) {
+    const transactions = this.getAllTransactions();
+    const index = transactions.findIndex((t: Transaction) => t.hash === hash);
+    if (index !== -1) {
+      transactions[index].isFailed = true;
+      save(LocalStorageKey.TRANSACTIONS, JSON.stringify(transactions));
+    }
+    return transactions;
+  }
+
+  clearConfirmedTransactions () {
+    const transactions = this.getAllTransactions();
+    const unConfirmedTransactions = transactions.filter((t: Transaction) => t.confirmedAt === undefined);
+    remove(LocalStorageKey.TRANSACTIONS);
+    save(LocalStorageKey.TRANSACTIONS, JSON.stringify(unConfirmedTransactions));
+    return unConfirmedTransactions;
+  };
+
   getPageState (): PageState {
     const pageState = load(LocalStorageKey.PAGE_STATE);
     return pageState !== null ? JSON.parse(pageState) : INITIAL_PAGE_STATE;
