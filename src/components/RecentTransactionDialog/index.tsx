@@ -27,7 +27,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
   const { classes } = useStyles();
   const { transactions, clearConfirmedTransactions } = useTransactionState();
 
-  const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined).sort((a, b) => a.createdAt - b.createdAt), [transactions]);
+  const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const confirmedTransactions = useMemo(() => transactions.filter((tx) => (tx.confirmedAt !== undefined || tx.isFailed !== undefined)).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const allTransactions = [...pendingTransactions, ...confirmedTransactions];
 
@@ -75,7 +75,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
                 className={classes.listItem}
               >
                 <Box display="flex" alignItems="center" gap="8px">
-                {!tx.confirmedAt && <CircularProgress size={20} color="primary" />}
+                {!tx.confirmedAt && <Box width={20} height={20} display="flex" alignItems="center" justifyContent="center"><CircularProgress size={20} color="primary" /></Box>}
                 {tx.confirmedAt && !tx.isFailed && <CheckCircleIcon className={classes.itemIcon} color="success" />}
                 {tx.confirmedAt && tx.isFailed && <ErrorIcon className={classes.itemIcon} color="error" />}
                 <Typography className={classes.summary}>{tx.summary}</Typography>
