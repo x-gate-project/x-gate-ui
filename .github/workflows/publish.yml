@@ -54,25 +54,3 @@ jobs:
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ steps.create-version.outputs.version }}
-
-  create-release:
-    if: ${{ inputs.create-release == true }}
-    needs: publish-version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ needs.publish-version.outputs.version }}
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.publish-version.outputs.version }}
-          release_name: Release - ${{ needs.publish-version.outputs.version }}
-          draft: false
-          prerelease: false
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ needs.publish-version.outputs.version }}
