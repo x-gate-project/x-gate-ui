@@ -5,6 +5,19 @@ import { isProduction } from "./utils/system";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import { walletConnect } from "wagmi/connectors";
 
+const DEFAULT_RPC_URLS = {
+  MAINNET: "https://api.gu.net/v1/json-rpc/evm/1",
+  SEPOLIA: "https://api.gu.net/v1/json-rpc/evm/11155111",
+  JOC: "https://api.gu.net/v1/json-rpc/evm/81",
+  JOCT: "https://api.gu.net/v1/json-rpc/evm/10081",
+  BASE: "https://api.gu.net/v1/json-rpc/evm/8453",
+  BASE_SEPOLIA: "https://api.gu.net/v1/json-rpc/evm/84532",
+  ARBITRUM: "https://api.gu.net/v1/json-rpc/evm/42161",
+  ARBITRUM_SEPOLIA: "https://api.gu.net/v1/json-rpc/evm/421614",
+  AVALANCHE: "https://api.gu.net/v1/json-rpc/evm/43114",
+  AVALANCHE_FUJI: "https://api.gu.net/v1/json-rpc/evm/43113",
+};
+
 export const joc = isProduction
   ? defineChain({
       id: 81,
@@ -17,8 +30,7 @@ export const joc = isProduction
       rpcUrls: {
         default: {
           http: [
-            "https://rpc-1.japanopenchain.org:8545",
-            "https://rpc-2.japanopenchain.org:8545",
+            process.env.NEXT_PUBLIC_JOC_RPC_URL || DEFAULT_RPC_URLS.JOC,
           ],
         },
       },
@@ -41,8 +53,7 @@ export const joc = isProduction
       rpcUrls: {
         default: {
           http: [
-            "https://rpc-1.testnet.japanopenchain.org:8545",
-            "https://rpc-2.testnet.japanopenchain.org:8545",
+            process.env.NEXT_PUBLIC_JOC_RPC_URL || DEFAULT_RPC_URLS.JOCT,
           ],
         },
       },
@@ -56,10 +67,94 @@ export const joc = isProduction
       testnet: true,
     });
 
-export const ethereum = isProduction ? mainnet : sepolia;
-export const arbitrumNet = isProduction ? arbitrum : arbitrumSepolia;
-export const baseNet = isProduction ? base : baseSepolia;
-export const avalancheNet = isProduction ? avalanche : avalancheFuji;
+export const ethereum = isProduction
+  ? defineChain({
+    ...mainnet,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL || DEFAULT_RPC_URLS.MAINNET,
+          ],
+        },
+      },
+    })
+  : defineChain({
+      ...sepolia,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL || DEFAULT_RPC_URLS.SEPOLIA,
+          ],
+        },
+      },
+    });
+
+export const arbitrumNet = isProduction
+  ? defineChain({
+    ...arbitrum,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || DEFAULT_RPC_URLS.ARBITRUM,
+          ],
+        },
+      },
+    })
+  : defineChain({
+      ...arbitrumSepolia,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || DEFAULT_RPC_URLS.ARBITRUM_SEPOLIA,
+          ],
+        },
+      },
+    });
+
+export const baseNet = isProduction
+  ? defineChain({
+    ...base,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_BASE_RPC_URL || DEFAULT_RPC_URLS.BASE,
+          ],
+        },
+      },
+    })
+  : defineChain({
+      ...baseSepolia,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_BASE_RPC_URL || DEFAULT_RPC_URLS.BASE_SEPOLIA,
+          ],
+        },
+      },
+    });
+
+export const avalancheNet = isProduction
+  ? defineChain({
+    ...avalanche,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_AVALANCHE_RPC_URL || DEFAULT_RPC_URLS.AVALANCHE,
+          ],
+        },
+      },
+    })
+  : defineChain({
+      ...avalancheFuji,
+      rpcUrls: {
+        default: {
+          http: [
+            process.env.NEXT_PUBLIC_AVALANCHE_RPC_URL || DEFAULT_RPC_URLS.AVALANCHE_FUJI,
+          ],
+        },
+      },
+    });
+
 export function getWagmiConfig() {
   return createConfig({
     chains: [ethereum, joc, arbitrumNet, baseNet, avalancheNet],
