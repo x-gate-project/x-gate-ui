@@ -31,8 +31,6 @@ const RecentTransactionDialog: React.FC<IProps> = ({
   const confirmedTransactions = useMemo(() => transactions.filter((tx) => (tx.confirmedAt !== undefined || tx.isFailed !== undefined)).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const allTransactions = [...pendingTransactions, ...confirmedTransactions];
 
-  console.log('ALL: ', allTransactions)
-
   const handleClearCompletedTransactions = useCallback(() => {
     clearCompletedTransactions();
     onClose();
