@@ -68,17 +68,19 @@ class LocalStorageService {
     const transactions = this.getAllTransactions();
     transactions.push(transaction);
     save(LocalStorageKey.TRANSACTIONS, JSON.stringify(transactions));
-    return transactions;
+    const updatedTransactions = this.getTransactionsByWalletAddress(transaction.fromAddress)
+    return updatedTransactions;
   };
 
-  confirmTransaction (hash: string, confirmedAt: number) {
+  confirmTransaction (hash: string, confirmedAt: number, walletAddress: string) {
     const transactions = this.getAllTransactions();
     const index = transactions.findIndex((t: Transaction) => t.hash === hash);
     if (index !== -1) {
       transactions[index].confirmedAt = confirmedAt;
       save(LocalStorageKey.TRANSACTIONS, JSON.stringify(transactions));
     }
-    return transactions;
+    const updatedTransactions = this.getTransactionsByWalletAddress(walletAddress)
+    return updatedTransactions;
   };
 
   setTransactionFailed (hash: string) {
@@ -91,12 +93,14 @@ class LocalStorageService {
     return transactions;
   }
 
-  clearConfirmedTransactions () {
+  clearCompletedTransactions (walletAddress: string) {
     const transactions = this.getAllTransactions();
-    const unConfirmedTransactions = transactions.filter((t: Transaction) => t.confirmedAt === undefined);
+    const currentAddressUncompletedTransactions = transactions.filter((t: Transaction) => t.confirmedAt === undefined && t.isFailed === undefined && t.fromAddress === walletAddress )
+    const anotherAddressTransactions = transactions.filter((t: Transaction) => t.fromAddress !== walletAddress );
+    const updatedTransactions = [...currentAddressUncompletedTransactions, ...anotherAddressTransactions]
     remove(LocalStorageKey.TRANSACTIONS);
-    save(LocalStorageKey.TRANSACTIONS, JSON.stringify(unConfirmedTransactions));
-    return unConfirmedTransactions;
+    save(LocalStorageKey.TRANSACTIONS, JSON.stringify(updatedTransactions));
+    return currentAddressUncompletedTransactions;
   };
 
   getPageState (): PageState {
