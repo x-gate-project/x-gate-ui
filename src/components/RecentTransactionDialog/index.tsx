@@ -81,7 +81,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
                 <Typography className={classes.summary}>{tx.summary}</Typography>
                 </Box>
                 <Link href={getExplorerLink(tx)} target="_blank">
-                  <LaunchIcon className={classes.itemIcon} />
+                  <LaunchIcon className={classes.launchIcon} />
                 </Link>
               </div>
             )) : (
@@ -114,9 +114,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     padding: '6px 8px',
     justifyContent: 'space-between',
     width: '100%',
-    '&:hover': {
-      cursor: 'pointer',
-    },
   },
   summary: {
     fontWeight: 400,
@@ -164,6 +161,13 @@ const useStyles = makeStyles()((theme: Theme) => ({
   itemIcon: {
     width: 24,
     height: 24,
+  },
+  launchIcon: {
+    width: 24,
+    height: 24,
+    '&:hover': {
+      cursor: 'pointer',
+    },
   },
   emptyTitle: {
     margin: '24px auto 0',
