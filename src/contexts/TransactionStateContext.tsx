@@ -11,6 +11,7 @@ import {
   FC,
   useEffect,
   useRef,
+  useCallback,
 } from "react";
 import { useAccount, useConfig } from "wagmi";
 import { waitForTransactionReceipt } from "wagmi/actions";
@@ -20,133 +21,146 @@ import { TransactionMethod } from "@/enums/transaction-method";
 interface TransactionStateContextProps {
   transactions: Transaction[];
   addTransaction: (transaction: Transaction, waitForSuccess: () => Promise<void>) => Promise<void>;
-  clearConfirmedTransactions: () => void;
+  clearCompletedTransactions: () => void;
 }
 
 const TransactionStateContext = createContext<TransactionStateContextProps | undefined>(undefined);
 
 export const TransactionStateProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const hasRunRef = useRef(false);
-
   const { address, isDisconnected } = useAccount();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const processedAddressesRef = useRef<Set<string>>(new Set());
   const wagmiConfig = useConfig();
   const dict = useDict();
 
+  const updateTransaction = useCallback(() => {
+    if(!address) return;
+    const transactions = localStorageService.getTransactionsByWalletAddress(address).sort((a, b) => a.createdAt - b.createdAt);
+    setTransactions(transactions);
+  }, [address]);
+
+  const showSuccessSnackbar = useCallback((tx: Transaction) => {
+    const fromNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.fromChainId)?.name || '';
+    const toNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.toChainId)?.name || '';
+    let messageTemplate;
+    switch (tx.method) {
+      case TransactionMethod.SEND:
+        messageTemplate = dict.send_tab.send_success;
+        break;
+      case TransactionMethod.MINT:
+        messageTemplate = dict.mint_tab.mint_success;
+        break;
+      case TransactionMethod.BURN:
+        messageTemplate = dict.burn_tab.burn_success;
+        break;
+      default:
+        return;
+    }
+    enqueueSnackbar(
+      messageTemplate
+        .replace("{{token}}", tx.token)
+        .replace("{{from}}", fromNetwork)
+        .replace("{{to}}", toNetwork),
+      { variant: "success" }
+    );
+  }, [wagmiConfig.chains, dict]);
+
+  const showErrorSnackbar = useCallback((tx: Transaction, error: any) => {
+    const fromNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.fromChainId)?.name;
+    const toNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.toChainId)?.name;
+    let messageTemplate;
+
+    switch (tx.method) {
+      case TransactionMethod.SEND:
+        messageTemplate = dict.send_tab.send_failed;
+        break;
+      case TransactionMethod.MINT:
+        messageTemplate = dict.mint_tab.mint_failed;
+        break;
+      case TransactionMethod.BURN:
+        messageTemplate = dict.burn_tab.burn_failed;
+        break;
+      default:
+        return;
+    }
+
+    enqueueSnackbar(
+      messageTemplate
+        .replace("{{token}}", tx.token)
+        .replace("{{from}}", fromNetwork!)
+        .replace("{{to}}", toNetwork!)
+        .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
+      { variant: "error", style: { whiteSpace: "pre-line" } }
+    );
+  }, [wagmiConfig.chains, dict]);
+
   useEffect(() => {
     const fetchTransactions = async () => {
-      if (!address || hasRunRef.current || isDisconnected) return;
-      hasRunRef.current = true;
+      if (!address || isDisconnected) return;
 
       const storedTransactions = localStorageService.getTransactionsByWalletAddress(address);
-      if (storedTransactions) {
+      if(storedTransactions) {
         setTransactions(storedTransactions);
       }
 
-      for (const tx of storedTransactions) {
-        if (!tx.confirmedAt) {
-          try {
-            if (tx.lzEndpointId) {
-              await waitForMessageReceived(tx.lzEndpointId, tx.hash);
-            } else {
-              await waitForTransactionReceipt(wagmiConfig, {
-                hash: tx.hash as `0x${string}`,
-              });
-            }
-            const updatedTime = Date.now();
-            const transactions = localStorageService.confirmTransaction(tx.hash, updatedTime);
-            setTransactions(transactions.sort((a, b) => a.createdAt - b.createdAt));
+      if(!processedAddressesRef.current.has(address)) {
+        processedAddressesRef.current.add(address);
+        for (const tx of storedTransactions) {
+          if (!tx.confirmedAt) {
+            try {
+              if (tx.lzEndpointId) {
+                await waitForMessageReceived(tx.lzEndpointId, tx.hash);
+              } else {
+                await waitForTransactionReceipt(wagmiConfig, {
+                  hash: tx.hash as `0x${string}`,
+                });
+              }
 
-            const fromNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.fromChainId)?.name;
-            const toNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.toChainId)?.name;
+              const updatedTime = Date.now();
+              localStorageService.confirmTransaction(tx.hash, updatedTime, address);
+              showSuccessSnackbar(tx);
+            } catch (error: any) {
+              if (tx.lzEndpointId && !error.message.startsWith("Message failed") && !error.message.startsWith("More than one message")) {
+                continue;
+              }
+              localStorageService.setTransactionFailed(tx.hash);
 
-            if (tx.method === TransactionMethod.SEND) {
-              enqueueSnackbar(
-                dict.send_tab.send_success
-                  .replace("{{token}}", tx.token)
-                  .replace("{{from}}", fromNetwork!)
-                  .replace("{{to}}", toNetwork!),
-                { variant: "success" }
-              );
-            }
-
-            if (tx.method === TransactionMethod.MINT) {
-              enqueueSnackbar(
-                dict.mint_tab.mint_success
-                  .replace("{{token}}", tx.token)
-                  .replace("{{from}}", fromNetwork!)
-                  .replace("{{to}}", toNetwork!),
-                { variant: "success" }
-              );
-            }
-
-            if (tx.method === TransactionMethod.BURN) {
-              enqueueSnackbar(
-                dict.burn_tab.burn_success
-                  .replace("{{token}}", tx.token)
-                  .replace("{{from}}", fromNetwork!)
-                  .replace("{{to}}", toNetwork!),
-                { variant: "success" }
-              );
-            }
-          } catch (error: any) {
-            if (tx.lzEndpointId && !error.message.startsWith("Message failed") && !error.message.startsWith("More than one message")) {
+              showErrorSnackbar(tx, error);
+            } finally {
+              updateTransaction();
               continue;
-            }
-            const fromNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.fromChainId)?.name;
-            const toNetwork = wagmiConfig.chains.find((chain) => chain.id === tx.toChainId)?.name;
-
-            localStorageService.setTransactionFailed(tx.hash);
-            if (tx.method === TransactionMethod.SEND) {
-              enqueueSnackbar(
-                dict.send_tab.send_failed.replace("{{token}}", tx.token)
-                  .replace("{{from}}", fromNetwork!)
-                  .replace("{{to}}", toNetwork!)
-                  .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
-                { variant: "error", style: { whiteSpace: "pre-line" } }
-              );
-            }
-
-            if (tx.method === TransactionMethod.MINT) {
-              enqueueSnackbar(
-                dict.mint_tab.mint_failed.replace("{{token}}", tx.token)
-                  .replace("{{from}}", fromNetwork!)
-                  .replace("{{to}}", toNetwork!)
-                  .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
-                { variant: "error", style: { whiteSpace: "pre-line" } }
-              );
-            }
-
-            if (tx.method === TransactionMethod.BURN) {
-              enqueueSnackbar(
-                dict.burn_tab.burn_failed.replace("{{token}}", tx.token)
-                  .replace("{{from}}", fromNetwork!)
-                  .replace("{{to}}", toNetwork!)
-                  .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
-                { variant: "error", style: { whiteSpace: "pre-line" } }
-              );
             }
           }
         }
       }
 
-      const newTransactions = localStorageService.getTransactionsByWalletAddress(address).sort((a, b) => a.createdAt - b.createdAt);
-      setTransactions(newTransactions);
+      processedAddressesRef.current.delete(address);
     };
 
     fetchTransactions();
-  }, [address, wagmiConfig, isDisconnected, dict]);
+  }, [
+    address,
+    wagmiConfig,
+    isDisconnected,
+    dict,
+    updateTransaction,
+    showErrorSnackbar,
+    showSuccessSnackbar
+  ]);
 
 
   // Function to add a transaction
   const addTransaction = async (transaction: Transaction, waitForSuccess: () => Promise<void>) => {
     let transactions: Transaction[] = [];
+    if(!address) {
+      return;
+    }
     try {
       transactions = localStorageService.addTransaction(transaction);
       setTransactions(transactions);
       await waitForSuccess();
       const updatedTime = Date.now();
-      transactions = localStorageService.confirmTransaction(transaction.hash, updatedTime);
+      transactions = localStorageService.confirmTransaction(transaction.hash, updatedTime, address);
     } catch (error) {
       transactions = localStorageService.setTransactionFailed(transaction.hash);
       throw error;
@@ -155,16 +169,19 @@ export const TransactionStateProvider: FC<{ children: ReactNode }> = ({ children
     }
   };
 
-  const clearConfirmedTransactions = () => {
-    const confirmedTransactions = localStorageService.clearConfirmedTransactions();
-    setTransactions(confirmedTransactions);
+  const clearCompletedTransactions = () => {
+    if(!address) {
+      return;
+    }
+    const currentAddressUncompletedTransactions = localStorageService.clearCompletedTransactions(address);
+    setTransactions(currentAddressUncompletedTransactions);
   };
 
   return (
     <TransactionStateContext.Provider value={{
         transactions,
         addTransaction,
-        clearConfirmedTransactions
+        clearCompletedTransactions
       }}>
       {children}
     </TransactionStateContext.Provider>

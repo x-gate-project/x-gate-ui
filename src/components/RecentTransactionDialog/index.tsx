@@ -25,16 +25,18 @@ const RecentTransactionDialog: React.FC<IProps> = ({
   const dict = useDict();
 
   const { classes } = useStyles();
-  const { transactions, clearConfirmedTransactions } = useTransactionState();
+  const { transactions, clearCompletedTransactions } = useTransactionState();
 
   const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const confirmedTransactions = useMemo(() => transactions.filter((tx) => (tx.confirmedAt !== undefined || tx.isFailed !== undefined)).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const allTransactions = [...pendingTransactions, ...confirmedTransactions];
 
-  const handleClearConfirmedTransactions = useCallback(() => {
-    clearConfirmedTransactions();
+  console.log('ALL: ', allTransactions)
+
+  const handleClearCompletedTransactions = useCallback(() => {
+    clearCompletedTransactions();
     onClose();
-  }, [clearConfirmedTransactions, onClose]);
+  }, [clearCompletedTransactions, onClose]);
 
   const getExplorerLink = (tx: Transaction) => {
     if (tx.lzEndpointId) {
@@ -64,7 +66,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
           {dict.recent_transaction_dialog.title}
         </DialogTitle>
         <div className={classes.container}>
-          <div className={classes.clearAllContainer} onClick={handleClearConfirmedTransactions}>
+          <div className={classes.clearAllContainer} onClick={handleClearCompletedTransactions}>
             <Typography className={classes.title}>{dict.recent_transaction_dialog.transactions}</Typography>
             <Typography className={classes.clearAll}>{dict.recent_transaction_dialog.clear_all}</Typography>
           </div>
