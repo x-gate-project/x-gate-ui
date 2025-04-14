@@ -1,6 +1,11 @@
-# X-GATE
+# X-GATE-UI
 
 ## Getting Started
+
+Install
+```bash
+npm install
+```
 
 First, run the development server:
 
