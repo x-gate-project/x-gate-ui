@@ -176,6 +176,8 @@ export default function Send() {
         });
         enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
 
+        resetSendAmount();
+
         await addTransaction({
           hash: sendTokenTxHash,
           summary: `Send ${sendAmount} ${selectedToken} from ${selectedFromNetwork.name} to ${selectedToNetwork.name}`,
@@ -195,7 +197,6 @@ export default function Send() {
           await waitForMessageReceived(destChain, sendTokenTxHash);
         });
 
-        resetSendAmount();
         refetchFromTokenBalance();
         refetchToTokenBalance();
         enqueueSnackbar(

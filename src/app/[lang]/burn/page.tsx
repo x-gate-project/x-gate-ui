@@ -158,6 +158,8 @@ export default function Burn() {
             { variant: "info" }
           );
 
+          resetBurnAmount();
+
           await addTransaction({
             hash: sendTokenTxHash,
             summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
@@ -184,6 +186,8 @@ export default function Burn() {
             args: [parseUnits(burnAmount, 6)],
           });
 
+          resetBurnAmount();
+
           await addTransaction({
             hash: hash,
             summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
@@ -202,7 +206,6 @@ export default function Burn() {
           });
         }
 
-        resetBurnAmount();
         refetchCurrentTokenData();
         refetchToTokenData();
         enqueueSnackbar(
