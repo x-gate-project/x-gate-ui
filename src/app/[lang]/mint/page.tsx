@@ -195,6 +195,9 @@ export default function Mint() {
             .replace("{{destination}}", toNetwork.name),
             { variant: "info" }
           );
+
+          resetMintAmount();
+
           await addTransaction({
             hash: mintTokenTxHash,
             summary: `Mint ${mintAmount} ${destinationToken} from ${ethereum.name} to ${toNetwork.name}`,
@@ -260,6 +263,8 @@ export default function Mint() {
             args: [parseUnits(mintAmount, 6)],
           });
 
+          resetMintAmount();
+
           await addTransaction({
             hash: mintTokenTxHash,
             summary: `Mint ${mintAmount} ${destinationToken} from ${ethereum.name} to ${toNetwork.name}`,
@@ -279,7 +284,6 @@ export default function Mint() {
         }
         console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully.`);
 
-        resetMintAmount();
         refetchUsdtEthereumData();
         refetchToTokenBalance();
         enqueueSnackbar(
