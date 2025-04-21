@@ -114,8 +114,7 @@ const StyledSelectedNetworkTitle = styled("div")(({ theme }) => ({
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
-  '@media (max-width: 400px)': {
-    maxWidth: "120px",
-    marginLeft: "4px",
+  '@media (max-width: 600px)': {
+    display: "none",
   },
 }));

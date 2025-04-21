@@ -39,6 +39,9 @@ import { Token } from "@/enums/token";
 import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
+import { useTransactionState } from "@/contexts/TransactionStateContext";
+import { TransactionMethod } from "@/enums/transaction-method";
+
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
@@ -50,7 +53,6 @@ export default function Send() {
   const resetSendAmount = useCallback(() => setSendAmount(""), []);
   const { classes } = useStyles();
   const { enqueueSnackbar } = useSnackbar();
-  const [isSending, setIsSending] = useState(false);
   const wagmiConfig = useConfig();
   const { address, isConnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
@@ -76,6 +78,7 @@ export default function Send() {
     chainId: selectedToNetwork.id,
   });
   const { chainId } = useAccount();
+  const { addTransaction } = useTransactionState();
 
   const fromTokenBalance = fromTokenData?.formatted;
   const toTokenBalance = toTokenData?.formatted;
@@ -116,12 +119,9 @@ export default function Send() {
       if (!address) {
         return;
       }
-
       const receiverAddress = isSendToAnotherWallet ? receiveAddress : address;
 
       event.preventDefault();
-      setIsSending(true);
-
       try {
         if (selectedFromNetwork.id !== chainId) {
           await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
@@ -174,29 +174,48 @@ export default function Send() {
           args: [sendParam, [fee.nativeFee, 0], address],
           value: fee.nativeFee,
         });
-        await waitForTransactionReceipt(wagmiConfig, {
-          hash: sendTokenTxHash,
-        });
-
         enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
 
-        await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id], sendTokenTxHash);
-
         resetSendAmount();
+
+        await addTransaction({
+          hash: sendTokenTxHash,
+          summary: `Send ${sendAmount} ${selectedToken} from ${selectedFromNetwork.name} to ${selectedToNetwork.name}`,
+          fromAddress: address,
+          toAddress: receiverAddress,
+          fromChainId: selectedFromNetwork.id,
+          toChainId: selectedToNetwork.id,
+          amount: sendAmount,
+          method: TransactionMethod.SEND,
+          token: selectedToken,
+          lzEndpointId: destChain,
+          createdAt: Date.now(),
+        }, async () => {
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: sendTokenTxHash,
+          });
+          await waitForMessageReceived(destChain, sendTokenTxHash);
+        });
+
         refetchFromTokenBalance();
         refetchToTokenBalance();
         enqueueSnackbar(
-          dict.send_tab.send_success.replace("{{token}}", selectedToken),
+          dict.send_tab.send_success
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedFromNetwork.name)
+            .replace("{{to}}", selectedToNetwork.name),
           { variant: "success" }
         );
       } catch (error) {
         console.log(`Send ${selectedToken} failded with error: ${error}`);
         enqueueSnackbar(
-          `${dict.send_tab.send_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
+          dict.send_tab.send_failed
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedFromNetwork.name)
+            .replace("{{to}}", selectedToNetwork.name)
+            .replace("{{error}}", (error as any).shortMessage || "Unknown error"),
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
-      } finally {
-        setIsSending(false);
       }
     },
     [
@@ -214,6 +233,7 @@ export default function Send() {
       dict,
       chainId,
       refetchToTokenBalance,
+      addTransaction,
     ]
   );
 
@@ -287,7 +307,6 @@ export default function Send() {
                 border="1px solid rgb(247, 248, 250)"
                 borderRadius="20px"
                 padding="16px"
-                paddingBottom={fromTokenBalance ? "16px" : "32px"}
               >
                 <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
                   <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
@@ -403,14 +422,12 @@ export default function Send() {
                     </div>
                   </Box>
                   {toTokenBalance &&
-                    <Tooltip title={toTokenBalance}>
-                      <div className={classes.topBalanceWrapper}>
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                        <Box color="#64748B">
-                          {toTokenBalance}
-                        </Box>
-                      </div>
-                    </Tooltip>
+                    <div className={classes.topBalanceWrapper}>
+                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                      <Box color="#64748B">
+                        {toTokenBalance}
+                      </Box>
+                    </div>
                   }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -484,7 +501,6 @@ export default function Send() {
                     />
                   }
                   checked={isSendToAnotherWallet}
-                  disabled={isSending}
                   label={
                     <div className={classes.inputTitle}>
                       {dict.send_tab.another_wallet_address}
@@ -528,15 +544,11 @@ export default function Send() {
             type="submit"
             color="primary"
             disabled={
-              isSending ||
               !sendAmount ||
               insufficientBalance ||
               !isConnected ||
               (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))
               || selectedFromNetwork.id === selectedToNetwork.id
-            }
-            endIcon={
-              isSending && <CircularProgress size={20} color="inherit" />
             }
           >
             {dict.send_tab.button}

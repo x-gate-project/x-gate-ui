@@ -1,6 +1,6 @@
 {
-  "name": "my-app",
-  "version": "0.1.0",
+  "name": "@x-gate-project/x-gate-ui",
+  "version": "1.1.0-build.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,6 +16,7 @@
     "@layerzerolabs/lz-definitions": "^3.0.67",
     "@layerzerolabs/lz-v2-utilities": "^3.0.67",
     "@layerzerolabs/scan-client": "^0.0.8",
+    "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.4",
     "@mui/material-nextjs": "^6.4.3",
     "connectkit": "^1.8.2",
@@ -29,7 +30,10 @@
     "react-hook-form": "^7.54.2",
     "tss-react": "^4.9.15",
     "viem": "^2.23.1",
-    "wagmi": "^2.14.11"
+    "wagmi": "^2.14.11",
+    "toformat": "2.0.0",
+    "decimal.js-light": "2.5.0",
+    "jsbi": "3.1.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
