@@ -11,7 +11,6 @@ import theme from "../../theme.config";
 import { getWagmiConfig } from "../../wagmi.config";
 import { DictProvider } from "@/contexts/DictContext";
 import { SupportedLocale } from "../../dicts";
-import { TransactionStateProvider } from "@/contexts/TransactionStateContext";
 
 type Props = {
   children: ReactNode;
@@ -31,11 +30,9 @@ export function Providers({ children, initialWagmiState, params }: Props) {
               anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             <WagmiProvider config={config} initialState={initialWagmiState}>
-              <TransactionStateProvider>
-                <QueryClientProvider client={queryClient}>
-                  <ConnectKitProvider>{children}</ConnectKitProvider>
-                </QueryClientProvider>
-              </TransactionStateProvider>
+              <QueryClientProvider client={queryClient}>
+                <ConnectKitProvider>{children}</ConnectKitProvider>
+              </QueryClientProvider>
             </WagmiProvider>
           </SnackbarProvider>
           </ThemeProvider>

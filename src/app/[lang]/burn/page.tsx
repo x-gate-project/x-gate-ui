@@ -39,8 +39,6 @@ import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
-import { TransactionMethod } from "@/enums/transaction-method";
-import { useTransactionState } from "@/contexts/TransactionStateContext";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -53,6 +51,7 @@ export default function Burn() {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [burnAmount, setBurnAmount] = useState("");
   const resetBurnAmount = useCallback(() => setBurnAmount(""), []);
+  const [isBurning, setIsBurning] = useState(false);
   const { classes } = useStyles();
   const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
@@ -71,8 +70,6 @@ export default function Burn() {
       token: selectedToken === Token.USDTX ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
       chainId: ethereum.id,
   });
-  const { addTransaction } = useTransactionState();
-
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
 
@@ -104,6 +101,7 @@ export default function Burn() {
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
+      setIsBurning(true);
       try {
         if (chainId !== selectedNetwork.id) {
           await switchChain(wagmiConfig, { chainId: selectedNetwork.id });
@@ -151,33 +149,15 @@ export default function Burn() {
             args: [sendParam, [fee.nativeFee, 0], address],
             value: fee.nativeFee,
           });
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: sendTokenTxHash,
+          });
           enqueueSnackbar(
-            dict.burn_tab.waiting_for_sending
-              .replace("{{token}}", selectedToken === Token.USDTX ? Token.USDT : Token.USDC)
-              .replace("{{destination}}", ethereum.name),
+            dict.burn_tab.waiting_for_sending.replace("{{token}}", selectedToken).replace("{{destination}}", ethereum.name),
             { variant: "info" }
           );
 
-          resetBurnAmount();
-
-          await addTransaction({
-            hash: sendTokenTxHash,
-            summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
-            fromAddress: address as string,
-            toAddress: address as string,
-            fromChainId: selectedNetwork.id,
-            toChainId: ethereum.id,
-            amount: burnAmount,
-            method: TransactionMethod.BURN,
-            token: selectedToken,
-            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id],
-            createdAt: Date.now(),
-          }, async () => {
-            await waitForTransactionReceipt(wagmiConfig, {
-              hash: sendTokenTxHash,
-            });
-            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
-          });
+          await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
         } else {
           const hash = await writeContract(wagmiConfig, {
             abi: tokenContractAbi,
@@ -186,44 +166,26 @@ export default function Burn() {
             args: [parseUnits(burnAmount, 6)],
           });
 
-          resetBurnAmount();
-
-          await addTransaction({
-            hash: hash,
-            summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
-            fromAddress: address as string,
-            toAddress: address as string,
-            fromChainId: selectedNetwork.id,
-            toChainId: ethereum.id,
-            amount: burnAmount,
-            method: TransactionMethod.BURN,
-            token: selectedToken,
-            createdAt: Date.now(),
-          }, async () => {
-            await waitForTransactionReceipt(wagmiConfig, {
-              hash,
-            });
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash,
           });
         }
 
+        resetBurnAmount();
         refetchCurrentTokenData();
         refetchToTokenData();
         enqueueSnackbar(
-          dict.burn_tab.burn_success
-            .replace("{{token}}", selectedToken)
-            .replace("{{from}}", selectedNetwork.name)
-            .replace("{{to}}", ethereum.name),
+          dict.burn_tab.burn_success.replace("{{token}}", selectedToken),
           { variant: "success" }
         );
       } catch (error) {
         console.log("Burn failded with error: ", error);
         enqueueSnackbar(
-          dict.burn_tab.burn_failed.replace("{{token}}", selectedToken)
-            .replace("{{from}}", selectedNetwork.name)
-            .replace("{{to}}", ethereum.name)
-            .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
+          `${dict.burn_tab.burn_failed.replace("{{token}}", selectedToken).replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error)}`,
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
+      } finally {
+        setIsBurning(false);
       }
     },
     [
@@ -238,7 +200,6 @@ export default function Burn() {
       address,
       selectedToken,
       refetchToTokenData,
-      addTransaction,
     ]
   );
 
@@ -277,6 +238,7 @@ export default function Burn() {
                 border="1px solid rgb(247, 248, 250)"
                 borderRadius="20px"
                 padding="16px"
+                paddingBottom={currentTokenBalance ? "16px" : "32px"}
               >
                 <Box width="100%" display="flex" alignItems="center" justifyContent="space-between" gap="4px">
                   <Box display="flex" alignItems="center" justifyContent="center" gap="4px">
@@ -285,15 +247,17 @@ export default function Burn() {
                     </Box>
                   </Box>
                   {currentTokenBalance &&
-                    <div className={classes.topBalanceWrapper}>
-                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                      <Box color="#64748B"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        whiteSpace="nowrap">
-                        {currentTokenBalance}
-                      </Box>
-                    </div>
+                    <Tooltip title={currentTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {currentTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
                   }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -375,15 +339,17 @@ export default function Burn() {
                     </Box>
                   </Box>
                   {toTokenBalance &&
-                    <div className={classes.topBalanceWrapper}>
-                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
-                      <Box color="#64748B"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        whiteSpace="nowrap">
-                        {toTokenBalance}
-                      </Box>
-                    </div>
+                    <Tooltip title={toTokenBalance}>
+                      <div className={classes.topBalanceWrapper}>
+                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap">
+                          {toTokenBalance}
+                        </Box>
+                      </div>
+                    </Tooltip>
                   }
                 </Box>
                 <Box width="100%" display="flex" alignItems="start" justifyContent="center" flexDirection="column">
@@ -441,10 +407,14 @@ export default function Burn() {
               type="submit"
               color="primary"
               disabled={
+                isBurning ||
                 !burnAmount ||
                 insufficientBalance ||
                 isDisconnected ||
                 isConnecting
+              }
+              endIcon={
+                isBurning && <CircularProgress size={20} color="inherit" />
               }
             >
               {dict.burn_tab.button}
