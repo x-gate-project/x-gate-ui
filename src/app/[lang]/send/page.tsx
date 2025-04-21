@@ -127,27 +127,15 @@ export default function Send() {
           await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
         }
 
-        const isFromETH = selectedFromNetwork.id === ethereum.id;
-
-        const options = isFromETH
-          ? Options.newOptions()
-              .addExecutorLzReceiveOption(200000, 0)
-              .toHex()
-              .toString()
-          : Options.newOptions()
-              .addExecutorLzReceiveOption(200000, 0)
-              .addExecutorComposeOption(0, 500000, 0)
-              .toHex()
-              .toString();
-        const sourceTokenAddress = selectedToken === Token.USDTX ?
-          CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any;
-        const composeMessage = isFromETH
-          ? "0x"
-          : ethers.solidityPacked(
-              ["uint16", "bytes32"],
-              [1, ethers.zeroPadValue(receiverAddress, 32)]
-            );
-
+        const options = Options.newOptions()
+          .addExecutorLzReceiveOption(200000, 0)
+          .toHex()
+          .toString();
+        const sourceTokenAddress =
+          selectedToken === Token.USDTX
+            ? (CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any)
+            : (CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any);
+        const composeMessage = "0x";
         const destChain = CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id];
 
         const sendParam = [
