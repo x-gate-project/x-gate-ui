@@ -5,8 +5,9 @@ import { styled } from "@mui/material/styles";
 import Button from "@mui/material/Button";
 import { useDict } from "@/contexts/DictContext";
 import { useAccount, useBalance } from "wagmi";
-import Tooltip from "@mui/material/Tooltip";
 import { Box } from "@mui/material";
+import { CurrencyAmount } from "@/utils/fractions/currencyAmount";
+import JSBI from 'jsbi'
 
 interface WalletButtonProps {
   isConnected: boolean;
@@ -22,8 +23,15 @@ export default function WalletButton({ isConnected, show, truncatedAddress }: Wa
     chainId: chainId,
   });
 
-  const balance = data?.formatted;
   const unit = data?.symbol || "";
+  const balance = (() => {
+    try {
+      return CurrencyAmount.ether(JSBI.BigInt(data?.value.toString() || "0"));
+    } catch (error) {
+      console.error("Error formatting balance:", error);
+      return undefined;
+    }
+  })();
 
   if(!isConnected) {
     return (
@@ -48,7 +56,6 @@ export default function WalletButton({ isConnected, show, truncatedAddress }: Wa
 
   return (
     <StyledRootDiv>
-      <Tooltip title={balance}>
         <Box
           sx={{
             display: "flex",
@@ -62,39 +69,34 @@ export default function WalletButton({ isConnected, show, truncatedAddress }: Wa
             },
           }}
         >
-          <Box
-            sx={{
-              fontWeight: 500,
-              fontSize: "16px",
-              lineHeight: "22.4px",
-              letterSpacing: "0%",
-              color: "#000000",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              maxWidth: "120px",
-              '@media (max-width: 720px)': {
-                maxWidth: "70px",
-              },
-              '@media (max-width: 500px)': {
-                maxWidth: "50px",
-              },
-            }}
-          >
-            {balance}
-          </Box>
-          <Box
-            sx={{
-              fontWeight: 500,
-              fontSize: "16px",
-              lineHeight: "22.4px",
-              letterSpacing: "0%",
-              color: "#000000",
-            }}
-          >
-            {unit}
-          </Box>
+        <Box
+          sx={{
+            fontWeight: 500,
+            fontSize: "16px",
+            lineHeight: "22.4px",
+            letterSpacing: "0%",
+            color: "#000000",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            '@media (max-width: 500px)': {
+              maxWidth: "220px",
+            },
+          }}
+        >
+          {balance ? balance?.toSignificant(4) : ""}
         </Box>
-      </Tooltip>
+        <Box
+          sx={{
+            fontWeight: 500,
+            fontSize: "16px",
+            lineHeight: "22.4px",
+            letterSpacing: "0%",
+            color: "#000000",
+          }}
+        >
+          {unit}
+        </Box>
+      </Box>
       <Button
         variant="contained"
         onClick={show}
