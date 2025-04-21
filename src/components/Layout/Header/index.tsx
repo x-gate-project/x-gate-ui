@@ -8,7 +8,6 @@ import { useDict } from "@/contexts/DictContext";
 import { ConnectKitButton } from "connectkit";
 import NetworkSwitcher from "../NetworkSwitcher";
 import WalletButton from "../WalletButton";
-import TransactionButton from "../TransactionButton";
 export default function Header() {
   const dict = useDict();
 
@@ -43,7 +42,6 @@ export default function Header() {
           </StyledLeftDiv>
           <StyledRightDiv>
               <StyledWalletSwitcherContainerDiv>
-                <TransactionButton/>
                 <NetworkSwitcher />
                 <ConnectKitButton.Custom>
                   {({ isConnected, show, truncatedAddress }) => (

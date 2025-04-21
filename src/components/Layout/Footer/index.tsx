@@ -5,7 +5,6 @@ import { styled } from "@mui/material/styles";
 import NetworkSwitcher from "../NetworkSwitcher";
 import { ConnectKitButton } from "connectkit";
 import WalletButton from "../WalletButton";
-import TransactionButton from "../TransactionButton";
 
 export default function Footer() {
   return (
@@ -20,7 +19,6 @@ export default function Footer() {
             </ConnectKitButton.Custom>
           </StyledLeftDiv>
           <StyledRightDiv>
-            <TransactionButton/>
             <NetworkSwitcher />
           </StyledRightDiv>
         </StyledAppBarDiv>
@@ -69,7 +67,4 @@ const StyledLeftDiv = styled("div")(({ theme }) => ({
 
 const StyledRightDiv = styled("div")(({ theme }) => ({
   display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  justifyContent: "flex-end",
 }));

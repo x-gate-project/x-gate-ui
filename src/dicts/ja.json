@@ -22,10 +22,8 @@
     "invalid_receive_address": "受信アドレスが無効です！",
     "receive_address_placeholder": "受信アドレスを入力",
     "waiting_for_sending": "トークンが送信中です！少し待ってください...",
-    "send_success": "{{token}}を{{from}}から{{to}}に送信しました！",
-    "send_failed": "{{token}}を{{from}}から{{to}}に送信に失敗しましたエラー:\n {{error}}\n もう一度試してください！",
-    "layer_zero_tx_title": "トランザクションの詳細についてはこちらをクリック",
-    "waiting_message": "完了するまでに約 3 ～ 5 分かかります。"
+    "send_success": "{{token}}を送信しました！",
+    "send_failed": "{{token}}を送信に失敗しましたエラー:\n {{error}}\n もう一度試してください！"
   },
   "mint_tab": {
     "mint": "をミントする",
@@ -34,9 +32,8 @@
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
-    "mint_success": "{{token}}を{{from}}から{{to}}にミントしました！",
-    "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください...",
-    "mint_failed": "{{token}}を{{from}}から{{to}}にミントに失敗しましたエラー:\n {{error}}\n もう一度試してください！"
+    "mint_success": "{{token}}をミントしました！",
+    "mint_failed": "{{token}}をミントに失敗しましたエラー:\n {{error}}\n もう一度試してください！"
   },
   "burn_tab": {
     "burn": "をバーン",
@@ -45,8 +42,8 @@
     "max": "最大",
     "balance": "残高",
     "invalid_amount": "金額が無効または総残高を超えています！",
-    "burn_success": "{{token}}を{{from}}から{{to}}にバーンしました！",
-    "burn_failed": "{{token}}を{{from}}から{{to}}にバーンに失敗しましたエラー:\n {{error}}\n もう一度試してください！",
+    "burn_success": "{{token}}をバーンしました！",
+    "burn_failed": "{{token}}をバーンに失敗しましたエラー:\n {{error}}\n もう一度試してください！",
     "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください..."
   },
   "account_detail_popover": {
@@ -65,15 +62,5 @@
   "token_change_popover": {
     "search_placeholder": "トークンを検索",
     "select_token": "トークンを選択"
-  },
-  "recent_transaction_dialog": {
-    "title": "最近のトランザクション",
-    "clear_all": "すべてクリア",
-    "transactions": "トランザクション",
-    "no_transactions": "トランザクションがありません"
-  },
-  "transaction_button": {
-    "transactions": "トランザクション",
-    "pending": "保留中"
   }
 }
