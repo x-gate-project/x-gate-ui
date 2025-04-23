@@ -71,8 +71,7 @@ export default function Burn() {
       token: selectedToken === Token.USDTX ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
       chainId: ethereum.id,
   });
-  const { addTransaction } = useTransactionState();
-
+  const { addTransaction, isBurning, setIsBurning } = useTransactionState();
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
 
@@ -104,6 +103,7 @@ export default function Burn() {
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
+      setIsBurning(true);
       try {
         if (chainId !== selectedNetwork.id) {
           await switchChain(wagmiConfig, { chainId: selectedNetwork.id });
@@ -158,6 +158,7 @@ export default function Burn() {
             { variant: "info" }
           );
 
+          setIsBurning(false);
           resetBurnAmount();
 
           await addTransaction({
@@ -186,6 +187,7 @@ export default function Burn() {
             args: [parseUnits(burnAmount, 6)],
           });
 
+          setIsBurning(false);
           resetBurnAmount();
 
           await addTransaction({
@@ -224,6 +226,8 @@ export default function Burn() {
             .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
+      } finally {
+        setIsBurning(false);
       }
     },
     [
@@ -239,6 +243,7 @@ export default function Burn() {
       selectedToken,
       refetchToTokenData,
       addTransaction,
+      setIsBurning,
     ]
   );
 
@@ -437,10 +442,12 @@ export default function Burn() {
           </div>
           <Button
               variant="contained"
-              className={classes.sendButton}
+              className={classes.burnButton}
               type="submit"
               color="primary"
+              startIcon={isBurning ? <CircularProgress color="inherit" size={24} /> : undefined}
               disabled={
+                isBurning ||
                 !burnAmount ||
                 insufficientBalance ||
                 isDisconnected ||
@@ -489,14 +496,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     alignItems: "start",
   },
-  sendButton: {
+  burnButton: {
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",

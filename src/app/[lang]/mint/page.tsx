@@ -79,7 +79,7 @@ export default function Mint() {
       CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any,
     chainId: toNetwork.id,
   });
-  const { addTransaction } = useTransactionState();
+  const { addTransaction, isMinting, setIsMinting } = useTransactionState();
   const usdtEthereumBalance = usdtEthereumData?.formatted;
   const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = mintAmount
@@ -113,6 +113,7 @@ export default function Mint() {
         return;
       }
 
+      setIsMinting(true);
       const destinationToken = selectedToken === Token.USDT ? Token.USDTX : Token.USDCX;
 
       try {
@@ -196,6 +197,7 @@ export default function Mint() {
             { variant: "info" }
           );
 
+          setIsMinting(false);
           resetMintAmount();
 
           await addTransaction({
@@ -263,6 +265,7 @@ export default function Mint() {
             args: [parseUnits(mintAmount, 6)],
           });
 
+          setIsMinting(false);
           resetMintAmount();
 
           await addTransaction({
@@ -303,6 +306,8 @@ export default function Mint() {
             .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
+      } finally {
+        setIsMinting(false);
       }
     },
     [
@@ -318,6 +323,7 @@ export default function Mint() {
       address,
       refetchToTokenBalance,
       addTransaction,
+      setIsMinting,
     ]
   );
 
@@ -537,10 +543,12 @@ export default function Mint() {
           </div>
           <Button
               variant="contained"
-              className={classes.sendButton}
+              className={classes.mintButton}
               type="submit"
               color="primary"
+              startIcon={isMinting ? <CircularProgress color="inherit" size={24} /> : undefined}
               disabled={
+                isMinting ||
                 !mintAmount ||
                 insufficientBalance ||
                 isDisconnected ||
@@ -599,14 +607,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     alignItems: "start",
   },
-  sendButton: {
+  mintButton: {
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",

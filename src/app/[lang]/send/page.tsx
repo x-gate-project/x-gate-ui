@@ -78,7 +78,7 @@ export default function Send() {
     chainId: selectedToNetwork.id,
   });
   const { chainId } = useAccount();
-  const { addTransaction } = useTransactionState();
+  const { addTransaction, isSending, setIsSending } = useTransactionState();
 
   const fromTokenBalance = fromTokenData?.formatted;
   const toTokenBalance = toTokenData?.formatted;
@@ -122,6 +122,7 @@ export default function Send() {
       const receiverAddress = isSendToAnotherWallet ? receiveAddress : address;
 
       event.preventDefault();
+      setIsSending(true);
       try {
         if (selectedFromNetwork.id !== chainId) {
           await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
@@ -162,6 +163,7 @@ export default function Send() {
           args: [sendParam, [fee.nativeFee, 0], address],
           value: fee.nativeFee,
         });
+        setIsSending(false);
         enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
 
         resetSendAmount();
@@ -204,6 +206,8 @@ export default function Send() {
             .replace("{{error}}", (error as any).shortMessage || "Unknown error"),
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
+      } finally {
+        setIsSending(false);
       }
     },
     [
@@ -222,6 +226,7 @@ export default function Send() {
       chainId,
       refetchToTokenBalance,
       addTransaction,
+      setIsSending,
     ]
   );
 
@@ -531,7 +536,9 @@ export default function Send() {
             className={classes.sendButton}
             type="submit"
             color="primary"
+            startIcon={isSending ? <CircularProgress color="inherit" size={24} /> : undefined}
             disabled={
+              isSending ||
               !sendAmount ||
               insufficientBalance ||
               !isConnected ||
@@ -599,9 +606,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",
