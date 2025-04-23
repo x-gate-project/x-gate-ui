@@ -536,7 +536,7 @@ export default function Send() {
             className={classes.sendButton}
             type="submit"
             color="primary"
-            startIcon={isSending ? <CircularProgress size={24} /> : undefined}
+            startIcon={isSending ? <CircularProgress color="inherit" size={24} /> : undefined}
             disabled={
               isSending ||
               !sendAmount ||
@@ -606,9 +606,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",
