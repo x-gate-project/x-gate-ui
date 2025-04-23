@@ -22,6 +22,12 @@ interface TransactionStateContextProps {
   transactions: Transaction[];
   addTransaction: (transaction: Transaction, waitForSuccess: () => Promise<void>) => Promise<void>;
   clearCompletedTransactions: () => void;
+  isSending: boolean;
+  isMinting: boolean;
+  isBurning: boolean;
+  setIsSending: (isSending: boolean) => void;
+  setIsMinting: (isMinting: boolean) => void;
+  setIsBurning: (isBurning: boolean) => void;
 }
 
 const TransactionStateContext = createContext<TransactionStateContextProps | undefined>(undefined);
@@ -32,6 +38,9 @@ export const TransactionStateProvider: FC<{ children: ReactNode }> = ({ children
   const processedAddressesRef = useRef<Set<string>>(new Set());
   const wagmiConfig = useConfig();
   const dict = useDict();
+  const [isSending, setIsSending] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [isBurning, setIsBurning] = useState(false);
 
   const updateTransaction = useCallback(() => {
     if(!address) return;
@@ -181,7 +190,13 @@ export const TransactionStateProvider: FC<{ children: ReactNode }> = ({ children
     <TransactionStateContext.Provider value={{
         transactions,
         addTransaction,
-        clearCompletedTransactions
+        clearCompletedTransactions,
+        isSending,
+        isMinting,
+        isBurning,
+        setIsSending,
+        setIsMinting,
+        setIsBurning
       }}>
       {children}
     </TransactionStateContext.Provider>
