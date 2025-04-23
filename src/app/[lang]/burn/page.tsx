@@ -442,10 +442,10 @@ export default function Burn() {
           </div>
           <Button
               variant="contained"
-              className={classes.sendButton}
+              className={classes.burnButton}
               type="submit"
               color="primary"
-              startIcon={isBurning ? <CircularProgress size={24} /> : undefined}
+              startIcon={isBurning ? <CircularProgress color="inherit" size={24} /> : undefined}
               disabled={
                 isBurning ||
                 !burnAmount ||
@@ -496,14 +496,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     alignItems: "start",
   },
-  sendButton: {
+  burnButton: {
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",

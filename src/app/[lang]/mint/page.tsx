@@ -543,10 +543,10 @@ export default function Mint() {
           </div>
           <Button
               variant="contained"
-              className={classes.sendButton}
+              className={classes.mintButton}
               type="submit"
               color="primary"
-              startIcon={isMinting ? <CircularProgress size={24} /> : undefined}
+              startIcon={isMinting ? <CircularProgress color="inherit" size={24} /> : undefined}
               disabled={
                 isMinting ||
                 !mintAmount ||
@@ -607,14 +607,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     alignItems: "start",
   },
-  sendButton: {
+  mintButton: {
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",
