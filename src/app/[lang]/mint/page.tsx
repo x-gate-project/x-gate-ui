@@ -121,12 +121,6 @@ export default function Mint() {
     []
   );
 
-  const handleSetMaxAmount = useCallback(() => {
-    if (fromTokenBalance) {
-      setMintAmount(fromTokenBalance);
-    }
-  }, [fromTokenBalance]);
-
   const mintJOCX = useCallback(async (address: `0x${string}`) => {
     try {
       setIsMinting(true);
@@ -555,13 +549,6 @@ export default function Mint() {
                       endAdornment: (
                         <InputAdornment position="end">
                           <div className={classes.recommendWrapper}>
-                            <div className={classes.chipWrapper}>
-                              <Chip
-                                onClick={handleSetMaxAmount}
-                                label={dict.mint_tab.max}
-                                className={classes.chipButton}
-                              />
-                            </div>
                             <div className={classes.balanceWrapper}>
                               <div
                                 className={classes.selectedTokenWrapper}
