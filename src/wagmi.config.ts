@@ -202,6 +202,13 @@ export const CHAIN_ID_TO_USDCX_ADDRESS_MAP = {
   [baseNet.id]: process.env.NEXT_PUBLIC_USDCX_BASE_ADDRESS,
 }
 
+export const CHAIN_ID_TO_JOCX_ADDRESS_MAP = {
+  [ethereum.id]: process.env.NEXT_PUBLIC_JOCX_ETHEREUM_ADDRESS,
+  [arbitrumNet.id]: process.env.NEXT_PUBLIC_JOCX_ARBITRUM_ADDRESS,
+  [avalancheNet.id]: process.env.NEXT_PUBLIC_JOCX_AVALANCHE_ADDRESS,
+  [baseNet.id]: process.env.NEXT_PUBLIC_JOCX_BASE_ADDRESS,
+}
+
 export const CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP = {
   [ethereum.id]: isProduction ? EndpointId.ETHEREUM_V2_MAINNET : EndpointId.SEPOLIA_V2_TESTNET,
   [joc.id]: isProduction ? EndpointId.JOC_V2_MAINNET : EndpointId.JOC_V2_TESTNET,

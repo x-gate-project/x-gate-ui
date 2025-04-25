@@ -5,4 +5,6 @@ export const TOKEN_TO_ICON_MAP = {
   [Token.USDCX]: '/icons/usdcx-icon.svg',
   [Token.USDT]: '/icons/usdt.svg',
   [Token.USDC]: '/icons/usdc.svg',
+  [Token.JOCX]: '/icons/japan-open-chain.svg',
+  [Token.JOC]: '/icons/japan-open-chain.svg',
 }
