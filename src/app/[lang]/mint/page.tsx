@@ -46,6 +46,7 @@ import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
 import jocxAdapterAbi from "@/libs/jocx/abis/JOCXAdapter.json";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
+import { renderTokenBalance } from "@/utils/render.util";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -101,7 +102,7 @@ export default function Mint() {
     chainId: toNetwork.id,
   });
   const { addTransaction, isMinting, setIsMinting } = useTransactionState();
-  const fromTokenBalance = fromTokenData?.formatted;
+  const fromTokenBalance = fromTokenData ?  renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
   const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = mintAmount
     ? Number(mintAmount) > Number(fromTokenBalance)
