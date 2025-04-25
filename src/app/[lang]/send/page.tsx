@@ -42,6 +42,7 @@ import { switchChain } from "wagmi/actions";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { TransactionMethod } from "@/enums/transaction-method";
 import jocxAbi from "@/libs/jocx/abis/JOCX.json";
+import { renderTokenBalance } from "@/utils/render.util";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -88,8 +89,8 @@ export default function Send() {
   const { chainId } = useAccount();
   const { addTransaction, isSending, setIsSending } = useTransactionState();
 
-  const fromTokenBalance = fromTokenData?.formatted;
-  const toTokenBalance = toTokenData?.formatted;
+  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
+  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';
   const insufficientBalance = sendAmount
     ? Number(sendAmount) >
       Number(fromTokenBalance)
