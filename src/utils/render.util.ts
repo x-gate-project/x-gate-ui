@@ -13,8 +13,8 @@ export const renderTokenBalance = (
     balance = balance.toString();
   }
 
-  const formatted = new Decimal(balance).toFixed(displayDecimals);
-  return new Decimal((renderCommaNumber(formatted)).replace(/,/g, '')).toString();
+  const formatted = new Decimal(balance).toDecimalPlaces(displayDecimals, Decimal.ROUND_DOWN);
+  return formatted.toString();
 };
 
 export const renderCommaNumber = (num: number | string = '0') => {
