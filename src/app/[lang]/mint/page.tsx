@@ -103,7 +103,7 @@ export default function Mint() {
   });
   const { addTransaction, isMinting, setIsMinting } = useTransactionState();
   const fromTokenBalance = fromTokenData ?  renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
-  const toTokenBalance = toTokenData?.formatted;
+  const toTokenBalance = toTokenData ?  renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';;
   const insufficientBalance = mintAmount
     ? Number(mintAmount) > Number(fromTokenBalance)
     : false;

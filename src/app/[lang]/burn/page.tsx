@@ -98,7 +98,7 @@ export default function Burn() {
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
 
-  const fromTokenBalance = fromTokenData?.formatted;
+  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
   const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';
   const insufficientBalance = burnAmount
     ? Number(burnAmount) > Number(fromTokenBalance)
