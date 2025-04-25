@@ -101,7 +101,7 @@ export default function Mint() {
     chainId: toNetwork.id,
   });
   const { addTransaction, isMinting, setIsMinting } = useTransactionState();
-  const fromTokenBalance = fromTokenData?.formatted;
+  const fromTokenBalance = (fromTokenData?.formatted || '').slice(0, (fromTokenData?.formatted || '').indexOf('.') + 7);
   const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = mintAmount
     ? Number(mintAmount) > Number(fromTokenBalance)

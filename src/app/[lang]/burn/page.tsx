@@ -98,7 +98,7 @@ export default function Burn() {
     React.useState<HTMLElement | null>(null);
 
   const fromTokenBalance = fromTokenData?.formatted;
-  const toTokenBalance = toTokenData?.formatted;
+  const toTokenBalance = (toTokenData?.formatted || '').slice(0, (toTokenData?.formatted || '').indexOf('.') + 7);
   const insufficientBalance = burnAmount
     ? Number(burnAmount) > Number(fromTokenBalance)
     : false;
