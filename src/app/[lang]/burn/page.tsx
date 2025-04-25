@@ -42,6 +42,7 @@ import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import jocxAbi from "@/libs/jocx/abis/JOCX.json";
+import { renderTokenBalance } from "@/utils/render.util";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -98,7 +99,7 @@ export default function Burn() {
     React.useState<HTMLElement | null>(null);
 
   const fromTokenBalance = fromTokenData?.formatted;
-  const toTokenBalance = toTokenData?.formatted;
+  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';
   const insufficientBalance = burnAmount
     ? Number(burnAmount) > Number(fromTokenBalance)
     : false;
