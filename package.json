@@ -1,6 +1,6 @@
 {
   "name": "@x-gate-project/x-gate-ui",
-  "version": "1.1.1-build.0",
+  "version": "1.2.0-build.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
