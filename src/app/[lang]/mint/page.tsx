@@ -37,7 +37,7 @@ import Layout from "@/components/Layout";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
 import { Token } from "@/enums/token";
-import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { ethers } from "ethers";
@@ -102,8 +102,9 @@ export default function Mint() {
     chainId: toNetwork.id,
   });
   const { addTransaction, isMinting, setIsMinting } = useTransactionState();
-  const fromTokenBalance = fromTokenData ?  renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
-  const toTokenBalance = toTokenData ?  renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';;
+  const displayDecimals = TOKEN_TO_DECIMALS_MAP[fromToken];
+  const fromTokenBalance = fromTokenData ?  renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
+  const toTokenBalance = toTokenData ?  renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';;
   const insufficientBalance = mintAmount
     ? Number(mintAmount) > Number(fromTokenBalance)
     : false;
@@ -115,10 +116,10 @@ export default function Mint() {
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
-        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
+        .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setMintAmount(amount);
     },
-    []
+    [displayDecimals]
   );
 
   const handleSetMaxAmount = useCallback(() => {
@@ -207,8 +208,8 @@ export default function Mint() {
       refetchToTokenBalance();
       enqueueSnackbar(
         dict.mint_tab.mint_success
-          .replace("{{token}}", fromToken)
-          .replace("{{from}}", ethereum.name)
+          .replace("{{token}}", toToken)
+          .replace("{{from}}", fromNetwork.name)
           .replace("{{to}}", toNetwork.name),
         { variant: "success" }
       );
@@ -216,8 +217,8 @@ export default function Mint() {
         console.log(`Mint ${toToken} failed with error: ${error}`);
         enqueueSnackbar(
           dict.mint_tab.mint_failed
-            .replace("{{token}}", fromToken)
-            .replace("{{from}}", ethereum.name)
+            .replace("{{token}}", toToken)
+            .replace("{{from}}", fromNetwork.name)
             .replace("{{to}}", toNetwork.name)
             .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
           { variant: "error", style: { whiteSpace: "pre-line" } }
@@ -342,21 +343,21 @@ export default function Mint() {
 
           await addTransaction({
             hash: mintTokenTxHash,
-            summary: `Mint ${mintAmount} ${toToken} from ${ethereum.name} to ${toNetwork.name}`,
+            summary: `Mint ${mintAmount} ${toToken} from ${fromNetwork.name} to ${toNetwork.name}`,
             fromAddress: address,
             toAddress: address,
-            fromChainId: ethereum.id,
+            fromChainId: fromNetwork.id,
             toChainId: toNetwork.id,
             amount: mintAmount,
             method: TransactionMethod.MINT,
             token: toToken,
-            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id],
+            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id],
             createdAt: Date.now(),
           }, async () => {
             await waitForTransactionReceipt(wagmiConfig, {
               hash: mintTokenTxHash,
             });
-            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id], mintTokenTxHash);
+            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id], mintTokenTxHash);
           });
         } else {
           const allowance = await readContract(wagmiConfig, {
@@ -412,10 +413,10 @@ export default function Mint() {
 
           await addTransaction({
             hash: mintTokenTxHash,
-            summary: `Mint ${mintAmount} ${toToken} from ${ethereum.name} to ${toNetwork.name}`,
+            summary: `Mint ${mintAmount} ${toToken} from ${fromNetwork.name} to ${toNetwork.name}`,
             fromAddress: address,
             toAddress: address,
-            fromChainId: ethereum.id,
+            fromChainId: fromNetwork.id,
             toChainId: toNetwork.id,
             amount: mintAmount,
             method: TransactionMethod.MINT,
@@ -433,7 +434,7 @@ export default function Mint() {
         refetchToTokenBalance();
         enqueueSnackbar(
           dict.mint_tab.mint_success
-            .replace("{{token}}", fromToken)
+            .replace("{{token}}", toToken)
             .replace("{{from}}", fromNetwork.name)
             .replace("{{to}}", toNetwork.name),
           { variant: "success" }
@@ -442,7 +443,7 @@ export default function Mint() {
         console.log(`Mint ${fromToken} failed with error: ${error}`);
         enqueueSnackbar(
           dict.mint_tab.mint_failed
-            .replace("{{token}}", fromToken)
+            .replace("{{token}}", toToken)
             .replace("{{from}}", fromNetwork.name)
             .replace("{{to}}", toNetwork.name)
             .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),

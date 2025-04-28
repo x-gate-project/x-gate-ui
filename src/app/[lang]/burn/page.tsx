@@ -35,7 +35,7 @@ import { ethers } from "ethers";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
 import { Token } from "@/enums/token";
-import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
@@ -97,9 +97,9 @@ export default function Burn() {
   const { addTransaction, isBurning, setIsBurning } = useTransactionState();
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
-
-  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
-  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';
+  const displayDecimals = TOKEN_TO_DECIMALS_MAP[fromToken];
+  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
+  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';
   const insufficientBalance = burnAmount
     ? Number(burnAmount) > Number(fromTokenBalance)
     : false;
@@ -111,10 +111,10 @@ export default function Burn() {
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
-        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
+        .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setBurnAmount(amount);
     },
-    []
+    [displayDecimals]
   );
 
   const handleSetMaxAmount = useCallback(() => {
@@ -173,11 +173,11 @@ export default function Burn() {
 
       await addTransaction({
         hash: burnTxHash,
-        summary: `Burn ${burnAmount} ${fromToken} from ${toNetwork.name} to ${ethereum.name}`,
+        summary: `Burn ${burnAmount} ${fromToken} from ${fromNetwork.name} to ${toNetwork.name}`,
         fromAddress: address as string,
         toAddress: address as string,
-        fromChainId: toNetwork.id,
-        toChainId: ethereum.id,
+        fromChainId: fromNetwork.id,
+        toChainId: toNetwork.id,
         amount: burnAmount,
         method: TransactionMethod.BURN,
         token: fromToken,
@@ -195,8 +195,8 @@ export default function Burn() {
       enqueueSnackbar(
         dict.burn_tab.burn_success
           .replace("{{token}}", fromToken)
-          .replace("{{from}}", toNetwork.name)
-          .replace("{{to}}", ethereum.name),
+          .replace("{{from}}", fromNetwork.name)
+          .replace("{{to}}", toNetwork.name),
         { variant: "success" }
       );
     } catch (error) {
@@ -204,8 +204,8 @@ export default function Burn() {
       enqueueSnackbar(
         dict.burn_tab.burn_failed
           .replace("{{token}}", fromToken)
-          .replace("{{from}}", toNetwork.name)
-          .replace("{{to}}", ethereum.name)
+          .replace("{{from}}", fromNetwork.name)
+          .replace("{{to}}", toNetwork.name)
           .replace(
             "{{error}}",
             (error as any).shortMessage || dict.error_page.unknown_error
@@ -306,11 +306,11 @@ export default function Burn() {
 
           await addTransaction({
             hash: sendTokenTxHash,
-            summary: `Burn ${burnAmount} ${fromToken} from ${fromNetwork.name} to ${ethereum.name}`,
+            summary: `Burn ${burnAmount} ${fromToken} from ${fromNetwork.name} to ${toNetwork.name}`,
             fromAddress: address as string,
             toAddress: address as string,
-            fromChainId: toNetwork.id,
-            toChainId: ethereum.id,
+            fromChainId: fromNetwork.id,
+            toChainId: toNetwork.id,
             amount: burnAmount,
             method: TransactionMethod.BURN,
             token: fromToken,
@@ -339,7 +339,7 @@ export default function Burn() {
             fromAddress: address as string,
             toAddress: address as string,
             fromChainId: fromNetwork.id,
-            toChainId: ethereum.id,
+            toChainId: toNetwork.id,
             amount: burnAmount,
             method: TransactionMethod.BURN,
             token: fromToken,
@@ -357,7 +357,7 @@ export default function Burn() {
           dict.burn_tab.burn_success
             .replace("{{token}}", fromToken)
             .replace("{{from}}", toNetwork.name)
-            .replace("{{to}}", ethereum.name),
+            .replace("{{to}}", toNetwork.name),
           { variant: "success" }
         );
       } catch (error) {
