@@ -556,13 +556,13 @@ export default function Mint() {
                       endAdornment: (
                         <InputAdornment position="end">
                           <div className={classes.recommendWrapper}>
-                            <div className={classes.chipWrapper}>
+                            {fromToken !== Token.JOC && <div className={classes.chipWrapper}>
                               <Chip
                                 onClick={handleSetMaxAmount}
                                 label={dict.mint_tab.max}
                                 className={classes.chipButton}
                               />
-                            </div>
+                            </div>}
                             <div className={classes.balanceWrapper}>
                               <div
                                 className={classes.selectedTokenWrapper}
