@@ -36,7 +36,7 @@ import { ellipsifyText } from "@/utils/string.utils";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
-import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
@@ -88,9 +88,9 @@ export default function Send() {
   });
   const { chainId } = useAccount();
   const { addTransaction, isSending, setIsSending } = useTransactionState();
-
-  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals: 6 }) : '';
-  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals: 6 }) : '';
+  const displayDecimals = TOKEN_TO_DECIMALS_MAP[selectedToken];
+  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
+  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';
   const insufficientBalance = sendAmount
     ? Number(sendAmount) >
       Number(fromTokenBalance)
@@ -103,10 +103,10 @@ export default function Send() {
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
-        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
+        .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setSendAmount(amount);
     },
-    []
+    [displayDecimals]
   );
 
   const swapFromAndToNetwork = useCallback(() => {
