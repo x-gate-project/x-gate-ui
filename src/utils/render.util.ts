@@ -14,7 +14,7 @@ export const renderTokenBalance = (
   }
 
   const formatted = new Decimal(balance).toDecimalPlaces(displayDecimals, Decimal.ROUND_DOWN);
-  return formatted.toString();
+  return formatted.toFixed();
 };
 
 export const renderCommaNumber = (num: number | string = '0') => {
