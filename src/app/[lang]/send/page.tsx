@@ -21,7 +21,7 @@ import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
-import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP } from "@/wagmi.config";
+import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP } from "@/wagmi.config";
 import {
   readContract,
   writeContract,
@@ -36,15 +36,19 @@ import { ellipsifyText } from "@/utils/string.utils";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
-import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { TransactionMethod } from "@/enums/transaction-method";
+import jocxAbi from "@/libs/jocx/abis/JOCX.json";
+import { renderTokenBalance } from "@/utils/render.util";
+import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
+  Token.JOCX,
 ]
 
 export default function Send() {
@@ -68,20 +72,26 @@ export default function Send() {
   const { data: fromTokenData, refetch: refetchFromTokenBalance } = useBalance({
     address,
     token: selectedToken === Token.USDTX ?
-      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any,
+      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any :
+      selectedToken === Token.USDCX ?
+        CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any :
+        CHAIN_ID_TO_JOCX_ADDRESS_MAP[selectedFromNetwork.id] as any,
     chainId: selectedFromNetwork.id,
   });
   const { data: toTokenData, refetch: refetchToTokenBalance } = useBalance({
     address,
     token: selectedToken === Token.USDTX ?
-      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedToNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedToNetwork.id] as any,
+      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedToNetwork.id] as any :
+      selectedToken === Token.USDCX ?
+        CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedToNetwork.id] as any :
+        CHAIN_ID_TO_JOCX_ADDRESS_MAP[selectedToNetwork.id] as any,
     chainId: selectedToNetwork.id,
   });
   const { chainId } = useAccount();
   const { addTransaction, isSending, setIsSending } = useTransactionState();
-
-  const fromTokenBalance = fromTokenData?.formatted;
-  const toTokenBalance = toTokenData?.formatted;
+  const displayDecimals = TOKEN_TO_DECIMALS_MAP[selectedToken];
+  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
+  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';
   const insufficientBalance = sendAmount
     ? Number(sendAmount) >
       Number(fromTokenBalance)
@@ -94,10 +104,10 @@ export default function Send() {
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
-        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
+        .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setSendAmount(amount);
     },
-    []
+    [displayDecimals]
   );
 
   const swapFromAndToNetwork = useCallback(() => {
@@ -114,14 +124,119 @@ export default function Send() {
     }
   }, [fromTokenBalance]);
 
+  const sendJOCX = useCallback(async (receiverAddress: `0x${string}`, address: `0x${string}`) => {
+      setIsSending(true);
+      try {
+        if (selectedFromNetwork.id !== chainId) {
+          await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
+        }
+
+        const sourceTokenAddress = CHAIN_ID_TO_JOCX_ADDRESS_MAP[selectedFromNetwork.id] as any;
+        const destChain = CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id];
+
+        const tokensToSend = ethers.parseEther(sendAmount);
+        const options = Options.newOptions()
+          .addExecutorLzReceiveOption(JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, 0)
+          .toHex()
+          .toString();
+
+        const sendParam = [
+          destChain,
+          ethers.zeroPadValue(receiverAddress, 32),
+          tokensToSend,
+          tokensToSend,
+          options,
+          "0x",
+          "0x",
+        ];
+
+        const fee: any = await readContract(wagmiConfig, {
+          abi: jocxAbi,
+          address: sourceTokenAddress,
+          functionName: "quoteSend",
+          args: [sendParam, false],
+        });
+
+        const sendTokenTxHash = await writeContract(wagmiConfig, {
+          abi: jocxAbi,
+          address: sourceTokenAddress,
+          functionName: "send",
+          args: [sendParam, [fee.nativeFee, 0], address],
+          value: fee.nativeFee,
+        });
+        setIsSending(false);
+        enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
+
+        resetSendAmount();
+
+        await addTransaction({
+          hash: sendTokenTxHash,
+          summary: `Send ${sendAmount} ${selectedToken} from ${selectedFromNetwork.name} to ${selectedToNetwork.name}`,
+          fromAddress: address,
+          toAddress: receiverAddress,
+          fromChainId: selectedFromNetwork.id,
+          toChainId: selectedToNetwork.id,
+          amount: sendAmount,
+          method: TransactionMethod.SEND,
+          token: selectedToken,
+          lzEndpointId: destChain,
+          createdAt: Date.now(),
+        }, async () => {
+          await waitForTransactionReceipt(wagmiConfig, {
+            hash: sendTokenTxHash,
+          });
+          await waitForMessageReceived(destChain, sendTokenTxHash);
+        });
+
+        refetchFromTokenBalance();
+        refetchToTokenBalance();
+        enqueueSnackbar(
+          dict.send_tab.send_success
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedFromNetwork.name)
+            .replace("{{to}}", selectedToNetwork.name),
+          { variant: "success" }
+        );
+      } catch (error) {
+        console.log(`Send ${selectedToken} failded with error: ${error}`);
+        enqueueSnackbar(
+          dict.send_tab.send_failed
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", selectedFromNetwork.name)
+            .replace("{{to}}", selectedToNetwork.name)
+            .replace("{{error}}", (error as any).shortMessage || "Unknown error"),
+          { variant: "error", style: { whiteSpace: "pre-line" } }
+        );
+      } finally {
+        setIsSending(false);
+      }
+  }, [
+    enqueueSnackbar,
+    refetchFromTokenBalance,
+      resetSendAmount,
+      sendAmount,
+      wagmiConfig,
+      selectedFromNetwork,
+      selectedToNetwork,
+      selectedToken,
+      dict,
+      refetchToTokenBalance,
+      addTransaction,
+      setIsSending,
+      chainId,
+  ]);
+
   const handleSubmit = useCallback(
     async (event: any) => {
+      event.preventDefault();
       if (!address) {
         return;
       }
       const receiverAddress = isSendToAnotherWallet ? receiveAddress : address;
-
-      event.preventDefault();
+      if (selectedToken === Token.JOCX) {
+        await sendJOCX(receiverAddress as `0x${string}`, address as `0x${string}`);
+        return;
+      }
       setIsSending(true);
       try {
         if (selectedFromNetwork.id !== chainId) {
@@ -129,7 +244,7 @@ export default function Send() {
         }
 
         const options = Options.newOptions()
-          .addExecutorLzReceiveOption(200000, 0)
+          .addExecutorLzReceiveOption(OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, 0)
           .toHex()
           .toString();
         const sourceTokenAddress =
@@ -227,6 +342,7 @@ export default function Send() {
       refetchToTokenBalance,
       addTransaction,
       setIsSending,
+      sendJOCX
     ]
   );
 
@@ -269,19 +385,20 @@ export default function Send() {
     const pageState = localStorageService.setPageState({
       sendToken: token,
       sendFromChainId: network.id,
+      sendToChainId: token === Token.JOCX && selectedToNetwork.id === joc.id ? ethereum.id : network.id,
     });
     setPageState(pageState);
-  }, [setPageState]);
+  }, [setPageState, selectedToNetwork]);
 
   useEffect(() => {
     if (selectedFromNetwork.id === selectedToNetwork.id) {
-      const anotherNetwork = wagmiConfig.chains.find((chain) => chain.id !== selectedFromNetwork.id);
+      const anotherNetwork = selectedToken === Token.JOCX ? wagmiConfig.chains.find((chain) => chain.id !== selectedFromNetwork.id && chain.id !== joc.id) : wagmiConfig.chains.find((chain) => chain.id !== selectedFromNetwork.id);
       const pageState = localStorageService.setPageState({
         sendToChainId: anotherNetwork?.id,
       });
       setPageState(pageState);
     }
-  }, [selectedFromNetwork, wagmiConfig, setPageState, selectedToNetwork]);
+  }, [selectedFromNetwork, wagmiConfig, setPageState, selectedToNetwork, selectedToken]);
 
   return (
     <Layout>
@@ -310,7 +427,7 @@ export default function Send() {
                   {fromTokenBalance &&
                     <Tooltip title={fromTokenBalance}>
                       <div className={classes.topBalanceWrapper}>
-                        <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                        <Box color="#64748B" fontSize={14}>{dict.send_tab.balance}:</Box>
                         <Box color="#64748B">
                           {fromTokenBalance}
                         </Box>

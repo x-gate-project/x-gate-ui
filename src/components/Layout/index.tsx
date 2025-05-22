@@ -45,7 +45,7 @@ const ContentContainer = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "start",
   justifyContent: "center",
-  height: "100vh",
+  height: "100dvh",
   background: `radial-gradient(circle at top,rgb(186, 237, 253) 0%,rgb(233, 247, 250) 50%,rgb(247, 251, 252) 100%)`,
   paddingTop: '110.5px',
   '@media (max-width: 960px)': {

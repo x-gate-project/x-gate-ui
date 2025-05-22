@@ -11,11 +11,13 @@ export type PageState = {
     token: string;
   };
   mint: {
+    fromChainId: number;
     toChainId: number;
     token: string;
   };
   burn: {
     fromChainId: number;
+    toChainId: number;
     token: string;
   };
 };
@@ -27,11 +29,13 @@ const INITIAL_PAGE_STATE: PageState = {
     token: Token.USDTX,
   },
   mint: {
+    fromChainId: ethereum.id,
     toChainId: ethereum.id,
     token: Token.USDT,
   },
   burn: {
     fromChainId: ethereum.id,
+    toChainId: ethereum.id,
     token: Token.USDTX,
   },
 };
@@ -112,9 +116,11 @@ class LocalStorageService {
     sendFromChainId?: number;
     sendToChainId?: number;
     sendToken?: string;
+    mintFromChainId?: number;
     mintToChainId?: number;
     mintToken?: string;
     burnFromChainId?: number;
+    burnToChainId?: number;
     burnToken?: string;
   }) {
     const pageState = this.getPageState();
@@ -127,6 +133,9 @@ class LocalStorageService {
     if (state.sendToken) {
       pageState.send.token = state.sendToken;
     }
+    if (state.mintFromChainId) {
+      pageState.mint.fromChainId = state.mintFromChainId;
+    }
     if (state.mintToChainId) {
       pageState.mint.toChainId = state.mintToChainId;
     }
@@ -138,6 +147,9 @@ class LocalStorageService {
     }
     if (state.burnToken) {
       pageState.burn.token = state.burnToken;
+    }
+    if (state.burnToChainId) {
+      pageState.burn.toChainId = state.burnToChainId;
     }
     save(LocalStorageKey.PAGE_STATE, JSON.stringify(pageState));
     return pageState;

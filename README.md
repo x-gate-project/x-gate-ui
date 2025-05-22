@@ -1,4 +1,4 @@
-# X-GATE-UI 
+# X-GATE-UI
 
 ## Getting Started
 
