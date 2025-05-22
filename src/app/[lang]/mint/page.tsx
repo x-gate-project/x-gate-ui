@@ -29,30 +29,26 @@ import {
   waitForTransactionReceipt,
   readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
-import { Chain, parseEther, parseUnits } from "viem";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
+import { Chain, parseUnits } from "viem";
 import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
 import Layout from "@/components/Layout";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import Image from "next/image";
 import { Token } from "@/enums/token";
-import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
-import jocxAdapterAbi from "@/libs/jocx/abis/JOCXAdapter.json";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
-import { renderTokenBalance } from "@/utils/render.util";
-import { JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
   Token.USDC,
-  Token.JOC
 ]
 
 export default function Mint() {
@@ -65,49 +61,29 @@ export default function Mint() {
   const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
-  const fromToken = useMemo(() => pageState.mint.token as Token, [pageState]);
-  const toToken = useMemo(() => {
-    if (fromToken === Token.USDT) {
-      return Token.USDTX;
-    }
-
-    if (fromToken === Token.USDC) {
-      return Token.USDCX;
-    }
-
-    return Token.JOCX;
-  }, [fromToken]);
-  const fromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.fromChainId)) || ethereum, [pageState, wagmiConfig]);
+  const selectedToken = useMemo(() => pageState.mint.token as Token, [pageState]);
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
   const [selectToTokenNetworkPopoverAnchorEl, setSelectToTokenNetworkPopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
-  const { data: fromTokenData, refetch: refetchFromTokenBalance } =
+  const { data: usdtEthereumData, refetch: refetchUsdtEthereumData } =
     useBalance({
       address,
-      token: fromToken === Token.USDT ?
-        process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any :
-        fromToken === Token.USDC ?
-          process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any :
-          undefined,
-      chainId: fromNetwork.id,
+      token: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
+      chainId: ethereum.id,
     });
   const { data: toTokenData, refetch: refetchToTokenBalance } = useBalance({
     address,
-    token: toToken === Token.USDTX ?
-      CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any :
-      toToken === Token.USDCX ?
-        CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any :
-        CHAIN_ID_TO_JOCX_ADDRESS_MAP[toNetwork.id] as any,
+    token: selectedToken === Token.USDT ?
+      CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any,
     chainId: toNetwork.id,
   });
   const { addTransaction, isMinting, setIsMinting } = useTransactionState();
-  const displayDecimals = TOKEN_TO_DECIMALS_MAP[fromToken];
-  const fromTokenBalance = fromTokenData ?  renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
-  const toTokenBalance = toTokenData ?  renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';;
+  const usdtEthereumBalance = usdtEthereumData?.formatted;
+  const toTokenBalance = toTokenData?.formatted;
   const insufficientBalance = mintAmount
-    ? Number(mintAmount) > Number(fromTokenBalance)
+    ? Number(mintAmount) > Number(usdtEthereumBalance)
     : false;
 
   const handleMintAmountChange = useCallback(
@@ -117,158 +93,39 @@ export default function Mint() {
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
-        .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
+        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setMintAmount(amount);
     },
-    [displayDecimals]
+    []
   );
 
   const handleSetMaxAmount = useCallback(() => {
-    if (fromTokenBalance) {
-      setMintAmount(fromTokenBalance);
+    if (usdtEthereumBalance) {
+      setMintAmount(usdtEthereumBalance);
     }
-  }, [fromTokenBalance]);
-
-  const mintJOCX = useCallback(async (address: `0x${string}`) => {
-    try {
-      setIsMinting(true);
-      if (chainId !== joc.id) {
-        await switchChain(wagmiConfig, { chainId: joc.id });
-      }
-
-      const tokensToMint = parseEther(mintAmount);
-      const options = Options.newOptions()
-      .addExecutorLzReceiveOption(JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, 0)
-      .toHex()
-      .toString();
-
-      const sendParam = [
-        CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
-        ethers.zeroPadValue(address, 32),
-        tokensToMint,
-        tokensToMint,
-        options,
-        "0x",
-        "0x",
-      ];
-
-      const fee: any = await readContract(wagmiConfig, {
-        abi: jocxAdapterAbi,
-        address: process.env.NEXT_PUBLIC_JOCX_ADAPTER_JOC_ADDRESS as `0x${string}`,
-        functionName: 'quoteSend',
-        args: [sendParam, false],
-      });
-
-      const mintTokenTxHash = await writeContract(wagmiConfig, {
-        address: process.env.NEXT_PUBLIC_JOCX_ADAPTER_JOC_ADDRESS as `0x${string}`,
-        abi: jocxAdapterAbi,
-        functionName: 'send',
-        args: [
-          sendParam,
-          [fee.nativeFee, 0],
-          address,
-        ],
-        value: fee.nativeFee + tokensToMint,
-      });
-
-      enqueueSnackbar( dict.mint_tab.waiting_for_sending
-        .replace("{{token}}", fromToken)
-        .replace("{{destination}}", toNetwork.name),
-        { variant: "info" }
-      );
-
-      setIsMinting(false);
-      resetMintAmount();
-
-      await addTransaction(
-        {
-          hash: mintTokenTxHash,
-          summary: `Mint ${mintAmount} ${toToken} from ${fromNetwork.name} to ${toNetwork.name}`,
-          fromAddress: address,
-          toAddress: address,
-          fromChainId: fromNetwork.id,
-          toChainId: toNetwork.id,
-          amount: mintAmount,
-          method: TransactionMethod.MINT,
-          token: toToken,
-          lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id],
-          createdAt: Date.now(),
-        },
-        async () => {
-          await waitForTransactionReceipt(wagmiConfig, {
-            hash: mintTokenTxHash,
-          });
-          await waitForMessageReceived(
-            CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id],
-            mintTokenTxHash,
-          );
-        },
-      );
-
-      refetchFromTokenBalance();
-      refetchToTokenBalance();
-      enqueueSnackbar(
-        dict.mint_tab.mint_success
-          .replace("{{token}}", toToken)
-          .replace("{{from}}", fromNetwork.name)
-          .replace("{{to}}", toNetwork.name),
-        { variant: "success" }
-      );
-    } catch (error) {
-        console.log(`Mint ${toToken} failed with error: ${error}`);
-        enqueueSnackbar(
-          dict.mint_tab.mint_failed
-            .replace("{{token}}", toToken)
-            .replace("{{from}}", fromNetwork.name)
-            .replace("{{to}}", toNetwork.name)
-            .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
-          { variant: "error", style: { whiteSpace: "pre-line" } }
-        );
-    } finally {
-      setIsMinting(false);
-    }
-  }, [
-    toNetwork,
-    mintAmount,
-    toToken,
-    wagmiConfig,
-    addTransaction,
-    fromNetwork,
-    dict,
-    enqueueSnackbar,
-    setIsMinting,
-    resetMintAmount,
-    fromToken,
-    chainId,
-    refetchFromTokenBalance,
-    refetchToTokenBalance,
-  ]);
-
+  }, [usdtEthereumBalance]);
 
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
-      if (!address) {
+
+      if(!address) {
         return;
       }
 
-      if (fromToken === Token.JOC) {
-        await mintJOCX(address);
-        return;
-      }
+      setIsMinting(true);
+      const destinationToken = selectedToken === Token.USDT ? Token.USDTX : Token.USDCX;
 
       try {
-        setIsMinting(true);
-
         if (chainId !== ethereum.id) {
           await switchChain(wagmiConfig, { chainId: ethereum.id });
         }
 
-        const sourceTokenAddress = fromToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS!
-        const destinationTokenAddress = fromToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS!
+        const sourceTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS!
+        const destinationTokenAddress = selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS!
 
         if (toNetwork.id !== ethereum.id) {
-          const options = Options.newOptions().addExecutorLzReceiveOption(OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, 0).toHex().toString()
+          const options = Options.newOptions().addExecutorLzReceiveOption(200000, 0).toHex().toString()
 
           const sendParam = [
               CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
@@ -295,7 +152,8 @@ export default function Mint() {
           });
 
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
-            if(allowance !== BigInt(0) && fromToken === Token.USDT) {
+            if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
+              console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
                 address: sourceTokenAddress as `0x${string}`,
@@ -334,7 +192,7 @@ export default function Mint() {
           });
 
           enqueueSnackbar( dict.mint_tab.waiting_for_sending
-            .replace("{{token}}", fromToken)
+            .replace("{{token}}", selectedToken)
             .replace("{{destination}}", toNetwork.name),
             { variant: "info" }
           );
@@ -344,21 +202,21 @@ export default function Mint() {
 
           await addTransaction({
             hash: mintTokenTxHash,
-            summary: `Mint ${mintAmount} ${toToken} from ${fromNetwork.name} to ${toNetwork.name}`,
+            summary: `Mint ${mintAmount} ${destinationToken} from ${ethereum.name} to ${toNetwork.name}`,
             fromAddress: address,
             toAddress: address,
-            fromChainId: fromNetwork.id,
+            fromChainId: ethereum.id,
             toChainId: toNetwork.id,
             amount: mintAmount,
             method: TransactionMethod.MINT,
-            token: toToken,
-            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id],
+            token: destinationToken,
+            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id],
             createdAt: Date.now(),
           }, async () => {
             await waitForTransactionReceipt(wagmiConfig, {
               hash: mintTokenTxHash,
             });
-            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id], mintTokenTxHash);
+            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id], mintTokenTxHash);
           });
         } else {
           const allowance = await readContract(wagmiConfig, {
@@ -368,7 +226,8 @@ export default function Mint() {
             args: [address, destinationTokenAddress],
           });
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
-            if(allowance !== BigInt(0) && fromToken === Token.USDT) {
+            if(allowance !== BigInt(0) && selectedToken === Token.USDT) {
+              console.log('approveTokenToZeroTxHash');
               const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
                 abi: erc20Abi,
                 address: sourceTokenAddress as `0x${string}`,
@@ -397,14 +256,11 @@ export default function Mint() {
             });
           }
 
-          console.log(`Approved ${toToken} successfully. Minting ${toToken} ...`);
+          console.log(`Approved ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully. Minting ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} ...`);
 
           const mintTokenTxHash = await writeContract(wagmiConfig, {
             abi: usdtxAbi,
-            address:
-              fromToken === Token.USDT
-                ? (process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any)
-                : (process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any),
+            address: selectedToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any,
             functionName: "mint",
             args: [parseUnits(mintAmount, 6)],
           });
@@ -414,14 +270,14 @@ export default function Mint() {
 
           await addTransaction({
             hash: mintTokenTxHash,
-            summary: `Mint ${mintAmount} ${toToken} from ${fromNetwork.name} to ${toNetwork.name}`,
+            summary: `Mint ${mintAmount} ${destinationToken} from ${ethereum.name} to ${toNetwork.name}`,
             fromAddress: address,
             toAddress: address,
-            fromChainId: fromNetwork.id,
+            fromChainId: ethereum.id,
             toChainId: toNetwork.id,
             amount: mintAmount,
             method: TransactionMethod.MINT,
-            token: toToken,
+            token: destinationToken,
             createdAt: Date.now(),
           }, async () => {
             await waitForTransactionReceipt(wagmiConfig, {
@@ -429,23 +285,23 @@ export default function Mint() {
             });
           });
         }
-        console.log(`Mint ${toToken} successfully.`);
+        console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} successfully.`);
 
-        refetchFromTokenBalance();
+        refetchUsdtEthereumData();
         refetchToTokenBalance();
         enqueueSnackbar(
           dict.mint_tab.mint_success
-            .replace("{{token}}", toToken)
-            .replace("{{from}}", fromNetwork.name)
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", ethereum.name)
             .replace("{{to}}", toNetwork.name),
           { variant: "success" }
         );
       } catch (error) {
-        console.log(`Mint ${fromToken} failed with error: ${error}`);
+        console.log(`Mint ${selectedToken === Token.USDT ? "USDTX" : "USDCX"} failed with error: ${error}`);
         enqueueSnackbar(
           dict.mint_tab.mint_failed
-            .replace("{{token}}", toToken)
-            .replace("{{from}}", fromNetwork.name)
+            .replace("{{token}}", selectedToken)
+            .replace("{{from}}", ethereum.name)
             .replace("{{to}}", toNetwork.name)
             .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
           { variant: "error", style: { whiteSpace: "pre-line" } }
@@ -458,22 +314,18 @@ export default function Mint() {
       chainId,
       enqueueSnackbar,
       mintAmount,
-      refetchFromTokenBalance,
+      refetchUsdtEthereumData,
       resetMintAmount,
       wagmiConfig,
-      fromToken,
+      selectedToken,
       dict,
       toNetwork,
       address,
       refetchToTokenBalance,
       addTransaction,
       setIsMinting,
-      toToken,
-      mintJOCX,
-      fromNetwork,
     ]
   );
-
 
   const onOpenSelectToTokenNetworkPopover = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -495,16 +347,14 @@ export default function Mint() {
     setTokenChangePopoverAnchorEl(null);
   }, [setTokenChangePopoverAnchorEl]);
 
-  const handleSelectFromToken = useCallback((token: Token, network: Chain) => {
+  const handleSelectToken = useCallback((token: Token) => {
     const pageState = localStorageService.setPageState({
       mintToken: token,
-      mintFromChainId: network.id,
-      mintToChainId: token === Token.JOC && toNetwork.id === joc.id ? ethereum.id : undefined,
     });
     setPageState(pageState);
-  }, [setPageState, toNetwork]);
+  }, [setPageState]);
 
-  const handleSelectToToken = useCallback((token: Token, network: Chain) => {
+  const handleSelectToNetwork = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({
       mintToChainId: network.id,
     });
@@ -535,14 +385,14 @@ export default function Mint() {
                     {dict.mint_tab.mint}
                     </Box>
                   </Box>
-                  {fromTokenBalance &&
+                  {usdtEthereumBalance &&
                     <div className={classes.topBalanceWrapper}>
                       <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
                       <Box color="#64748B"
                         overflow="hidden"
                         textOverflow="ellipsis"
                       whiteSpace="nowrap">
-                        {fromTokenBalance}
+                        {usdtEthereumBalance}
                       </Box>
                     </div>
                   }
@@ -557,26 +407,26 @@ export default function Mint() {
                       endAdornment: (
                         <InputAdornment position="end">
                           <div className={classes.recommendWrapper}>
-                            {fromToken !== Token.JOC && <div className={classes.chipWrapper}>
+                            <div className={classes.chipWrapper}>
                               <Chip
                                 onClick={handleSetMaxAmount}
                                 label={dict.mint_tab.max}
                                 className={classes.chipButton}
                               />
-                            </div>}
+                            </div>
                             <div className={classes.balanceWrapper}>
                               <div
                                 className={classes.selectedTokenWrapper}
                                 onClick={onOpenTokenChangePopover}
                               >
                                 <TokenWithChainIcon
-                                  tokenIcon={TOKEN_TO_ICON_MAP[fromToken]}
-                                  chainIcon={CHAIN_ID_TO_ICON_MAP[fromNetwork.id]}
+                                  tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
+                                  chainIcon="/icons/ethereum.svg"
                                   width={24}
                                   height={24}
                                 />
                                 <Box paddingLeft="2px" color="black">
-                                  {fromToken}
+                                  {selectedToken}
                                 </Box>
                                 <Box display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
@@ -659,13 +509,13 @@ export default function Mint() {
                                 onClick={onOpenSelectToTokenNetworkPopover}
                               >
                                 <TokenWithChainIcon
-                                  tokenIcon={TOKEN_TO_ICON_MAP[toToken]}
+                                  tokenIcon={selectedToken === Token.USDT ? TOKEN_TO_ICON_MAP[Token.USDTX] : TOKEN_TO_ICON_MAP[Token.USDCX]}
                                   chainIcon={CHAIN_ID_TO_ICON_MAP[toNetwork.id]}
                                   width={24}
                                   height={24}
                                 />
                                 <Box paddingLeft="2px" color="black">
-                                  {toToken}
+                                  {selectedToken === Token.USDT ? Token.USDTX : Token.USDCX}
                                 </Box>
                                 <Box display="flex" alignItems="center" justifyContent="center">
                                   <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
@@ -712,22 +562,22 @@ export default function Mint() {
       <TokenChangePopover
         open={Boolean(selectToTokenNetworkPopoverAnchorEl)}
         onClose={onCloseSelectToTokenNetworkPopover}
-        onChangeToken={handleSelectToToken}
+        onChangeToken={handleSelectToNetwork}
         anchorEl={selectToTokenNetworkPopoverAnchorEl}
-        selectedToken={toToken}
+        selectedToken={selectedToken === Token.USDT ? Token.USDTX : Token.USDCX}
         networks={wagmiConfig.chains as any}
-        tokens={[toToken]}
+        tokens={[selectedToken === Token.USDT ? Token.USDTX : Token.USDCX]}
         selectedNetwork={toNetwork}
       />
       <TokenChangePopover
         open={Boolean(tokenChangePopoverAnchorEl)}
         onClose={onCloseTokenChangePopover}
-        onChangeToken={handleSelectFromToken}
+        onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
-        selectedToken={fromToken}
+        selectedToken={selectedToken}
         networks={[ethereum]}
         tokens={MINT_SUPPORT_TOKENS}
-        selectedNetwork={fromNetwork}
+        selectedNetwork={ethereum}
       />
     </Layout>
   );
@@ -861,11 +711,8 @@ const useStyles = makeStyles()((theme: Theme) => ({
     },
   },
   inputTitle: {
-    fontWeight: 500,
-    fontSize: "14px",
-    lineHeight: "20px",
-    letterSpacing: "0%",
-    color: "#020617",
+    fontSize: "16px",
+    color: "#000000",
   },
   selectedNetworkTitle: {
     fontWeight: 400,
