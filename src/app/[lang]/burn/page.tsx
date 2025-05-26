@@ -498,7 +498,10 @@ export default function Burn() {
                     size="medium"
                     value={burnAmount}
                     onChange={handleMintAmountChange}
-                    inputProps={{ "data-testid": "amount-input" }}
+                    inputProps={{
+                      "data-testid": "amount-input",
+                      maxLength: 1000,
+                    }}
                     error={insufficientBalance}
                     helperText={insufficientBalance && dict.burn_tab.invalid_amount}
                     FormHelperTextProps={{

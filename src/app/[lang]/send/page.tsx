@@ -484,7 +484,10 @@ export default function Send() {
                     autoFocus
                     size="medium"
                     name="from"
-                    inputProps={{ "data-testid": "from-input" }}
+                    inputProps={{
+                      "data-testid": "from-input",
+                      maxLength: 1000,
+                    }}
                     error={insufficientBalance}
                     helperText={insufficientBalance && dict.send_tab.invalid_amount}
                     FormHelperTextProps={{

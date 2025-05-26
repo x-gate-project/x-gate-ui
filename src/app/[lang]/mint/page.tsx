@@ -596,7 +596,10 @@ export default function Mint() {
                     size="medium"
                     value={mintAmount}
                     onChange={handleMintAmountChange}
-                    inputProps={{ "data-testid": "amount-input" }}
+                    inputProps={{
+                      "data-testid": "amount-input",
+                      maxLength: 1000,
+                    }}
                     error={insufficientBalance}
                     helperText={insufficientBalance && dict.mint_tab.invalid_amount}
                     FormHelperTextProps={{
