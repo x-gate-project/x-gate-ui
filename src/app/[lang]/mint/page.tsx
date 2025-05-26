@@ -496,13 +496,14 @@ export default function Mint() {
   }, [setTokenChangePopoverAnchorEl]);
 
   const handleSelectFromToken = useCallback((token: Token, network: Chain) => {
+    resetMintAmount();
     const pageState = localStorageService.setPageState({
       mintToken: token,
       mintFromChainId: network.id,
       mintToChainId: token === Token.JOC && toNetwork.id === joc.id ? ethereum.id : undefined,
     });
     setPageState(pageState);
-  }, [setPageState, toNetwork]);
+  }, [setPageState, toNetwork, resetMintAmount]);
 
   const handleSelectToToken = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({

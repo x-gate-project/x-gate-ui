@@ -405,13 +405,14 @@ export default function Burn() {
   }, [setTokenChangePopoverAnchorEl]);
 
   const handleSelectToken = useCallback((token: Token, network: Chain) => {
+    resetBurnAmount();
     const pageState = localStorageService.setPageState({
       burnToken: token,
       burnFromChainId: network.id,
       burnToChainId: token === Token.JOCX ? joc.id : ethereum.id,
     });
     setPageState(pageState);
-  }, [setPageState]);
+  }, [setPageState, resetBurnAmount]);
 
   return (
     <Layout>

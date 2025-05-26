@@ -382,13 +382,14 @@ export default function Send() {
   }, [setPageState]);
 
   const handleSelectFromToken = useCallback((token: Token, network: Chain) => {
+    resetSendAmount();
     const pageState = localStorageService.setPageState({
       sendToken: token,
       sendFromChainId: network.id,
       sendToChainId: token === Token.JOCX && selectedToNetwork.id === joc.id ? ethereum.id : network.id,
     });
     setPageState(pageState);
-  }, [setPageState, selectedToNetwork]);
+  }, [setPageState, selectedToNetwork, resetSendAmount]);
 
   useEffect(() => {
     if (selectedFromNetwork.id === selectedToNetwork.id) {
