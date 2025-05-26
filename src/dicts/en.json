@@ -25,7 +25,8 @@
     "send_success": "Send {{token}} from {{from}} to {{to}} successfully!",
     "send_failed": "Send {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
     "layer_zero_tx_title": "Click here for more details about the transaction",
-    "waiting_message": "It will take about 3 to 5 minutes to complete."
+    "waiting_message": "It will take about 3 to 5 minutes to complete.",
+    "send_summary": "Send {{amount}} {{token}} from {{from}} to {{to}}"
   },
   "mint_tab": {
     "mint": "Mint Using",
@@ -36,7 +37,8 @@
     "invalid_amount": "Amount is invalid or bigger than total balance!",
     "mint_success": "Mint {{token}} from {{from}} to {{to}} successfully!",
     "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment...",
-    "mint_failed": "Mint {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!"
+    "mint_failed": "Mint {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
+    "mint_summary": "Mint {{amount}} {{token}} from {{from}} to {{to}}"
   },
   "burn_tab": {
     "burn": "Burn",
@@ -47,7 +49,8 @@
     "invalid_amount": "Amount is invalid or bigger than total balance!",
     "burn_success": "Burn {{token}} from {{from}} to {{to}} successfully!",
     "burn_failed": "Burn {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
-    "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment..."
+    "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment...",
+    "burn_summary": "Burn {{amount}} {{token}} from {{from}} to {{to}}"
   },
   "account_detail_popover": {
     "disconnect": "Disconnect"

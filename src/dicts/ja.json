@@ -25,7 +25,8 @@
     "send_success": "{{token}}を{{from}}から{{to}}に送信しました！",
     "send_failed": "{{token}}を{{from}}から{{to}}に送信に失敗しましたエラー:\n {{error}}\n もう一度試してください！",
     "layer_zero_tx_title": "トランザクションの詳細についてはこちらをクリック",
-    "waiting_message": "完了するまでに約 3 ～ 5 分かかります。"
+    "waiting_message": "完了するまでに約 3 ～ 5 分かかります。",
+    "send_summary": "{{amount}} {{token}}を{{from}}から{{to}}に送信"
   },
   "mint_tab": {
     "mint": "をミントする",
@@ -36,7 +37,8 @@
     "invalid_amount": "金額が無効または総残高を超えています！",
     "mint_success": "{{token}}を{{from}}から{{to}}にミントしました！",
     "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください...",
-    "mint_failed": "{{token}}を{{from}}から{{to}}にミントに失敗しましたエラー:\n {{error}}\n もう一度試してください！"
+    "mint_failed": "{{token}}を{{from}}から{{to}}にミントに失敗しましたエラー:\n {{error}}\n もう一度試してください！",
+    "mint_summary": "{{amount}} {{token}}を{{from}}から{{to}}にミント"
   },
   "burn_tab": {
     "burn": "をバーン",
@@ -47,7 +49,8 @@
     "invalid_amount": "金額が無効または総残高を超えています！",
     "burn_success": "{{token}}を{{from}}から{{to}}にバーンしました！",
     "burn_failed": "{{token}}を{{from}}から{{to}}にバーンに失敗しましたエラー:\n {{error}}\n もう一度試してください！",
-    "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください..."
+    "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください...",
+    "burn_summary": "{{amount}} {{token}}を{{from}}から{{to}}にバーン"
   },
   "account_detail_popover": {
     "disconnect": "切断"

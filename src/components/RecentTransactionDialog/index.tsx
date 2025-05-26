@@ -3,15 +3,10 @@ import Typography from '@mui/material/Typography';
 import { useDict } from '@/contexts/DictContext';
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
-import { Box, CircularProgress, Dialog, DialogTitle, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, IconButton } from '@mui/material';
 import { useTransactionState } from '@/contexts/TransactionStateContext';
-import { getEtherscanTxLink, getLayerZeroTxLink } from '@/utils/string.utils';
-import Link from 'next/link';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import LaunchIcon from '@mui/icons-material/Launch';
 import CloseIcon from '@mui/icons-material/Close';
-import ErrorIcon from '@mui/icons-material/Error';
-import { Transaction } from '@/services/local-storage.service';
+import RecentTransactionItem from './RecentTransactionItem';
 
 interface IProps {
   open: boolean;
@@ -35,13 +30,6 @@ const RecentTransactionDialog: React.FC<IProps> = ({
     clearCompletedTransactions();
     onClose();
   }, [clearCompletedTransactions, onClose]);
-
-  const getExplorerLink = (tx: Transaction) => {
-    if (tx.lzEndpointId) {
-      return getLayerZeroTxLink(tx.hash);
-    }
-    return getEtherscanTxLink(tx.hash);
-  };
 
   return (
     <Dialog
@@ -70,20 +58,10 @@ const RecentTransactionDialog: React.FC<IProps> = ({
           </div>
           <div className={classes.list}>
             {allTransactions.length > 0 ? allTransactions.map((tx) => (
-              <div
+              <RecentTransactionItem
                 key={tx.hash}
-                className={classes.listItem}
-              >
-                <Box display="flex" alignItems="center" gap="8px">
-                {!tx.confirmedAt && <Box width={20} height={20} display="flex" alignItems="center" justifyContent="center"><CircularProgress size={20} color="primary" /></Box>}
-                {tx.confirmedAt && !tx.isFailed && <CheckCircleIcon className={classes.itemIcon} color="success" />}
-                {tx.confirmedAt && tx.isFailed && <ErrorIcon className={classes.itemIcon} color="error" />}
-                <Typography className={classes.summary}>{tx.summary}</Typography>
-                </Box>
-                <Link href={getExplorerLink(tx)} target="_blank">
-                  <LaunchIcon className={classes.launchIcon} />
-                </Link>
-              </div>
+                transaction={tx}
+              />
             )) : (
               <Typography className={classes.emptyTitle}>{dict.recent_transaction_dialog.no_transactions}</Typography>
             )}
@@ -106,20 +84,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     flexDirection: 'column',
     alignItems: 'start',
     width: '100%',
-  },
-  listItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '6px 8px',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  summary: {
-    fontWeight: 400,
-    fontSize: '14px',
-    lineHeight: '20px',
-    letterSpacing: 0,
   },
   closeIcon: {
     position: 'absolute',
@@ -161,13 +125,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
   itemIcon: {
     width: 24,
     height: 24,
-  },
-  launchIcon: {
-    width: 24,
-    height: 24,
-    '&:hover': {
-      cursor: 'pointer',
-    },
   },
   emptyTitle: {
     margin: '24px auto 0',
