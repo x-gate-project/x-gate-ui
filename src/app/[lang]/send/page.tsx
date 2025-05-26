@@ -657,6 +657,7 @@ export default function Send() {
             disabled={
               isSending ||
               !sendAmount ||
+              Number(sendAmount) === 0 ||
               insufficientBalance ||
               !isConnected ||
               (isSendToAnotherWallet && (!ethers.isAddress(receiveAddress) || receiveAddress === ""))

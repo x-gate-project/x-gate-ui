@@ -597,6 +597,7 @@ export default function Burn() {
               disabled={
                 isBurning ||
                 !burnAmount ||
+                Number(burnAmount) === 0 ||
                 insufficientBalance ||
                 isDisconnected ||
                 isConnecting

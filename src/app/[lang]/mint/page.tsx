@@ -700,6 +700,7 @@ export default function Mint() {
               disabled={
                 isMinting ||
                 !mintAmount ||
+                Number(mintAmount) === 0 ||
                 insufficientBalance ||
                 isDisconnected ||
                 isConnecting
