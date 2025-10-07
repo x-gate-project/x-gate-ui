@@ -75,5 +75,13 @@
   "transaction_button": {
     "transactions": "Transactions",
     "pending": "Pending"
+  },
+  "token_change_dialog": {
+    "search_placeholder": "Search name",
+    "network": "Network: ",
+    "from": "From",
+    "to": "To",
+    "no_results_found": "No results found.",
+    "all": "All"
   }
 }

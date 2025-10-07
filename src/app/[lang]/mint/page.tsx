@@ -48,6 +48,7 @@ import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import SelectTokenDialog from "@/components/SelectTokenDialog";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -79,10 +80,6 @@ export default function Mint() {
   }, [fromToken]);
   const fromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.fromChainId)) || ethereum, [pageState, wagmiConfig]);
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.mint.toChainId)) || ethereum, [pageState, wagmiConfig]);
-  const [selectToTokenNetworkPopoverAnchorEl, setSelectToTokenNetworkPopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
-  const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
   const { data: fromTokenData, refetch: refetchFromTokenBalance } =
     useBalance({
       address,
@@ -109,6 +106,22 @@ export default function Mint() {
   const insufficientBalance = mintAmount
     ? Number(mintAmount) > Number(fromTokenBalance)
     : false;
+
+  const [openFromTokenChangeDialog, setOpenFromTokenChangeDialog] = useState(false);
+  const [openToTokenChangeDialog, setOpenToTokenChangeDialog] = useState(false);
+
+  const onOpenFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(true);
+  }, [setOpenFromTokenChangeDialog]);
+  const onCloseFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(false);
+  }, [setOpenFromTokenChangeDialog]);
+  const onOpenToTokenChangeDialog = useCallback(() => {
+    setOpenToTokenChangeDialog(true);
+  }, [setOpenToTokenChangeDialog]);
+  const onCloseToTokenChangeDialog = useCallback(() => {
+    setOpenToTokenChangeDialog(false);
+  }, [setOpenToTokenChangeDialog]);
 
   const handleMintAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -474,27 +487,6 @@ export default function Mint() {
     ]
   );
 
-
-  const onOpenSelectToTokenNetworkPopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setSelectToTokenNetworkPopoverAnchorEl(event.currentTarget);
-    },
-    [setSelectToTokenNetworkPopoverAnchorEl],
-  );
-  const onCloseSelectToTokenNetworkPopover = useCallback(() => {
-    setSelectToTokenNetworkPopoverAnchorEl(null);
-  }, [setSelectToTokenNetworkPopoverAnchorEl]);
-
-  const onOpenTokenChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setTokenChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setTokenChangePopoverAnchorEl],
-  );
-  const onCloseTokenChangePopover = useCallback(() => {
-    setTokenChangePopoverAnchorEl(null);
-  }, [setTokenChangePopoverAnchorEl]);
-
   const handleSelectFromToken = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({
       mintToken: token,
@@ -567,7 +559,7 @@ export default function Mint() {
                             <div className={classes.balanceWrapper}>
                               <div
                                 className={classes.selectedTokenWrapper}
-                                onClick={onOpenTokenChangePopover}
+                                onClick={onOpenFromTokenChangeDialog}
                               >
                                 <TokenWithChainIcon
                                   tokenIcon={TOKEN_TO_ICON_MAP[fromToken]}
@@ -656,7 +648,7 @@ export default function Mint() {
                                   backgroundColor: "white",
                                   border: "1px solid #E2E8F0",
                                 }}
-                                onClick={onOpenSelectToTokenNetworkPopover}
+                                onClick={onOpenToTokenChangeDialog}
                               >
                                 <TokenWithChainIcon
                                   tokenIcon={TOKEN_TO_ICON_MAP[toToken]}
@@ -709,25 +701,25 @@ export default function Mint() {
             </Button>
         </div>
       </form>
-      <TokenChangePopover
-        open={Boolean(selectToTokenNetworkPopoverAnchorEl)}
-        onClose={onCloseSelectToTokenNetworkPopover}
+      <SelectTokenDialog
+        open={openToTokenChangeDialog}
+        onClose={onCloseToTokenChangeDialog}
         onChangeToken={handleSelectToToken}
-        anchorEl={selectToTokenNetworkPopoverAnchorEl}
         selectedToken={toToken}
         networks={wagmiConfig.chains as any}
         tokens={[toToken]}
         selectedNetwork={toNetwork}
+        isFrom={false}
       />
-      <TokenChangePopover
-        open={Boolean(tokenChangePopoverAnchorEl)}
-        onClose={onCloseTokenChangePopover}
+      <SelectTokenDialog
+        open={openFromTokenChangeDialog}
+        onClose={onCloseFromTokenChangeDialog}
         onChangeToken={handleSelectFromToken}
-        anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={fromToken}
-        networks={[ethereum]}
+        networks={[ethereum, joc]}
         tokens={MINT_SUPPORT_TOKENS}
         selectedNetwork={fromNetwork}
+        isFrom={true}
       />
     </Layout>
   );
