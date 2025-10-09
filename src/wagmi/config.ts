@@ -1,7 +1,7 @@
 import { createConfig, http, cookieStorage, createStorage } from "wagmi";
 import { mainnet, sepolia, arbitrum, base, arbitrumSepolia, baseSepolia, avalancheFuji, avalanche } from "wagmi/chains";
 import { defineChain } from "viem";
-import { isProduction } from "./utils/system";
+import { isProduction } from "../utils/system";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import { walletConnect } from "wagmi/connectors";
 

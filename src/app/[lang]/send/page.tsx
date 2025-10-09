@@ -21,18 +21,14 @@ import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
-import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP } from "@/wagmi.config";
+import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP } from "@/wagmi/config";
 import {
-  readContract,
-  writeContract,
   waitForTransactionReceipt,
 } from "wagmi/actions";
 import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
-import tokenAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
-import { ellipsifyText } from "@/utils/string.utils";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
@@ -41,10 +37,10 @@ import localStorageService from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { TransactionMethod } from "@/enums/transaction-method";
-import jocxAbi from "@/libs/jocx/abis/JOCX.json";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
+import { readNoftxQuoteSend, readOftxQuoteSend, writeNoftxSend, writeOftxSend } from "@/wagmi/generated";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -153,28 +149,24 @@ export default function Send() {
           .toHex()
           .toString();
 
-        const sendParam = [
-          destChain,
-          ethers.zeroPadValue(receiverAddress, 32),
-          tokensToSend,
-          tokensToSend,
-          options,
-          "0x",
-          "0x",
-        ];
+        const sendParam = {
+          dstEid: destChain,
+          to: ethers.zeroPadValue(receiverAddress, 32) as `0x${string}`,
+          amountLD: tokensToSend,
+          minAmountLD: tokensToSend,
+          extraOptions: options as `0x${string}`,
+          composeMsg: "0x" as `0x${string}`,
+          oftCmd: "0x" as `0x${string}`,
+        };
 
-        const fee: any = await readContract(wagmiConfig, {
-          abi: jocxAbi,
-          address: sourceTokenAddress,
-          functionName: "quoteSend",
+        const fee = await readNoftxQuoteSend(wagmiConfig, {
+          address: sourceTokenAddress as `0x${string}`,
           args: [sendParam, false],
         });
 
-        const sendTokenTxHash = await writeContract(wagmiConfig, {
-          abi: jocxAbi,
-          address: sourceTokenAddress,
-          functionName: "send",
-          args: [sendParam, [fee.nativeFee, 0], address],
+        const sendTokenTxHash = await writeNoftxSend(wagmiConfig, {
+          address: sourceTokenAddress as `0x${string}`,
+          args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
           value: fee.nativeFee,
         });
         setIsSending(false);
@@ -267,30 +259,27 @@ export default function Send() {
         const composeMessage = "0x";
         const destChain = CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id];
 
-        const sendParam = [
-          destChain,
-          ethers.zeroPadValue(receiverAddress, 32),
-          parseUnits(sendAmount, 6),
-          parseUnits(sendAmount, 6),
-          options,
-          composeMessage,
-          "0x",
-        ];
+        const sendParam = {
+          dstEid: destChain,
+          to: ethers.zeroPadValue(receiverAddress, 32) as `0x${string}`,
+          amountLD: parseUnits(sendAmount, 6),
+          minAmountLD: parseUnits(sendAmount, 6),
+          extraOptions: options as `0x${string}`,
+          composeMsg: composeMessage as `0x${string}`,
+          oftCmd: "0x" as `0x${string}`,
+        }
 
-        const fee: any = await readContract(wagmiConfig, {
-          abi: tokenAbi,
-          address: sourceTokenAddress,
-          functionName: "quoteSend",
+        const fee = await readOftxQuoteSend(wagmiConfig, {
+          address: sourceTokenAddress as `0x${string}`,
           args: [sendParam, false],
         });
 
-        const sendTokenTxHash = await writeContract(wagmiConfig, {
-          abi: tokenAbi,
-          address: sourceTokenAddress,
-          functionName: "send",
-          args: [sendParam, [fee.nativeFee, 0], address],
+        const sendTokenTxHash = await writeOftxSend(wagmiConfig, {
+          address: sourceTokenAddress as `0x${string}`,
+          args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
           value: fee.nativeFee,
         });
+
         setIsSending(false);
         enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
 

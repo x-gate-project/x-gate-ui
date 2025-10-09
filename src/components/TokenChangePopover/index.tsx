@@ -13,7 +13,7 @@ import Image from 'next/image';
 import { Token } from '@/enums/token';
 import { TOKEN_TO_ICON_MAP } from '@/utils/token.utils';
 import { Chain } from 'viem';
-import { joc } from '@/wagmi.config';
+import { joc } from '@/wagmi/config';
 
 interface IProps {
   open: boolean;

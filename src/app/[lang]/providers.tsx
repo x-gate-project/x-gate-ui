@@ -8,7 +8,7 @@ import { SnackbarProvider, useSnackbar } from "notistack";
 import { ThemeProvider } from "@mui/material/styles";
 import { ConnectKitProvider } from "connectkit";
 import theme from "../../theme.config";
-import { getWagmiConfig } from "../../wagmi.config";
+import { getWagmiConfig } from "../../wagmi/config";
 import { DictProvider } from "@/contexts/DictContext";
 import { SupportedLocale } from "../../dicts";
 import { TransactionStateProvider } from "@/contexts/TransactionStateContext";

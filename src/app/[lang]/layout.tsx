@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import { cookieToInitialState } from "wagmi";
 
-import { getWagmiConfig } from "../../wagmi.config";
+import { getWagmiConfig } from "../../wagmi/config";
 import { Providers } from "./providers";
 
 import "./globals.css";

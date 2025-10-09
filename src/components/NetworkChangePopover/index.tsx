@@ -10,7 +10,7 @@ import { Theme } from "@mui/material/styles";
 import { debounce, InputAdornment, TextField } from '@mui/material';
 import clsx from 'clsx';
 import { Chain } from 'viem';
-import { CHAIN_ID_TO_ICON_MAP } from '@/wagmi.config';
+import { CHAIN_ID_TO_ICON_MAP } from '@/wagmi/config';
 import Image from 'next/image';
 interface IProps {
   open: boolean;
