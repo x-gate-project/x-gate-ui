@@ -44,6 +44,7 @@ import { useTransactionState } from "@/contexts/TransactionStateContext";
 import jocxAbi from "@/libs/jocx/abis/JOCX.json";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import SelectTokenDialog from "@/components/SelectTokenDialog";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -96,14 +97,21 @@ export default function Burn() {
       chainId: toNetwork.id,
   });
   const { addTransaction, isBurning, setIsBurning } = useTransactionState();
-  const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
   const displayDecimals = TOKEN_TO_DECIMALS_MAP[fromToken];
   const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
   const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';
   const insufficientBalance = burnAmount
     ? Number(burnAmount) > Number(fromTokenBalance)
     : false;
+
+  const [openFromTokenChangeDialog, setOpenFromTokenChangeDialog] = useState(false);
+
+  const onOpenFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(true);
+  }, [setOpenFromTokenChangeDialog]);
+  const onCloseFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(false);
+  }, [setOpenFromTokenChangeDialog]);
 
   const handleMintAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,16 +402,6 @@ export default function Burn() {
     ]
   );
 
-  const onOpenTokenChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setTokenChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setTokenChangePopoverAnchorEl],
-  );
-  const onCloseTokenChangePopover = useCallback(() => {
-    setTokenChangePopoverAnchorEl(null);
-  }, [setTokenChangePopoverAnchorEl]);
-
   const handleSelectToken = useCallback((token: Token, network: Chain) => {
     const pageState = localStorageService.setPageState({
       burnToken: token,
@@ -468,7 +466,7 @@ export default function Burn() {
                             <div className={classes.balanceWrapper}>
                               <div
                                   className={classes.selectedTokenWrapper}
-                                  onClick={onOpenTokenChangePopover}
+                                  onClick={onOpenFromTokenChangeDialog}
                                 >
                                   <TokenWithChainIcon
                                     tokenIcon={TOKEN_TO_ICON_MAP[fromToken]}
@@ -606,15 +604,15 @@ export default function Burn() {
           </Button>
         </div>
       </form>
-      <TokenChangePopover
-        open={Boolean(tokenChangePopoverAnchorEl)}
-        onClose={onCloseTokenChangePopover}
+      <SelectTokenDialog
+        open={openFromTokenChangeDialog}
+        onClose={onCloseFromTokenChangeDialog}
         onChangeToken={handleSelectToken}
-        anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={fromToken}
         networks={wagmiConfig.chains as any}
         tokens={BURN_SUPPORT_TOKENS}
-        selectedNetwork={toNetwork}
+        selectedNetwork={fromNetwork}
+        isFrom={true}
       />
     </Layout>
   );

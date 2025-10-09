@@ -44,6 +44,7 @@ import { TransactionMethod } from "@/enums/transaction-method";
 import jocxAbi from "@/libs/jocx/abis/JOCX.json";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import SelectTokenDialog from "@/components/SelectTokenDialog";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -64,10 +65,6 @@ export default function Send() {
   const selectedToNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.toChainId)) || joc, [pageState, wagmiConfig]);
   const selectedToken = useMemo(() => pageState.send.token as Token, [pageState]);
   const [receiveAddress, setReceiveAddress] = useState("");
-  const [toTokenAndNetworkChangePopoverAnchorEl, setToTokenAndNetworkChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
-  const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
   const [isSendToAnotherWallet, setIsSendToAnotherWallet] = useState(false);
   const { data: fromTokenData, refetch: refetchFromTokenBalance } = useBalance({
     address,
@@ -96,6 +93,22 @@ export default function Send() {
     ? Number(sendAmount) >
       Number(fromTokenBalance)
     : false;
+
+  const [openFromTokenChangeDialog, setOpenFromTokenChangeDialog] = useState(false);
+  const [openToTokenChangeDialog, setOpenToTokenChangeDialog] = useState(false);
+
+  const onOpenFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(true);
+  }, [setOpenFromTokenChangeDialog]);
+  const onCloseFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(false);
+  }, [setOpenFromTokenChangeDialog]);
+  const onOpenToTokenChangeDialog = useCallback(() => {
+    setOpenToTokenChangeDialog(true);
+  }, [setOpenToTokenChangeDialog]);
+  const onCloseToTokenChangeDialog = useCallback(() => {
+    setOpenToTokenChangeDialog(false);
+  }, [setOpenToTokenChangeDialog]);
 
   const handleSendAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,26 +359,6 @@ export default function Send() {
     ]
   );
 
-  const onOpenSelectToTokenNetworkChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setToTokenAndNetworkChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setToTokenAndNetworkChangePopoverAnchorEl],
-  );
-  const onCloseToTokenAndNetworkChangePopover = useCallback(() => {
-    setToTokenAndNetworkChangePopoverAnchorEl(null);
-  }, [setToTokenAndNetworkChangePopoverAnchorEl]);
-
-  const onOpenTokenChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setTokenChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setTokenChangePopoverAnchorEl],
-  );
-  const onCloseTokenChangePopover = useCallback(() => {
-    setTokenChangePopoverAnchorEl(null);
-  }, [setTokenChangePopoverAnchorEl]);
-
   const handleSendToAnotherWalletCheckboxChange = useCallback((event: SyntheticEvent<Element, Event>, checked: boolean) => {
     setIsSendToAnotherWallet(checked);
   }, []);
@@ -456,7 +449,7 @@ export default function Send() {
                             </div>
                             <div
                                 className={classes.selectedTokenWrapper}
-                                onClick={onOpenTokenChangePopover}
+                                onClick={onOpenFromTokenChangeDialog}
                               >
                                 <TokenWithChainIcon
                                     tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
@@ -561,7 +554,7 @@ export default function Send() {
                                   cursor: "pointer",
                                 }}
                                 gap="2px"
-                                onClick={onOpenSelectToTokenNetworkChangePopover}
+                                onClick={onOpenToTokenChangeDialog}
                               >
                                 <TokenWithChainIcon
                                     tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
@@ -667,25 +660,25 @@ export default function Send() {
           </Button>
         </div>
       </form>
-      <TokenChangePopover
-        open={Boolean(tokenChangePopoverAnchorEl)}
-        onClose={onCloseTokenChangePopover}
+      <SelectTokenDialog
+        open={openFromTokenChangeDialog}
+        onClose={onCloseFromTokenChangeDialog}
         onChangeToken={handleSelectFromToken}
-        anchorEl={tokenChangePopoverAnchorEl}
         selectedToken={selectedToken}
         networks={wagmiConfig.chains as any}
         selectedNetwork={selectedFromNetwork}
         tokens={SEND_SUPPORT_TOKENS}
+        isFrom={true}
       />
-      <TokenChangePopover
-        open={Boolean(toTokenAndNetworkChangePopoverAnchorEl)}
-        onClose={onCloseToTokenAndNetworkChangePopover}
+      <SelectTokenDialog
+        open={openToTokenChangeDialog}
+        onClose={onCloseToTokenChangeDialog}
         onChangeToken={handleSelectToToken}
-        anchorEl={toTokenAndNetworkChangePopoverAnchorEl}
         selectedToken={selectedToken}
         tokens={SEND_SUPPORT_TOKENS.filter((token) => token === selectedToken)}
         selectedNetwork={selectedToNetwork}
         networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedFromNetwork.id)}
+        isFrom={false}
       />
     </Layout>
   );
