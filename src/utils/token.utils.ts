@@ -1,5 +1,5 @@
 import { Token } from "@/enums/token";
-import { CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP } from "@/wagmi.config";
+import { CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP } from "@/wagmi/config";
 import { Chain } from "viem";
 
 export const TOKEN_TO_ICON_MAP = {

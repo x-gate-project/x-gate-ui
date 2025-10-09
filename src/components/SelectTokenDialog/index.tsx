@@ -17,7 +17,7 @@ import clsx from "clsx";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { Chain } from "viem";
-import { CHAIN_ID_TO_ICON_MAP, ethereum, joc } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, ethereum, joc } from "@/wagmi/config";
 import CloseIcon from "@mui/icons-material/Close";
 import TokenListItem from "./TokenListItem";
 

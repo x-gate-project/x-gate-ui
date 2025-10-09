@@ -1,7 +1,6 @@
 import { Token } from "@/enums/token";
 import { renderTokenBalance } from "@/utils/render.util";
 import { getTokenAddress, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi.config";
 import { Chain } from "viem";
 import { useAccount, useBalance } from "wagmi";
 import clsx from "clsx";
@@ -10,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { ellipsifyText } from "@/utils/string.utils";
+import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi/config";
 
 interface TokenListItemProps {
   tokenData: { token: Token; network: Chain };
