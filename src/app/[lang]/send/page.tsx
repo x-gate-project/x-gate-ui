@@ -43,6 +43,7 @@ import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { TransactionMethod } from "@/enums/transaction-method";
 import jocxAbi from "@/libs/jocx/abis/JOCX.json";
 import { renderTokenBalance } from "@/utils/render.util";
+import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -135,7 +136,7 @@ export default function Send() {
 
         const tokensToSend = ethers.parseEther(sendAmount);
         const options = Options.newOptions()
-          .addExecutorLzReceiveOption(200000, 0)
+          .addExecutorLzReceiveOption(JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, 0)
           .toHex()
           .toString();
 
@@ -243,7 +244,7 @@ export default function Send() {
         }
 
         const options = Options.newOptions()
-          .addExecutorLzReceiveOption(200000, 0)
+          .addExecutorLzReceiveOption(OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, 0)
           .toHex()
           .toString();
         const sourceTokenAddress =

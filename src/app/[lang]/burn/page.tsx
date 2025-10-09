@@ -43,6 +43,7 @@ import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import jocxAbi from "@/libs/jocx/abis/JOCX.json";
 import { renderTokenBalance } from "@/utils/render.util";
+import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -133,7 +134,7 @@ export default function Burn() {
 
       const tokensToBurn = ethers.parseEther(burnAmount);
       const options = Options.newOptions()
-        .addExecutorLzReceiveOption(200000, 0)
+        .addExecutorLzReceiveOption(JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, 0)
         .toHex()
         .toString();
 
@@ -259,8 +260,8 @@ export default function Burn() {
           const sourceTokenAddress = fromToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[fromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[fromNetwork.id] as any;
 
           const options = Options.newOptions()
-            .addExecutorLzReceiveOption(200000, 0)
-            .addExecutorComposeOption(0, 500000, 0)
+            .addExecutorLzReceiveOption(OFTX_BURN_LZ_RECEIVE_GAS_LIMIT, 0)
+            .addExecutorComposeOption(0, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, 0)
             .toHex()
             .toString();
 

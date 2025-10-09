@@ -47,6 +47,7 @@ import jocxAdapterAbi from "@/libs/jocx/abis/JOCXAdapter.json";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
+import { JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 
 const MINT_SUPPORT_TOKENS = [
   Token.USDT,
@@ -137,7 +138,7 @@ export default function Mint() {
 
       const tokensToMint = parseEther(mintAmount);
       const options = Options.newOptions()
-      .addExecutorLzReceiveOption(200000, 0)
+      .addExecutorLzReceiveOption(JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, 0)
       .toHex()
       .toString();
 
@@ -267,7 +268,7 @@ export default function Mint() {
         const destinationTokenAddress = fromToken === Token.USDT ? process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS! : process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS!
 
         if (toNetwork.id !== ethereum.id) {
-          const options = Options.newOptions().addExecutorLzReceiveOption(200000, 0).toHex().toString()
+          const options = Options.newOptions().addExecutorLzReceiveOption(OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, 0).toHex().toString()
 
           const sendParam = [
               CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
