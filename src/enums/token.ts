@@ -5,4 +5,5 @@ export enum Token {
   USDC = 'USDC',
   JOCX = 'JOCX',
   JOC = 'JOC',
+  USDA = 'USDA'
 }

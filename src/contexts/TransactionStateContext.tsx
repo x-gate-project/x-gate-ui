@@ -115,7 +115,7 @@ export const TransactionStateProvider: FC<{ children: ReactNode }> = ({ children
       if(!processedAddressesRef.current.has(address)) {
         processedAddressesRef.current.add(address);
         for (const tx of storedTransactions) {
-          if (!tx.confirmedAt) {
+          if (!tx.confirmedAt && !tx.isFailed) {
             try {
               if (tx.lzEndpointId) {
                 await waitForMessageReceived(tx.lzEndpointId, tx.hash);

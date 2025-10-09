@@ -75,9 +75,9 @@ const RecentTransactionDialog: React.FC<IProps> = ({
                 className={classes.listItem}
               >
                 <Box display="flex" alignItems="center" gap="8px">
-                {!tx.confirmedAt && <Box width={20} height={20} display="flex" alignItems="center" justifyContent="center"><CircularProgress size={20} color="primary" /></Box>}
+                {!tx.confirmedAt && !tx.isFailed && <Box width={20} height={20} display="flex" alignItems="center" justifyContent="center"><CircularProgress size={20} color="primary" /></Box>}
                 {tx.confirmedAt && !tx.isFailed && <CheckCircleIcon className={classes.itemIcon} color="success" />}
-                {tx.confirmedAt && tx.isFailed && <ErrorIcon className={classes.itemIcon} color="error" />}
+                {tx.isFailed && <ErrorIcon className={classes.itemIcon} color="error" />}
                 <Typography className={classes.summary}>{tx.summary}</Typography>
                 </Box>
                 <Link href={getExplorerLink(tx)} target="_blank">

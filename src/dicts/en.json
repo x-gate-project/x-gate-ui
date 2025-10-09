@@ -47,7 +47,10 @@
     "invalid_amount": "Amount is invalid or bigger than total balance!",
     "burn_success": "Burn {{token}} from {{from}} to {{to}} successfully!",
     "burn_failed": "Burn {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
-    "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment..."
+    "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment...",
+    "invalid_fallback_address": "Invalid fallback address!",
+    "fallback_address_placeholder": "Enter a fallback address for burning USDA tokens",
+    "fetch_fee_of_error": "Please switch to Ethereum network to calculating correct burn out amount!"
   },
   "account_detail_popover": {
     "disconnect": "Disconnect"
@@ -75,5 +78,13 @@
   "transaction_button": {
     "transactions": "Transactions",
     "pending": "Pending"
+  },
+  "token_change_dialog": {
+    "search_placeholder": "Search name",
+    "network": "Network: ",
+    "from": "From",
+    "to": "To",
+    "no_results_found": "No results found.",
+    "all": "All"
   }
 }

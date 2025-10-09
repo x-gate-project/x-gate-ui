@@ -19,9 +19,9 @@ import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { useDict } from "@/contexts/DictContext";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
-import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
+import { useAccount, useBalance, useConfig } from "wagmi";
 import Layout from "@/components/Layout";
-import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP } from "@/wagmi/config";
+import { CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_USDA_ADDRESS_MAP } from "@/wagmi/config";
 import {
   waitForTransactionReceipt,
 } from "wagmi/actions";
@@ -29,22 +29,23 @@ import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
-import TokenChangePopover from "@/components/TokenChangePopover";
 import { waitForMessageReceived } from '@layerzerolabs/scan-client';
 import { Token } from "@/enums/token";
-import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { getTokenAddress, PAIR_TOKENS, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
 import { switchChain } from "wagmi/actions";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { renderTokenBalance } from "@/utils/render.util";
-import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
-import { readNoftxQuoteSend, readOftxQuoteSend, writeNoftxSend, writeOftxSend } from "@/wagmi/generated";
+import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, USDA_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import SelectTokenDialog from "@/components/SelectTokenDialog";
+import { readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeNoftxSend, writeOftaSend, writeOftxSend } from "@/wagmi/generated";
 
 const SEND_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
   Token.JOCX,
+  Token.USDA,
 ]
 
 export default function Send() {
@@ -60,27 +61,15 @@ export default function Send() {
   const selectedToNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.send.toChainId)) || joc, [pageState, wagmiConfig]);
   const selectedToken = useMemo(() => pageState.send.token as Token, [pageState]);
   const [receiveAddress, setReceiveAddress] = useState("");
-  const [toTokenAndNetworkChangePopoverAnchorEl, setToTokenAndNetworkChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
-  const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
-    React.useState<HTMLElement | null>(null);
   const [isSendToAnotherWallet, setIsSendToAnotherWallet] = useState(false);
   const { data: fromTokenData, refetch: refetchFromTokenBalance } = useBalance({
     address,
-    token: selectedToken === Token.USDTX ?
-      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedFromNetwork.id] as any :
-      selectedToken === Token.USDCX ?
-        CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedFromNetwork.id] as any :
-        CHAIN_ID_TO_JOCX_ADDRESS_MAP[selectedFromNetwork.id] as any,
+    token: getTokenAddress(selectedToken, selectedFromNetwork) as `0x${string}`,
     chainId: selectedFromNetwork.id,
   });
   const { data: toTokenData, refetch: refetchToTokenBalance } = useBalance({
     address,
-    token: selectedToken === Token.USDTX ?
-      CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedToNetwork.id] as any :
-      selectedToken === Token.USDCX ?
-        CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedToNetwork.id] as any :
-        CHAIN_ID_TO_JOCX_ADDRESS_MAP[selectedToNetwork.id] as any,
+    token: getTokenAddress(selectedToken, selectedToNetwork) as `0x${string}`,
     chainId: selectedToNetwork.id,
   });
   const { chainId } = useAccount();
@@ -92,6 +81,22 @@ export default function Send() {
     ? Number(sendAmount) >
       Number(fromTokenBalance)
     : false;
+
+  const [openFromTokenChangeDialog, setOpenFromTokenChangeDialog] = useState(false);
+  const [openToTokenChangeDialog, setOpenToTokenChangeDialog] = useState(false);
+
+  const onOpenFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(true);
+  }, [setOpenFromTokenChangeDialog]);
+  const onCloseFromTokenChangeDialog = useCallback(() => {
+    setOpenFromTokenChangeDialog(false);
+  }, [setOpenFromTokenChangeDialog]);
+  const onOpenToTokenChangeDialog = useCallback(() => {
+    setOpenToTokenChangeDialog(true);
+  }, [setOpenToTokenChangeDialog]);
+  const onCloseToTokenChangeDialog = useCallback(() => {
+    setOpenToTokenChangeDialog(false);
+  }, [setOpenToTokenChangeDialog]);
 
   const handleSendAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +124,105 @@ export default function Send() {
       setSendAmount(fromTokenBalance);
     }
   }, [fromTokenBalance]);
+
+  const sendUSDA = useCallback(async (receiverAddress: `0x${string}`, address: `0x${string}`) => {
+    setIsSending(true);
+
+    try {
+      if (selectedFromNetwork.id !== chainId) {
+        await switchChain(wagmiConfig, { chainId: selectedFromNetwork.id });
+      }
+
+      const sourceTokenAddress = CHAIN_ID_TO_USDA_ADDRESS_MAP[selectedFromNetwork.id] as `0x${string}`;
+      const destChain = CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedToNetwork.id];
+
+      const tokensToSend = ethers.parseUnits(sendAmount, 6);
+      const options = Options.newOptions()
+        .addExecutorLzReceiveOption(USDA_SEND_LZ_RECEIVE_GAS_LIMIT, 0)
+        .toHex()
+        .toString();
+
+      const sendParam = {
+        dstEid: destChain,
+        to: ethers.zeroPadValue(receiverAddress, 32) as `0x${string}`,
+        amountLD: tokensToSend,
+        minAmountLD: tokensToSend,
+        extraOptions: options as `0x${string}`,
+        composeMsg: "0x" as `0x${string}`,
+        oftCmd: "0x" as `0x${string}`,
+      };
+
+      const fee = await readOftaQuoteSend(wagmiConfig, {
+        address: sourceTokenAddress,
+        args: [sendParam, false],
+      });
+
+      const sendTokenTxHash = await writeOftaSend(wagmiConfig, {
+        address: sourceTokenAddress,
+        args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address],
+        value: fee.nativeFee,
+      });
+      setIsSending(false);
+      enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
+
+      resetSendAmount();
+
+      await addTransaction({
+        hash: sendTokenTxHash,
+        summary: `Send ${sendAmount} ${selectedToken} from ${selectedFromNetwork.name} to ${selectedToNetwork.name}`,
+        fromAddress: address,
+        toAddress: receiverAddress,
+        fromChainId: selectedFromNetwork.id,
+        toChainId: selectedToNetwork.id,
+        amount: sendAmount,
+        method: TransactionMethod.SEND,
+        token: selectedToken,
+        lzEndpointId: destChain,
+        createdAt: Date.now(),
+      }, async () => {
+        await waitForTransactionReceipt(wagmiConfig, {
+          hash: sendTokenTxHash,
+        });
+        await waitForMessageReceived(destChain, sendTokenTxHash);
+      });
+
+      refetchFromTokenBalance();
+      refetchToTokenBalance();
+      enqueueSnackbar(
+        dict.send_tab.send_success
+          .replace("{{token}}", selectedToken)
+          .replace("{{from}}", selectedFromNetwork.name)
+          .replace("{{to}}", selectedToNetwork.name),
+        { variant: "success" }
+      );
+    } catch (error) {
+      console.log(`Send ${selectedToken} failded with error: ${error}`);
+      enqueueSnackbar(
+        dict.send_tab.send_failed
+          .replace("{{token}}", selectedToken)
+          .replace("{{from}}", selectedFromNetwork.name)
+          .replace("{{to}}", selectedToNetwork.name)
+          .replace("{{error}}", (error as any).shortMessage || "Unknown error"),
+        { variant: "error", style: { whiteSpace: "pre-line" } }
+      );
+    } finally {
+      setIsSending(false);
+    }
+  }, [
+  enqueueSnackbar,
+  refetchFromTokenBalance,
+    resetSendAmount,
+    sendAmount,
+    wagmiConfig,
+    selectedFromNetwork,
+    selectedToNetwork,
+    selectedToken,
+    dict,
+    refetchToTokenBalance,
+    addTransaction,
+    setIsSending,
+    chainId,
+  ]);
 
   const sendJOCX = useCallback(async (receiverAddress: `0x${string}`, address: `0x${string}`) => {
       setIsSending(true);
@@ -229,6 +333,12 @@ export default function Send() {
         await sendJOCX(receiverAddress as `0x${string}`, address as `0x${string}`);
         return;
       }
+
+      if(selectedToken === Token.USDA) {
+        await sendUSDA(receiverAddress as `0x${string}`, address as `0x${string}`);
+        return;
+      }
+
       setIsSending(true);
       try {
         if (selectedFromNetwork.id !== chainId) {
@@ -331,29 +441,10 @@ export default function Send() {
       refetchToTokenBalance,
       addTransaction,
       setIsSending,
-      sendJOCX
+      sendJOCX,
+      sendUSDA,
     ]
   );
-
-  const onOpenSelectToTokenNetworkChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setToTokenAndNetworkChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setToTokenAndNetworkChangePopoverAnchorEl],
-  );
-  const onCloseToTokenAndNetworkChangePopover = useCallback(() => {
-    setToTokenAndNetworkChangePopoverAnchorEl(null);
-  }, [setToTokenAndNetworkChangePopoverAnchorEl]);
-
-  const onOpenTokenChangePopover = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setTokenChangePopoverAnchorEl(event.currentTarget);
-    },
-    [setTokenChangePopoverAnchorEl],
-  );
-  const onCloseTokenChangePopover = useCallback(() => {
-    setTokenChangePopoverAnchorEl(null);
-  }, [setTokenChangePopoverAnchorEl]);
 
   const handleSendToAnotherWalletCheckboxChange = useCallback((event: SyntheticEvent<Element, Event>, checked: boolean) => {
     setIsSendToAnotherWallet(checked);
@@ -389,12 +480,54 @@ export default function Send() {
     }
   }, [selectedFromNetwork, wagmiConfig, setPageState, selectedToNetwork, selectedToken]);
 
+  const fromTokens = useMemo(() => {
+    const tokens = SEND_SUPPORT_TOKENS;
+    return wagmiConfig.chains.flatMap((network) => {
+      return tokens.map((token) => {
+        const tokenConfig = PAIR_TOKENS[token];
+        const isNetworkSupported = tokenConfig?.suportedNetworks?.some(
+          (supportedNet) => supportedNet.id === network.id
+        );
+
+        if (!isNetworkSupported) {
+          return null;
+        }
+
+        return {
+          token,
+          network,
+        };
+      });
+    });
+  }, [wagmiConfig]);
+
+  const toTokens = useMemo(() => {
+    const tokens = SEND_SUPPORT_TOKENS.filter((token) => token === selectedToken);
+    return wagmiConfig.chains.filter((chain) => chain.id !== selectedFromNetwork.id).flatMap((network) => {
+      return tokens.map((token) => {
+
+        const tokenConfig = PAIR_TOKENS[token];
+        const isNetworkSupported = tokenConfig?.suportedNetworks?.some(
+          (supportedNet) => supportedNet.id === network.id
+        );
+
+        if (!isNetworkSupported) {
+          return null;
+        }
+
+        return {
+          token,
+          network,
+        };
+      });
+    });
+  }, [wagmiConfig, selectedFromNetwork, selectedToken]);
+
   return (
     <Layout>
       <form onSubmit={handleSubmit}>
         <div className={classes.wrapper}>
           <div className={classes.infoWrapper}>
-
             <div className={classes.itemWrapper}>
               <Box
                 width="100%"
@@ -445,7 +578,7 @@ export default function Send() {
                             </div>
                             <div
                                 className={classes.selectedTokenWrapper}
-                                onClick={onOpenTokenChangePopover}
+                                onClick={onOpenFromTokenChangeDialog}
                               >
                                 <TokenWithChainIcon
                                     tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
@@ -550,7 +683,7 @@ export default function Send() {
                                   cursor: "pointer",
                                 }}
                                 gap="2px"
-                                onClick={onOpenSelectToTokenNetworkChangePopover}
+                                onClick={onOpenToTokenChangeDialog}
                               >
                                 <TokenWithChainIcon
                                     tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
@@ -656,25 +789,21 @@ export default function Send() {
           </Button>
         </div>
       </form>
-      <TokenChangePopover
-        open={Boolean(tokenChangePopoverAnchorEl)}
-        onClose={onCloseTokenChangePopover}
+      <SelectTokenDialog
+        open={openFromTokenChangeDialog}
+        onClose={onCloseFromTokenChangeDialog}
         onChangeToken={handleSelectFromToken}
-        anchorEl={tokenChangePopoverAnchorEl}
-        selectedToken={selectedToken}
-        networks={wagmiConfig.chains as any}
-        selectedNetwork={selectedFromNetwork}
-        tokens={SEND_SUPPORT_TOKENS}
+        selectedToken={{ token: selectedToken, network: selectedFromNetwork }}
+        tokens={fromTokens as { token: Token; network: Chain }[]}
+        isFrom={true}
       />
-      <TokenChangePopover
-        open={Boolean(toTokenAndNetworkChangePopoverAnchorEl)}
-        onClose={onCloseToTokenAndNetworkChangePopover}
+      <SelectTokenDialog
+        open={openToTokenChangeDialog}
+        onClose={onCloseToTokenChangeDialog}
         onChangeToken={handleSelectToToken}
-        anchorEl={toTokenAndNetworkChangePopoverAnchorEl}
-        selectedToken={selectedToken}
-        tokens={SEND_SUPPORT_TOKENS.filter((token) => token === selectedToken)}
-        selectedNetwork={selectedToNetwork}
-        networks={wagmiConfig.chains.filter((chain) => chain.id !== selectedFromNetwork.id)}
+        selectedToken={{ token: selectedToken, network: selectedToNetwork }}
+        tokens={toTokens as { token: Token; network: Chain }[]}
+        isFrom={false}
       />
     </Layout>
   );

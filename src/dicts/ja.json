@@ -47,7 +47,10 @@
     "invalid_amount": "金額が無効または総残高を超えています！",
     "burn_success": "{{token}}を{{from}}から{{to}}にバーンしました！",
     "burn_failed": "{{token}}を{{from}}から{{to}}にバーンに失敗しましたエラー:\n {{error}}\n もう一度試してください！",
-    "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください..."
+    "waiting_for_sending": "{{token}}を{{destination}}ネットワークに送信中です！少し待ってください...",
+    "invalid_fallback_address": "無効なフォールバックアドレス！",
+    "fallback_address_placeholder": "USDAバーンのフォールバックアドレスを入力",
+    "fetch_fee_of_error": "正しいバーン出金額を計算するためにはEthereumネットワークに切り替えてください！"
   },
   "account_detail_popover": {
     "disconnect": "切断"
@@ -75,5 +78,13 @@
   "transaction_button": {
     "transactions": "トランザクション",
     "pending": "保留中"
+  },
+  "token_change_dialog": {
+    "search_placeholder": "名前を検索",
+    "network": "ネットワーク: ",
+    "from": "送信元",
+    "to": "送信先",
+    "no_results_found": "結果が見つかりません。",
+    "all": "すべて"
   }
 }
