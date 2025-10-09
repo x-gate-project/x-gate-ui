@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { Token } from '@/enums/token';
 import { TOKEN_TO_ICON_MAP } from '@/utils/token.utils';
 import { Chain } from 'viem';
+import { joc } from '@/wagmi.config';
 
 interface IProps {
   open: boolean;
@@ -43,6 +44,16 @@ const TokenChangePopover: React.FC<IProps> = ({
 
   const allTokens = networks.flatMap((network) => {
     return tokens.map((token) => {
+      if(token === Token.JOC) {
+        return {
+          token,
+          network: joc,
+        };
+      }
+
+      if(token === Token.JOCX && network.id === joc.id) {
+        return null;
+      }
       return {
         token,
         network,
@@ -71,8 +82,8 @@ const TokenChangePopover: React.FC<IProps> = ({
     }
     return allTokens.filter(
       (t) =>
-        t.token.toLowerCase().includes(searchText.toLowerCase()) ||
-        t.network.name.toLowerCase().includes(searchText.toLowerCase()),
+        t && (t.token.toLowerCase().includes(searchText.toLowerCase()) ||
+        t.network.name.toLowerCase().includes(searchText.toLowerCase())),
     );
   }, [searchText, allTokens]);
 
@@ -111,7 +122,7 @@ const TokenChangePopover: React.FC<IProps> = ({
             <Typography className={classes.selectNetworkTitle}>{dict.token_change_popover.select_token}</Typography>
           </div>
           {filteredTokens.map((t) => (
-            <div
+            t && (<div
               key={`${t.token}-${t.network.id}`}
               className={clsx(classes.listItem, (selectedNetwork && t.network.id === selectedNetwork.id && t.token === selectedToken) && classes.listItemSelected)}
               onClick={() => onSelectToken(t)}
@@ -121,7 +132,7 @@ const TokenChangePopover: React.FC<IProps> = ({
                 <Typography className={classes.tokenName}>{t.token}</Typography>
               </div>
               <Typography className={classes.networkName}>{t.network.name}</Typography>
-            </div>
+            </div>)
           ))}
         </div>
       </div>

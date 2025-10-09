@@ -24,7 +24,7 @@ import {
   waitForTransactionReceipt,
   readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
 import { Chain, formatUnits, parseUnits } from "viem";
 import tokenContractAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
@@ -35,16 +35,20 @@ import { ethers } from "ethers";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
 import { Token } from "@/enums/token";
-import { TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
+import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
+import jocxAbi from "@/libs/jocx/abis/JOCX.json";
+import { renderTokenBalance } from "@/utils/render.util";
+import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
   Token.USDCX,
+  Token.JOCX,
 ]
 
 export default function Burn() {
@@ -57,29 +61,48 @@ export default function Burn() {
   const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
-  const selectedToken = useMemo(() => pageState.burn.token as Token, [pageState]);
-  const selectedNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
-  const { data: currentTokenData, refetch: refetchCurrentTokenData } =
+  const fromToken = useMemo(() => pageState.burn.token as Token, [pageState]);
+  const toToken = useMemo(() => {
+    if(fromToken === Token.USDTX) {
+      return Token.USDT;
+    }
+
+    if(fromToken === Token.USDCX) {
+      return Token.USDC;
+    }
+
+    return Token.JOC;
+  }, [fromToken]);
+  const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.toChainId)) || ethereum, [pageState, wagmiConfig]);
+  const fromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
+  const { data: fromTokenData, refetch: refetchFromTokenData } =
     useBalance({
       address,
-      token: selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any,
-      chainId: selectedNetwork.id,
+      token: fromToken === Token.USDTX ?
+        CHAIN_ID_TO_USDTX_ADDRESS_MAP[fromNetwork.id] as any
+          : fromToken === Token.USDCX ?
+        CHAIN_ID_TO_USDCX_ADDRESS_MAP[fromNetwork.id] as any
+          : CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
+      chainId: fromNetwork.id,
   });
   const { data: toTokenData, refetch: refetchToTokenData } =
     useBalance({
       address,
-      token: selectedToken === Token.USDTX ? process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any : process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any,
-      chainId: ethereum.id,
+      token: toToken === Token.USDT ?
+        process.env.NEXT_PUBLIC_USDT_ETHEREUM_ADDRESS as any :
+        toToken === Token.USDC ?
+          process.env.NEXT_PUBLIC_USDC_ETHEREUM_ADDRESS as any :
+          undefined,
+      chainId: toNetwork.id,
   });
-  const { addTransaction } = useTransactionState();
-
+  const { addTransaction, isBurning, setIsBurning } = useTransactionState();
   const [tokenChangePopoverAnchorEl, setTokenChangePopoverAnchorEl] =
     React.useState<HTMLElement | null>(null);
-
-  const currentTokenBalance = currentTokenData?.formatted;
-  const toTokenBalance = toTokenData?.formatted;
+  const displayDecimals = TOKEN_TO_DECIMALS_MAP[fromToken];
+  const fromTokenBalance = fromTokenData ? renderTokenBalance(fromTokenData?.formatted, { displayDecimals }) : '';
+  const toTokenBalance = toTokenData ? renderTokenBalance(toTokenData?.formatted, { displayDecimals }) : '';
   const insufficientBalance = burnAmount
-    ? Number(burnAmount) > Number(currentTokenBalance)
+    ? Number(burnAmount) > Number(fromTokenBalance)
     : false;
 
   const handleMintAmountChange = useCallback(
@@ -89,35 +112,156 @@ export default function Burn() {
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
-        .replace(new RegExp(`(\\.\\d{${6}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
+        .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
       setBurnAmount(amount);
     },
-    []
+    [displayDecimals]
   );
 
   const handleSetMaxAmount = useCallback(() => {
-    if (currentTokenBalance) {
-      setBurnAmount(currentTokenBalance);
+    if (fromTokenBalance) {
+      setBurnAmount(fromTokenBalance);
     }
-  }, [currentTokenBalance]);
+  }, [fromTokenBalance]);
+
+  const burnJOCX = useCallback(async () => {
+    setIsBurning(true);
+    const destinationChain = isProduction ? EndpointId.JOC_V2_MAINNET : EndpointId.JOC_V2_TESTNET;
+    try {
+      if (chainId !== fromNetwork.id) {
+        await switchChain(wagmiConfig, { chainId: fromNetwork.id });
+      }
+
+      const tokensToBurn = ethers.parseEther(burnAmount);
+      const options = Options.newOptions()
+        .addExecutorLzReceiveOption(JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, 0)
+        .toHex()
+        .toString();
+
+      const sendParam = [
+        destinationChain,
+        ethers.zeroPadValue(address as `0x${string}`, 32),
+        tokensToBurn,
+        tokensToBurn,
+        options,
+        "0x",
+        "0x",
+      ];
+
+      const fee: any = await readContract(wagmiConfig, {
+        abi: jocxAbi,
+        address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
+        functionName: "quoteSend",
+        args: [sendParam, false],
+      });
+
+      const burnTxHash = await writeContract(wagmiConfig, {
+        abi: jocxAbi,
+        address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
+        functionName: "send",
+        args: [sendParam, [fee.nativeFee, 0], address],
+        value: fee.nativeFee,
+      });
+
+      enqueueSnackbar(
+        dict.burn_tab.waiting_for_sending
+          .replace("{{token}}", toToken)
+          .replace("{{destination}}", toNetwork.name),
+        { variant: "info" }
+      );
+      setIsBurning(false);
+      resetBurnAmount();
+
+      await addTransaction({
+        hash: burnTxHash,
+        summary: `Burn ${burnAmount} ${fromToken} from ${fromNetwork.name} to ${toNetwork.name}`,
+        fromAddress: address as string,
+        toAddress: address as string,
+        fromChainId: fromNetwork.id,
+        toChainId: toNetwork.id,
+        amount: burnAmount,
+        method: TransactionMethod.BURN,
+        token: fromToken,
+        lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
+        createdAt: Date.now(),
+      }, async () => {
+        await waitForTransactionReceipt(wagmiConfig, {
+          hash: burnTxHash,
+        });
+        await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], burnTxHash);
+      });
+
+      refetchFromTokenData();
+      refetchToTokenData();
+      enqueueSnackbar(
+        dict.burn_tab.burn_success
+          .replace("{{token}}", fromToken)
+          .replace("{{from}}", fromNetwork.name)
+          .replace("{{to}}", toNetwork.name),
+        { variant: "success" }
+      );
+    } catch (error) {
+      console.log("Burn failded with error: ", error);
+      enqueueSnackbar(
+        dict.burn_tab.burn_failed
+          .replace("{{token}}", fromToken)
+          .replace("{{from}}", fromNetwork.name)
+          .replace("{{to}}", toNetwork.name)
+          .replace(
+            "{{error}}",
+            (error as any).shortMessage || dict.error_page.unknown_error
+          ),
+        { variant: "error", style: { whiteSpace: "pre-line" } }
+      );
+    } finally {
+      setIsBurning(false);
+    }
+  }, [
+    burnAmount,
+    chainId,
+    dict,
+    enqueueSnackbar,
+    toNetwork,
+    refetchFromTokenData,
+    resetBurnAmount,
+    wagmiConfig,
+    address,
+    fromToken,
+    refetchToTokenData,
+    addTransaction,
+    setIsBurning,
+    fromNetwork,
+    toToken,
+  ]);
+
 
   const handleSubmit = useCallback(
     async (event: any) => {
       event.preventDefault();
+      if(!address) {
+        return;
+      }
+
+      if(fromToken === Token.JOCX) {
+        await burnJOCX();
+        return;
+      }
+
+      setIsBurning(true);
       try {
-        if (chainId !== selectedNetwork.id) {
-          await switchChain(wagmiConfig, { chainId: selectedNetwork.id });
+        if (chainId !== fromNetwork.id) {
+          await switchChain(wagmiConfig, { chainId: fromNetwork.id });
         }
 
-        const isFromETH = selectedNetwork.id === ethereum.id;
+        const isFromETH = fromNetwork.id === ethereum.id;
 
         if(!isFromETH && address) {
-          const ethereumTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[ethereum.id] as any;
-          const sourceTokenAddress = selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any;
+          const ethereumTokenAddress = fromToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[ethereum.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[ethereum.id] as any;
+          const sourceTokenAddress = fromToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[fromNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[fromNetwork.id] as any;
 
           const options = Options.newOptions()
-            .addExecutorLzReceiveOption(200000, 0)
-            .addExecutorComposeOption(0, 500000, 0)
+            .addExecutorLzReceiveOption(OFTX_BURN_LZ_RECEIVE_GAS_LIMIT, 0)
+            .addExecutorComposeOption(0, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, 0)
             .toHex()
             .toString();
 
@@ -153,47 +297,53 @@ export default function Burn() {
           });
           enqueueSnackbar(
             dict.burn_tab.waiting_for_sending
-              .replace("{{token}}", selectedToken === Token.USDTX ? Token.USDT : Token.USDC)
-              .replace("{{destination}}", ethereum.name),
+              .replace("{{token}}", toToken)
+              .replace("{{destination}}", toNetwork.name),
             { variant: "info" }
           );
 
+          setIsBurning(false);
+          resetBurnAmount();
+
           await addTransaction({
             hash: sendTokenTxHash,
-            summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
+            summary: `Burn ${burnAmount} ${fromToken} from ${fromNetwork.name} to ${toNetwork.name}`,
             fromAddress: address as string,
             toAddress: address as string,
-            fromChainId: selectedNetwork.id,
-            toChainId: ethereum.id,
+            fromChainId: fromNetwork.id,
+            toChainId: toNetwork.id,
             amount: burnAmount,
             method: TransactionMethod.BURN,
-            token: selectedToken,
-            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id],
+            token: fromToken,
+            lzEndpointId: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
             createdAt: Date.now(),
           }, async () => {
             await waitForTransactionReceipt(wagmiConfig, {
               hash: sendTokenTxHash,
             });
-            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[selectedNetwork.id], sendTokenTxHash);
+            await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], sendTokenTxHash);
           });
         } else {
           const hash = await writeContract(wagmiConfig, {
             abi: tokenContractAbi,
-            address: selectedToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[selectedNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[selectedNetwork.id] as any,
+            address: fromToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any,
             functionName: "burn",
             args: [parseUnits(burnAmount, 6)],
           });
 
+          setIsBurning(false);
+          resetBurnAmount();
+
           await addTransaction({
             hash: hash,
-            summary: `Burn ${burnAmount} ${selectedToken} from ${selectedNetwork.name} to ${ethereum.name}`,
+            summary: `Burn ${burnAmount} ${fromToken} from ${fromNetwork.name} to ${ethereum.name}`,
             fromAddress: address as string,
             toAddress: address as string,
-            fromChainId: selectedNetwork.id,
-            toChainId: ethereum.id,
+            fromChainId: fromNetwork.id,
+            toChainId: toNetwork.id,
             amount: burnAmount,
             method: TransactionMethod.BURN,
-            token: selectedToken,
+            token: fromToken,
             createdAt: Date.now(),
           }, async () => {
             await waitForTransactionReceipt(wagmiConfig, {
@@ -202,25 +352,26 @@ export default function Burn() {
           });
         }
 
-        resetBurnAmount();
-        refetchCurrentTokenData();
+        refetchFromTokenData();
         refetchToTokenData();
         enqueueSnackbar(
           dict.burn_tab.burn_success
-            .replace("{{token}}", selectedToken)
-            .replace("{{from}}", selectedNetwork.name)
-            .replace("{{to}}", ethereum.name),
+            .replace("{{token}}", fromToken)
+            .replace("{{from}}", toNetwork.name)
+            .replace("{{to}}", toNetwork.name),
           { variant: "success" }
         );
       } catch (error) {
         console.log("Burn failded with error: ", error);
         enqueueSnackbar(
-          dict.burn_tab.burn_failed.replace("{{token}}", selectedToken)
-            .replace("{{from}}", selectedNetwork.name)
-            .replace("{{to}}", ethereum.name)
+          dict.burn_tab.burn_failed.replace("{{token}}", fromToken)
+            .replace("{{from}}", fromNetwork.name)
+            .replace("{{to}}", toNetwork.name)
             .replace("{{error}}", (error as any).shortMessage || dict.error_page.unknown_error),
           { variant: "error", style: { whiteSpace: "pre-line" } }
         );
+      } finally {
+        setIsBurning(false);
       }
     },
     [
@@ -228,14 +379,18 @@ export default function Burn() {
       chainId,
       dict,
       enqueueSnackbar,
-      selectedNetwork,
-      refetchCurrentTokenData,
+      toNetwork,
+      refetchFromTokenData,
       resetBurnAmount,
       wagmiConfig,
       address,
-      selectedToken,
+      fromToken,
       refetchToTokenData,
       addTransaction,
+      setIsBurning,
+      burnJOCX,
+      fromNetwork,
+      toToken,
     ]
   );
 
@@ -253,6 +408,7 @@ export default function Burn() {
     const pageState = localStorageService.setPageState({
       burnToken: token,
       burnFromChainId: network.id,
+      burnToChainId: token === Token.JOCX ? joc.id : ethereum.id,
     });
     setPageState(pageState);
   }, [setPageState]);
@@ -281,14 +437,14 @@ export default function Burn() {
                       {dict.burn_tab.burn}
                     </Box>
                   </Box>
-                  {currentTokenBalance &&
+                  {fromTokenBalance &&
                     <div className={classes.topBalanceWrapper}>
-                      <Box color="#64748B" fontSize={14}>{dict.mint_tab.balance}:</Box>
+                      <Box color="#64748B" fontSize={14}>{dict.burn_tab.balance}:</Box>
                       <Box color="#64748B"
                         overflow="hidden"
                         textOverflow="ellipsis"
                         whiteSpace="nowrap">
-                        {currentTokenBalance}
+                        {fromTokenBalance}
                       </Box>
                     </div>
                   }
@@ -315,13 +471,13 @@ export default function Burn() {
                                   onClick={onOpenTokenChangePopover}
                                 >
                                   <TokenWithChainIcon
-                                    tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
-                                    chainIcon={CHAIN_ID_TO_ICON_MAP[selectedNetwork.id]}
+                                    tokenIcon={TOKEN_TO_ICON_MAP[fromToken]}
+                                    chainIcon={CHAIN_ID_TO_ICON_MAP[fromNetwork.id]}
                                     width={24}
                                     height={24}
                                   />
                                   <Box paddingLeft="2px" color="black">
-                                    {selectedToken}
+                                    {fromToken}
                                   </Box>
                                   <Box display="flex" alignItems="center" justifyContent="center">
                                     <Image src="/icons/caret-sort.svg" alt="USDT" width={16} height={16} />
@@ -403,13 +559,13 @@ export default function Burn() {
                                 gap="2px"
                               >
                                 <TokenWithChainIcon
-                                  tokenIcon={TOKEN_TO_ICON_MAP[selectedToken]}
-                                  chainIcon="/icons/ethereum.svg"
+                                  tokenIcon={TOKEN_TO_ICON_MAP[toToken]}
+                                  chainIcon={CHAIN_ID_TO_ICON_MAP[toNetwork.id]}
                                   width={24}
                                   height={24}
                                 />
                                 <Box paddingLeft="2px" color="black">
-                                  {selectedToken === Token.USDTX ? Token.USDT : Token.USDC}
+                                  {toToken}
                                 </Box>
                               </Box>
                             </div>
@@ -434,10 +590,12 @@ export default function Burn() {
           </div>
           <Button
               variant="contained"
-              className={classes.sendButton}
+              className={classes.burnButton}
               type="submit"
               color="primary"
+              startIcon={isBurning ? <CircularProgress color="inherit" size={24} /> : undefined}
               disabled={
+                isBurning ||
                 !burnAmount ||
                 insufficientBalance ||
                 isDisconnected ||
@@ -453,10 +611,10 @@ export default function Burn() {
         onClose={onCloseTokenChangePopover}
         onChangeToken={handleSelectToken}
         anchorEl={tokenChangePopoverAnchorEl}
-        selectedToken={selectedToken}
+        selectedToken={fromToken}
         networks={wagmiConfig.chains as any}
         tokens={BURN_SUPPORT_TOKENS}
-        selectedNetwork={selectedNetwork}
+        selectedNetwork={toNetwork}
       />
     </Layout>
   );
@@ -486,14 +644,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     alignItems: "start",
   },
-  sendButton: {
+  burnButton: {
     textTransform: "none",
     padding: "14px 12px",
     borderRadius: "12px",
     width: "100%",
-    "&.Mui-disabled": {
-      color: "#020617",
-    },
   },
   sendTitle: {
     fontSize: "16px",
@@ -586,8 +741,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     background: "#F1F5F9",
   },
   inputTitle: {
-    fontSize: "16px",
-    color: "#000000",
+    fontWeight: 500,
+    fontSize: "14px",
+    lineHeight: "20px",
+    letterSpacing: "0%",
+    color: "#020617",
   },
   selectedNetworkTitle: {
     fontWeight: 400,

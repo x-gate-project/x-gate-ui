@@ -3,4 +3,6 @@ export enum Token {
   USDCX = 'USDCX',
   USDT = 'USDT',
   USDC = 'USDC',
+  JOCX = 'JOCX',
+  JOC = 'JOC',
 }
