@@ -2,7 +2,7 @@ import { LocalStorageKey } from '@/consts/local-storage-key';
 import { Token } from '@/enums/token';
 import { TransactionMethod } from '@/enums/transaction-method';
 import { load, remove, save } from '@/utils/local.storage.utils';
-import { ethereum, joc } from '@/wagmi.config';
+import { ethereum, joc } from '@/wagmi/config';
 
 export type PageState = {
   send: {

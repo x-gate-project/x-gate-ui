@@ -9,8 +9,6 @@ import {
   Box,
   alpha,
   InputAdornment,
-  useTheme,
-  Tooltip,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
@@ -20,15 +18,11 @@ import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
 import {
   switchChain,
-  writeContract,
   waitForTransactionReceipt,
-  readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
 import { Chain, formatUnits, parseUnits } from "viem";
-import tokenContractAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
-import NetworkChangePopover from "@/components/NetworkChangePopover";
 import TokenChangePopover from "@/components/TokenChangePopover";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { ethers } from "ethers";
@@ -41,9 +35,9 @@ import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
-import jocxAbi from "@/libs/jocx/abis/JOCX.json";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import { readNoftxQuoteSend, readOftxQuoteSend, writeNoftxSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
 
 const BURN_SUPPORT_TOKENS = [
   Token.USDTX,
@@ -138,28 +132,24 @@ export default function Burn() {
         .toHex()
         .toString();
 
-      const sendParam = [
-        destinationChain,
-        ethers.zeroPadValue(address as `0x${string}`, 32),
-        tokensToBurn,
-        tokensToBurn,
-        options,
-        "0x",
-        "0x",
-      ];
+      const sendParam = {
+        dstEid: destinationChain,
+        to: ethers.zeroPadValue(address as `0x${string}`, 32) as `0x${string}`,
+        amountLD: tokensToBurn,
+        minAmountLD: tokensToBurn,
+        extraOptions: options as `0x${string}`,
+        composeMsg: "0x" as `0x${string}`,
+        oftCmd: "0x" as `0x${string}`,
+      };
 
-      const fee: any = await readContract(wagmiConfig, {
-        abi: jocxAbi,
+      const fee = await readNoftxQuoteSend(wagmiConfig, {
         address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
-        functionName: "quoteSend",
         args: [sendParam, false],
       });
 
-      const burnTxHash = await writeContract(wagmiConfig, {
-        abi: jocxAbi,
+      const burnTxHash = await writeNoftxSend(wagmiConfig, {
         address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
-        functionName: "send",
-        args: [sendParam, [fee.nativeFee, 0], address],
+        args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
         value: fee.nativeFee,
       });
 
@@ -271,28 +261,24 @@ export default function Burn() {
           );
 
           const destEndpointId = isProduction ? EndpointId.ETHEREUM_V2_MAINNET : EndpointId.SEPOLIA_V2_TESTNET;
-          const sendParam = [
-            destEndpointId,
-            ethers.zeroPadValue(ethereumTokenAddress, 32),
-            ethers.parseUnits(burnAmount, 6),
-            ethers.parseUnits(burnAmount, 6),
-            options,
-            composeMessage,
-            "0x",
-          ];
+          const sendParam = {
+            dstEid: destEndpointId,
+            to: ethers.zeroPadValue(ethereumTokenAddress, 32) as `0x${string}`,
+            amountLD: ethers.parseUnits(burnAmount, 6),
+            minAmountLD: ethers.parseUnits(burnAmount, 6),
+            extraOptions: options as `0x${string}`,
+            composeMsg: composeMessage as `0x${string}`,
+            oftCmd: "0x" as `0x${string}`,
+          };
 
-          const fee: any = await readContract(wagmiConfig, {
-            abi: tokenContractAbi,
+          const fee = await readOftxQuoteSend(wagmiConfig, {
             address: sourceTokenAddress,
-            functionName: "quoteSend",
             args: [sendParam, false],
           });
 
-          const sendTokenTxHash = await writeContract(wagmiConfig, {
-            abi: tokenContractAbi,
+          const sendTokenTxHash = await writeOftxSend(wagmiConfig, {
             address: sourceTokenAddress,
-            functionName: "send",
-            args: [sendParam, [fee.nativeFee, 0], address],
+            args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address],
             value: fee.nativeFee,
           });
           enqueueSnackbar(
@@ -324,10 +310,8 @@ export default function Burn() {
             await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], sendTokenTxHash);
           });
         } else {
-          const hash = await writeContract(wagmiConfig, {
-            abi: tokenContractAbi,
+          const hash = await writeOftxBurn(wagmiConfig, {
             address: fromToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any,
-            functionName: "burn",
             args: [parseUnits(burnAmount, 6)],
           });
 
