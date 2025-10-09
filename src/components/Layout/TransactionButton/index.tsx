@@ -14,7 +14,7 @@ import theme from "@/theme.config";
 export default function TransactionButton() {
   const dict = useDict();
   const { transactions } = useTransactionState();
-  const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined), [transactions]);
+  const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined), [transactions]);
   const { isConnected } = useAccount();
 
   const [openTransactionDialog, setOpenTransactionDialog] = useState(false);
