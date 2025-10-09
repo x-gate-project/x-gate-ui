@@ -164,64 +164,66 @@ const SelectTokenDialog: React.FC<IProps> = ({
         </DialogTitle>
 
         <div className={classes.container}>
-          {/* Search Bar */}
-          <TextField
-            className={classes.searchTextField}
-            placeholder={dict.token_change_dialog.search_placeholder}
-            size="small"
-            onChange={onSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Image
-                    src="/icons/search-icon.svg"
-                    alt="search"
-                    width={16}
-                    height={16}
-                  />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div style={{ padding: "0 24px" }}>
+            {/* Search Bar */}
+            <TextField
+              className={classes.searchTextField}
+              placeholder={dict.token_change_dialog.search_placeholder}
+              size="small"
+              onChange={onSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Image
+                      src="/icons/search-icon.svg"
+                      alt="search"
+                      width={16}
+                      height={16}
+                    />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-          <div className={classes.networkSection}>
-            <Typography className={classes.sectionTitle}>
-              {dict.token_change_dialog.network}{" "}
-              {currentNetwork
-                ? currentNetwork.name
-                : dict.token_change_dialog.all}
-            </Typography>
-            <div className={classes.networkIcons}>
-              <div
-                className={clsx(
-                  classes.networkIcon,
-                  !currentNetwork && classes.networkIconSelected
-                )}
-                onClick={onSelectAllNetworks}
-              >
-                <Typography className={classes.allNetworksText}>
-                  {dict.token_change_dialog.all}
-                </Typography>
-              </div>
-              {availableNetworks.map((net) => (
+            <div className={classes.networkSection}>
+              <Typography className={classes.sectionTitle}>
+                {dict.token_change_dialog.network}{" "}
+                {currentNetwork
+                  ? currentNetwork.name
+                  : dict.token_change_dialog.all}
+              </Typography>
+              <div className={classes.networkIcons}>
                 <div
-                  key={net.id}
                   className={clsx(
                     classes.networkIcon,
-                    currentNetwork &&
-                      net.id === currentNetwork.id &&
-                      classes.networkIconSelected
+                    !currentNetwork && classes.networkIconSelected
                   )}
-                  onClick={() => onSelectNetwork(net)}
+                  onClick={onSelectAllNetworks}
                 >
-                  <Image
-                    src={CHAIN_ID_TO_ICON_MAP[net.id]}
-                    alt=""
-                    width={28}
-                    height={28}
-                  />
+                  <Typography className={classes.allNetworksText}>
+                    {dict.token_change_dialog.all}
+                  </Typography>
                 </div>
-              ))}
+                {availableNetworks.map((net) => (
+                  <div
+                    key={net.id}
+                    className={clsx(
+                      classes.networkIcon,
+                      currentNetwork &&
+                        net.id === currentNetwork.id &&
+                        classes.networkIconSelected
+                    )}
+                    onClick={() => onSelectNetwork(net)}
+                  >
+                    <Image
+                      src={CHAIN_ID_TO_ICON_MAP[net.id]}
+                      alt=""
+                      width={28}
+                      height={28}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -258,7 +260,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "stretch",
-    padding: "0 24px 24px 24px",
+    padding: "0 0 24px 0",
     backgroundColor: "#FFFFFF",
   },
   dialogTitle: {
@@ -389,18 +391,28 @@ const useStyles = makeStyles()((theme: Theme) => ({
     display: "flex",
     flexDirection: "column",
     gap: "8px",
-    maxHeight: "300px",
+    maxHeight: "calc(80vh - 200px)",
     overflowY: "auto",
-    "&::-webkit-scrollbar": {
-      width: "6px",
+    '&::-webkit-scrollbar': {
+    width: '14px',
+    background: 'transparent',
+  },
+  '&:hover': {
+    '&::-webkit-scrollbar': {
+      width: '14px',
     },
-    "&::-webkit-scrollbar-track": {
-      backgroundColor: "#F1F5F9",
-      borderRadius: "3px",
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: "#E2E8F0",
     },
-    "&::-webkit-scrollbar-thumb": {
-      backgroundColor: "#CBD5E1",
-      borderRadius: "3px",
+    },
+    '&::-webkit-scrollbar-track': {
+      background: 'rgba(0, 0, 0, 0)',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      border: '4px solid rgba(0, 0, 0, 0)',
+      backgroundClip: 'padding-box',
+      borderRadius: '9999px',
+      backgroundColor: "white",
     },
   },
   emptyState: {
@@ -411,7 +423,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     minHeight: "120px",
   },
   emptyStateText: {
-    // color: "#64748B",
     fontSize: "16px",
     fontWeight: 400,
     textAlign: "center",
@@ -429,6 +440,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   dialogPaper: {
     borderRadius: "30px",
     maxWidth: "418px",
+    maxHeight: "80vh",
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },
