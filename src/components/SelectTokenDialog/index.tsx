@@ -45,9 +45,7 @@ const SelectTokenDialog: React.FC<IProps> = ({
   const dict = useDict();
 
   const { classes } = useStyles();
-  const [currentNetwork, setCurrentNetwork] = useState<Chain | null>(
-    null
-  );
+  const [currentNetwork, setCurrentNetwork] = useState<Chain | null>(null);
 
   const allTokens = networks.flatMap((network) => {
     return tokens.map((token) => {
@@ -58,7 +56,13 @@ const SelectTokenDialog: React.FC<IProps> = ({
         };
       }
 
-      if (((token === Token.USDT || token === Token.USDC || token === Token.JOCX ) && network.id === joc.id) || (token === Token.JOC && network.id === ethereum.id)) {
+      if (
+        ((token === Token.USDT ||
+          token === Token.USDC ||
+          token === Token.JOCX) &&
+          network.id === joc.id) ||
+        (token === Token.JOC && network.id === ethereum.id)
+      ) {
         return null;
       }
 
@@ -226,7 +230,6 @@ const SelectTokenDialog: React.FC<IProps> = ({
               </div>
             </div>
           </div>
-
           <div className={classes.tokenList}>
             {filteredTokens.length > 0 ? (
               filteredTokens.map(
@@ -393,27 +396,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "8px",
     maxHeight: "calc(80vh - 200px)",
     overflowY: "auto",
-    '&::-webkit-scrollbar': {
-    width: '14px',
-    background: 'transparent',
-  },
-  '&:hover': {
-    '&::-webkit-scrollbar': {
-      width: '14px',
-    },
-    '&::-webkit-scrollbar-thumb': {
-      backgroundColor: "#E2E8F0",
-    },
-    },
-    '&::-webkit-scrollbar-track': {
-      background: 'rgba(0, 0, 0, 0)',
-    },
-    '&::-webkit-scrollbar-thumb': {
-      border: '4px solid rgba(0, 0, 0, 0)',
-      backgroundClip: 'padding-box',
-      borderRadius: '9999px',
-      backgroundColor: "white",
-    },
+    paddingBottom: "30px",
   },
   emptyState: {
     display: "flex",
@@ -441,6 +424,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     borderRadius: "30px",
     maxWidth: "418px",
     maxHeight: "80vh",
+    minHeight: "80vh",
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },
@@ -452,4 +436,3 @@ const useStyles = makeStyles()((theme: Theme) => ({
 }));
 
 export default SelectTokenDialog;
-
