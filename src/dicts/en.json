@@ -48,9 +48,7 @@
     "burn_success": "Burn {{token}} from {{from}} to {{to}} successfully!",
     "burn_failed": "Burn {{token}} from {{from}} to {{to}} failed with error:\n {{error}}\n Please try again!",
     "waiting_for_sending": "Your {{token}} is being sent to the {{destination}} network! Please wait a moment...",
-    "invalid_fallback_address": "Invalid fallback address!",
-    "fallback_address_placeholder": "Enter a fallback address for burning USDA tokens",
-    "fetch_fee_of_error": "Please switch to Ethereum network to calculating correct burn out amount!"
+    "insufficient_tokens_prompt": "In case of insufficient {{toToken}} tokens, what token do you want to replace with?"
   },
   "account_detail_popover": {
     "disconnect": "Disconnect"

@@ -40,7 +40,7 @@ import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
-import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
 import { readEthereumTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeEthereumTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
 
@@ -259,10 +259,10 @@ export default function Burn() {
         const fallbackTokenAddress = fallbackToken === Token.USDA
           ? '0x0000000000000000000000000000000000000000' as `0x${string}`
           : getTokenAddress(fallbackToken, toNetwork) as `0x${string}`;
-        console.log("fallbackTokenAddress", fallbackTokenAddress);
+
         const options = Options.newOptions()
-          .addExecutorLzReceiveOption(200000, 0)
-          .addExecutorComposeOption(0, 500000, 0)
+          .addExecutorLzReceiveOption(OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, 0)
+          .addExecutorComposeOption(0, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, 0)
           .toHex()
           .toString()
 
@@ -652,7 +652,6 @@ export default function Burn() {
         }
       } catch (error) {
         console.log("Out amount failed with error: ", error);
-        enqueueSnackbar(dict.burn_tab.fetch_fee_of_error, { variant: "error" });
         setOutAmount(burnAmount);
       } finally {
         setLoadingOutAmount(false);
@@ -864,7 +863,7 @@ export default function Burn() {
                       }
                     }}
                   >
-                    In case of insufficient {toToken} tokens, what token do you want to replace with?
+                    {dict.burn_tab.insufficient_tokens_prompt.replace('{{toToken}}', toToken)}
                   </FormLabel>
                   <RadioGroup
                     value={fallbackToken}
