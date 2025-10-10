@@ -182,770 +182,6 @@ export const erc20Abi = [
 ] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ethereumTreasury
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const ethereumTreasuryAbi = [
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousAdmin',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'newAdmin',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'AdminChanged',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'beacon',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'BeaconUpgraded',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'implementation',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'Upgraded',
-  },
-  { type: 'fallback', stateMutability: 'payable' },
-  { type: 'receive', stateMutability: 'payable' },
-  {
-    type: 'error',
-    inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
-    name: 'AddressEmptyCode',
-  },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'implementation', internalType: 'address', type: 'address' },
-    ],
-    name: 'ERC1967InvalidImplementation',
-  },
-  { type: 'error', inputs: [], name: 'ERC1967NonPayable' },
-  {
-    type: 'error',
-    inputs: [{ name: 'caller', internalType: 'address', type: 'address' }],
-    name: 'EthereumTreasury__CallerMustBeLayerzeroEndpoint',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'from', internalType: 'address', type: 'address' }],
-    name: 'EthereumTreasury__InvalidSourceSendingContract',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
-    name: 'EthereumTreasury__TokenIsNotAReserveToken',
-  },
-  { type: 'error', inputs: [], name: 'FailedCall' },
-  { type: 'error', inputs: [], name: 'InvalidInitialization' },
-  { type: 'error', inputs: [], name: 'NotInitializing' },
-  {
-    type: 'error',
-    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
-    name: 'OwnableInvalidOwner',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
-    name: 'OwnableUnauthorizedAccount',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
-    name: 'SafeERC20FailedOperation',
-  },
-  { type: 'error', inputs: [], name: 'UUPSUnauthorizedCallContext' },
-  {
-    type: 'error',
-    inputs: [{ name: 'slot', internalType: 'bytes32', type: 'bytes32' }],
-    name: 'UUPSUnsupportedProxiableUUID',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'burnFee',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'BurnFeeSet',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'feeReceiver',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'FeeReceiverSet',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'version',
-        internalType: 'uint64',
-        type: 'uint64',
-        indexed: false,
-      },
-    ],
-    name: 'Initialized',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'newOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'OwnershipTransferred',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'token',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'ReserveTokenAdded',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'token',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'ReserveTokenRemoved',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'BPS_DENOMINATOR',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'UPGRADE_INTERFACE_VERSION',
-    outputs: [{ name: '', internalType: 'string', type: 'string' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: '_token', internalType: 'address', type: 'address' }],
-    name: 'addReserveToken',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: '_token', internalType: 'address', type: 'address' },
-      { name: '_amount', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'burn',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'burnFee',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: '_param',
-        internalType: 'struct CrossChainMintParam',
-        type: 'tuple',
-        components: [
-          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
-          { name: 'amount', internalType: 'uint256', type: 'uint256' },
-          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
-          { name: 'token', internalType: 'address', type: 'address' },
-          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-      {
-        name: '_fee',
-        internalType: 'struct MessagingFee',
-        type: 'tuple',
-        components: [
-          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
-          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
-        ],
-      },
-    ],
-    name: 'crossChainMint',
-    outputs: [],
-    stateMutability: 'payable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'amount', internalType: 'uint256', type: 'uint256' }],
-    name: 'feeOf',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'feeReceiver',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'ofta_', internalType: 'address', type: 'address' },
-      { name: 'reserveTokens', internalType: 'address[]', type: 'address[]' },
-      { name: 'burnFee_', internalType: 'uint256', type: 'uint256' },
-      { name: 'feeReceiver_', internalType: 'address', type: 'address' },
-      { name: 'initialOwner_', internalType: 'address', type: 'address' },
-    ],
-    name: 'initialize',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: '_from', internalType: 'address', type: 'address' },
-      { name: '_guid', internalType: 'bytes32', type: 'bytes32' },
-      { name: '_message', internalType: 'bytes', type: 'bytes' },
-      { name: '_executor', internalType: 'address', type: 'address' },
-      { name: '_extraData', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'lzCompose',
-    outputs: [],
-    stateMutability: 'payable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: '_token', internalType: 'address', type: 'address' },
-      { name: '_amount', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'mint',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'owner',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'proxiableUUID',
-    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: '_param',
-        internalType: 'struct CrossChainMintParam',
-        type: 'tuple',
-        components: [
-          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
-          { name: 'amount', internalType: 'uint256', type: 'uint256' },
-          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
-          { name: 'token', internalType: 'address', type: 'address' },
-          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-    ],
-    name: 'quoteCrossChainMint',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct MessagingFee',
-        type: 'tuple',
-        components: [
-          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
-          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
-        ],
-      },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: '_token', internalType: 'address', type: 'address' }],
-    name: 'removeReserveToken',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'burnFee_', internalType: 'uint256', type: 'uint256' }],
-    name: 'setBurnFee',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'feeReceiver_', internalType: 'address', type: 'address' },
-    ],
-    name: 'setFeeReceiver',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'newImplementation', internalType: 'address', type: 'address' },
-      { name: 'data', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'upgradeToAndCall',
-    outputs: [],
-    stateMutability: 'payable',
-  },
-  {
-    type: 'constructor',
-    inputs: [
-      { name: '_logic', internalType: 'address', type: 'address' },
-      { name: '_data', internalType: 'bytes', type: 'bytes' },
-    ],
-    stateMutability: 'payable',
-  },
-] as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// japanOpenChainTreasury
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const japanOpenChainTreasuryAbi = [
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousAdmin',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'newAdmin',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'AdminChanged',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'beacon',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'BeaconUpgraded',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'implementation',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'Upgraded',
-  },
-  { type: 'fallback', stateMutability: 'payable' },
-  { type: 'receive', stateMutability: 'payable' },
-  {
-    type: 'error',
-    inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
-    name: 'AddressEmptyCode',
-  },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'implementation', internalType: 'address', type: 'address' },
-    ],
-    name: 'ERC1967InvalidImplementation',
-  },
-  { type: 'error', inputs: [], name: 'ERC1967NonPayable' },
-  { type: 'error', inputs: [], name: 'FailedCall' },
-  { type: 'error', inputs: [], name: 'InvalidInitialization' },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'oftxTokensLength', internalType: 'uint256', type: 'uint256' },
-      {
-        name: 'ethereumOFTXTokensLength',
-        internalType: 'uint256',
-        type: 'uint256',
-      },
-    ],
-    name: 'JapanOpenChainTreasury__InvalidReserveTokensLength',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
-    name: 'JapanOpenChainTreasury__TokenIsNotAReserveToken',
-  },
-  { type: 'error', inputs: [], name: 'NotInitializing' },
-  {
-    type: 'error',
-    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
-    name: 'OwnableInvalidOwner',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
-    name: 'OwnableUnauthorizedAccount',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
-    name: 'SafeERC20FailedOperation',
-  },
-  { type: 'error', inputs: [], name: 'UUPSUnauthorizedCallContext' },
-  {
-    type: 'error',
-    inputs: [{ name: 'slot', internalType: 'bytes32', type: 'bytes32' }],
-    name: 'UUPSUnsupportedProxiableUUID',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'version',
-        internalType: 'uint64',
-        type: 'uint64',
-        indexed: false,
-      },
-    ],
-    name: 'Initialized',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'newOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'OwnershipTransferred',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'token',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'ReserveTokenAdded',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'token',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-    ],
-    name: 'ReserveTokenRemoved',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'OFTX_COMPOSE_BURN_MSG_TYPE',
-    outputs: [{ name: '', internalType: 'uint16', type: 'uint16' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'UPGRADE_INTERFACE_VERSION',
-    outputs: [{ name: '', internalType: 'string', type: 'string' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: '_token', internalType: 'address', type: 'address' },
-      { name: '_ethereumToken', internalType: 'address', type: 'address' },
-    ],
-    name: 'addReserveToken',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'oftToken', internalType: 'address', type: 'address' }],
-    name: 'ethereumOFTXTokensOf',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'ofta_', internalType: 'address', type: 'address' },
-      { name: 'oftxTokens', internalType: 'address[]', type: 'address[]' },
-      {
-        name: 'ethereumOFTXTokens',
-        internalType: 'address[]',
-        type: 'address[]',
-      },
-      { name: 'ethereumTreasury_', internalType: 'address', type: 'address' },
-      { name: 'initialOwner_', internalType: 'address', type: 'address' },
-    ],
-    name: 'initialize',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: '_param',
-        internalType: 'struct MintParam',
-        type: 'tuple',
-        components: [
-          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
-          { name: 'amount', internalType: 'uint256', type: 'uint256' },
-          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
-          { name: 'token', internalType: 'address', type: 'address' },
-          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-      {
-        name: '_fee',
-        internalType: 'struct MessagingFee',
-        type: 'tuple',
-        components: [
-          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
-          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
-        ],
-      },
-    ],
-    name: 'mint',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct MessagingReceipt',
-        type: 'tuple',
-        components: [
-          { name: 'guid', internalType: 'bytes32', type: 'bytes32' },
-          { name: 'nonce', internalType: 'uint64', type: 'uint64' },
-          {
-            name: 'fee',
-            internalType: 'struct MessagingFee',
-            type: 'tuple',
-            components: [
-              { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
-              { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
-            ],
-          },
-        ],
-      },
-      {
-        name: '',
-        internalType: 'struct OFTReceipt',
-        type: 'tuple',
-        components: [
-          { name: 'amountSentLD', internalType: 'uint256', type: 'uint256' },
-          {
-            name: 'amountReceivedLD',
-            internalType: 'uint256',
-            type: 'uint256',
-          },
-        ],
-      },
-    ],
-    stateMutability: 'payable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'owner',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'proxiableUUID',
-    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: '_param',
-        internalType: 'struct MintParam',
-        type: 'tuple',
-        components: [
-          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
-          { name: 'amount', internalType: 'uint256', type: 'uint256' },
-          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
-          { name: 'token', internalType: 'address', type: 'address' },
-          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-    ],
-    name: 'quoteMint',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct MessagingFee',
-        type: 'tuple',
-        components: [
-          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
-          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
-        ],
-      },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: '_token', internalType: 'address', type: 'address' }],
-    name: 'removeReserveToken',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'newImplementation', internalType: 'address', type: 'address' },
-      { name: 'data', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'upgradeToAndCall',
-    outputs: [],
-    stateMutability: 'payable',
-  },
-  {
-    type: 'constructor',
-    inputs: [
-      { name: '_logic', internalType: 'address', type: 'address' },
-      { name: '_data', internalType: 'bytes', type: 'bytes' },
-    ],
-    stateMutability: 'payable',
-  },
-] as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // noftx
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4047,6 +3283,770 @@ export const oftaAbi = [
 ] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// oftaTreasury
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const oftaTreasuryAbi = [
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousAdmin',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'newAdmin',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'AdminChanged',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'beacon',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'BeaconUpgraded',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'implementation',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'Upgraded',
+  },
+  { type: 'fallback', stateMutability: 'payable' },
+  { type: 'receive', stateMutability: 'payable' },
+  {
+    type: 'error',
+    inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
+    name: 'AddressEmptyCode',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'implementation', internalType: 'address', type: 'address' },
+    ],
+    name: 'ERC1967InvalidImplementation',
+  },
+  { type: 'error', inputs: [], name: 'ERC1967NonPayable' },
+  {
+    type: 'error',
+    inputs: [{ name: 'caller', internalType: 'address', type: 'address' }],
+    name: 'EthereumTreasury__CallerMustBeLayerzeroEndpoint',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'from', internalType: 'address', type: 'address' }],
+    name: 'EthereumTreasury__InvalidSourceSendingContract',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'EthereumTreasury__TokenIsNotAReserveToken',
+  },
+  { type: 'error', inputs: [], name: 'FailedCall' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  {
+    type: 'error',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'OwnableInvalidOwner',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'OwnableUnauthorizedAccount',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation',
+  },
+  { type: 'error', inputs: [], name: 'UUPSUnauthorizedCallContext' },
+  {
+    type: 'error',
+    inputs: [{ name: 'slot', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'UUPSUnsupportedProxiableUUID',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'burnFee',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'BurnFeeSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'feeReceiver',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'FeeReceiverSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'ReserveTokenAdded',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'ReserveTokenRemoved',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'BPS_DENOMINATOR',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'UPGRADE_INTERFACE_VERSION',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_token', internalType: 'address', type: 'address' }],
+    name: 'addReserveToken',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_token', internalType: 'address', type: 'address' },
+      { name: '_amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'burn',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'burnFee',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: '_param',
+        internalType: 'struct CrossChainMintParam',
+        type: 'tuple',
+        components: [
+          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
+          { name: 'amount', internalType: 'uint256', type: 'uint256' },
+          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+      {
+        name: '_fee',
+        internalType: 'struct MessagingFee',
+        type: 'tuple',
+        components: [
+          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
+          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    name: 'crossChainMint',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'amount', internalType: 'uint256', type: 'uint256' }],
+    name: 'feeOf',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'feeReceiver',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'ofta_', internalType: 'address', type: 'address' },
+      { name: 'reserveTokens', internalType: 'address[]', type: 'address[]' },
+      { name: 'burnFee_', internalType: 'uint256', type: 'uint256' },
+      { name: 'feeReceiver_', internalType: 'address', type: 'address' },
+      { name: 'initialOwner_', internalType: 'address', type: 'address' },
+    ],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_from', internalType: 'address', type: 'address' },
+      { name: '_guid', internalType: 'bytes32', type: 'bytes32' },
+      { name: '_message', internalType: 'bytes', type: 'bytes' },
+      { name: '_executor', internalType: 'address', type: 'address' },
+      { name: '_extraData', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'lzCompose',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_token', internalType: 'address', type: 'address' },
+      { name: '_amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'mint',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'proxiableUUID',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: '_param',
+        internalType: 'struct CrossChainMintParam',
+        type: 'tuple',
+        components: [
+          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
+          { name: 'amount', internalType: 'uint256', type: 'uint256' },
+          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    name: 'quoteCrossChainMint',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct MessagingFee',
+        type: 'tuple',
+        components: [
+          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
+          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_token', internalType: 'address', type: 'address' }],
+    name: 'removeReserveToken',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'burnFee_', internalType: 'uint256', type: 'uint256' }],
+    name: 'setBurnFee',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'feeReceiver_', internalType: 'address', type: 'address' },
+    ],
+    name: 'setFeeReceiver',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newImplementation', internalType: 'address', type: 'address' },
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'upgradeToAndCall',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'constructor',
+    inputs: [
+      { name: '_logic', internalType: 'address', type: 'address' },
+      { name: '_data', internalType: 'bytes', type: 'bytes' },
+    ],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// oftaTreasuryProxy
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const oftaTreasuryProxyAbi = [
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousAdmin',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'newAdmin',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'AdminChanged',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'beacon',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'BeaconUpgraded',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'implementation',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'Upgraded',
+  },
+  { type: 'fallback', stateMutability: 'payable' },
+  { type: 'receive', stateMutability: 'payable' },
+  {
+    type: 'error',
+    inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
+    name: 'AddressEmptyCode',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'implementation', internalType: 'address', type: 'address' },
+    ],
+    name: 'ERC1967InvalidImplementation',
+  },
+  { type: 'error', inputs: [], name: 'ERC1967NonPayable' },
+  { type: 'error', inputs: [], name: 'FailedCall' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'oftxTokensLength', internalType: 'uint256', type: 'uint256' },
+      {
+        name: 'ethereumOFTXTokensLength',
+        internalType: 'uint256',
+        type: 'uint256',
+      },
+    ],
+    name: 'JapanOpenChainTreasury__InvalidReserveTokensLength',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'JapanOpenChainTreasury__TokenIsNotAReserveToken',
+  },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  {
+    type: 'error',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'OwnableInvalidOwner',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'OwnableUnauthorizedAccount',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation',
+  },
+  { type: 'error', inputs: [], name: 'UUPSUnauthorizedCallContext' },
+  {
+    type: 'error',
+    inputs: [{ name: 'slot', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'UUPSUnsupportedProxiableUUID',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'ReserveTokenAdded',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'ReserveTokenRemoved',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'OFTX_COMPOSE_BURN_MSG_TYPE',
+    outputs: [{ name: '', internalType: 'uint16', type: 'uint16' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'UPGRADE_INTERFACE_VERSION',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '_token', internalType: 'address', type: 'address' },
+      { name: '_ethereumToken', internalType: 'address', type: 'address' },
+    ],
+    name: 'addReserveToken',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'oftToken', internalType: 'address', type: 'address' }],
+    name: 'ethereumOFTXTokensOf',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'ofta_', internalType: 'address', type: 'address' },
+      { name: 'oftxTokens', internalType: 'address[]', type: 'address[]' },
+      {
+        name: 'ethereumOFTXTokens',
+        internalType: 'address[]',
+        type: 'address[]',
+      },
+      { name: 'ethereumTreasury_', internalType: 'address', type: 'address' },
+      { name: 'initialOwner_', internalType: 'address', type: 'address' },
+    ],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: '_param',
+        internalType: 'struct MintParam',
+        type: 'tuple',
+        components: [
+          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
+          { name: 'amount', internalType: 'uint256', type: 'uint256' },
+          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+      {
+        name: '_fee',
+        internalType: 'struct MessagingFee',
+        type: 'tuple',
+        components: [
+          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
+          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    name: 'mint',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct MessagingReceipt',
+        type: 'tuple',
+        components: [
+          { name: 'guid', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'nonce', internalType: 'uint64', type: 'uint64' },
+          {
+            name: 'fee',
+            internalType: 'struct MessagingFee',
+            type: 'tuple',
+            components: [
+              { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
+              { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '',
+        internalType: 'struct OFTReceipt',
+        type: 'tuple',
+        components: [
+          { name: 'amountSentLD', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'amountReceivedLD',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+        ],
+      },
+    ],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'proxiableUUID',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: '_param',
+        internalType: 'struct MintParam',
+        type: 'tuple',
+        components: [
+          { name: 'dstEid', internalType: 'uint32', type: 'uint32' },
+          { name: 'amount', internalType: 'uint256', type: 'uint256' },
+          { name: 'minAmount', internalType: 'uint256', type: 'uint256' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'extraOptions', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    name: 'quoteMint',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct MessagingFee',
+        type: 'tuple',
+        components: [
+          { name: 'nativeFee', internalType: 'uint256', type: 'uint256' },
+          { name: 'lzTokenFee', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_token', internalType: 'address', type: 'address' }],
+    name: 'removeReserveToken',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newImplementation', internalType: 'address', type: 'address' },
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'upgradeToAndCall',
+    outputs: [],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'constructor',
+    inputs: [
+      { name: '_logic', internalType: 'address', type: 'address' },
+      { name: '_data', internalType: 'bytes', type: 'bytes' },
+    ],
+    stateMutability: 'payable',
+  },
+] as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // oftx
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -5123,664 +5123,6 @@ export const useWatchErc20TransferEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
     abi: erc20Abi,
     eventName: 'Transfer',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const useReadEthereumTreasury = /*#__PURE__*/ createUseReadContract({
-  abi: ethereumTreasuryAbi,
-})
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"BPS_DENOMINATOR"`
- */
-export const useReadEthereumTreasuryBpsDenominator =
-  /*#__PURE__*/ createUseReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'BPS_DENOMINATOR',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
- */
-export const useReadEthereumTreasuryUpgradeInterfaceVersion =
-  /*#__PURE__*/ createUseReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'UPGRADE_INTERFACE_VERSION',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"burnFee"`
- */
-export const useReadEthereumTreasuryBurnFee =
-  /*#__PURE__*/ createUseReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'burnFee',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"feeOf"`
- */
-export const useReadEthereumTreasuryFeeOf = /*#__PURE__*/ createUseReadContract(
-  { abi: ethereumTreasuryAbi, functionName: 'feeOf' },
-)
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"feeReceiver"`
- */
-export const useReadEthereumTreasuryFeeReceiver =
-  /*#__PURE__*/ createUseReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'feeReceiver',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"owner"`
- */
-export const useReadEthereumTreasuryOwner = /*#__PURE__*/ createUseReadContract(
-  { abi: ethereumTreasuryAbi, functionName: 'owner' },
-)
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"proxiableUUID"`
- */
-export const useReadEthereumTreasuryProxiableUuid =
-  /*#__PURE__*/ createUseReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'proxiableUUID',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"quoteCrossChainMint"`
- */
-export const useReadEthereumTreasuryQuoteCrossChainMint =
-  /*#__PURE__*/ createUseReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'quoteCrossChainMint',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const useWriteEthereumTreasury = /*#__PURE__*/ createUseWriteContract({
-  abi: ethereumTreasuryAbi,
-})
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const useWriteEthereumTreasuryAddReserveToken =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"burn"`
- */
-export const useWriteEthereumTreasuryBurn =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'burn',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
- */
-export const useWriteEthereumTreasuryCrossChainMint =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'crossChainMint',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const useWriteEthereumTreasuryInitialize =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"lzCompose"`
- */
-export const useWriteEthereumTreasuryLzCompose =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'lzCompose',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const useWriteEthereumTreasuryMint =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const useWriteEthereumTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const useWriteEthereumTreasuryRenounceOwnership =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
- */
-export const useWriteEthereumTreasurySetBurnFee =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setBurnFee',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
- */
-export const useWriteEthereumTreasurySetFeeReceiver =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setFeeReceiver',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const useWriteEthereumTreasuryTransferOwnership =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const useWriteEthereumTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const useSimulateEthereumTreasury =
-  /*#__PURE__*/ createUseSimulateContract({ abi: ethereumTreasuryAbi })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const useSimulateEthereumTreasuryAddReserveToken =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"burn"`
- */
-export const useSimulateEthereumTreasuryBurn =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'burn',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
- */
-export const useSimulateEthereumTreasuryCrossChainMint =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'crossChainMint',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const useSimulateEthereumTreasuryInitialize =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"lzCompose"`
- */
-export const useSimulateEthereumTreasuryLzCompose =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'lzCompose',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const useSimulateEthereumTreasuryMint =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const useSimulateEthereumTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const useSimulateEthereumTreasuryRenounceOwnership =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
- */
-export const useSimulateEthereumTreasurySetBurnFee =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setBurnFee',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
- */
-export const useSimulateEthereumTreasurySetFeeReceiver =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setFeeReceiver',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const useSimulateEthereumTreasuryTransferOwnership =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const useSimulateEthereumTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const useWatchEthereumTreasuryEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({ abi: ethereumTreasuryAbi })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"AdminChanged"`
- */
-export const useWatchEthereumTreasuryAdminChangedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'AdminChanged',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"BeaconUpgraded"`
- */
-export const useWatchEthereumTreasuryBeaconUpgradedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'BeaconUpgraded',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"Upgraded"`
- */
-export const useWatchEthereumTreasuryUpgradedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'Upgraded',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"BurnFeeSet"`
- */
-export const useWatchEthereumTreasuryBurnFeeSetEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'BurnFeeSet',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"FeeReceiverSet"`
- */
-export const useWatchEthereumTreasuryFeeReceiverSetEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'FeeReceiverSet',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"Initialized"`
- */
-export const useWatchEthereumTreasuryInitializedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'Initialized',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"OwnershipTransferred"`
- */
-export const useWatchEthereumTreasuryOwnershipTransferredEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'OwnershipTransferred',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"ReserveTokenAdded"`
- */
-export const useWatchEthereumTreasuryReserveTokenAddedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'ReserveTokenAdded',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
- */
-export const useWatchEthereumTreasuryReserveTokenRemovedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'ReserveTokenRemoved',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const useReadJapanOpenChainTreasury =
-  /*#__PURE__*/ createUseReadContract({ abi: japanOpenChainTreasuryAbi })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"OFTX_COMPOSE_BURN_MSG_TYPE"`
- */
-export const useReadJapanOpenChainTreasuryOftxComposeBurnMsgType =
-  /*#__PURE__*/ createUseReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'OFTX_COMPOSE_BURN_MSG_TYPE',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
- */
-export const useReadJapanOpenChainTreasuryUpgradeInterfaceVersion =
-  /*#__PURE__*/ createUseReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'UPGRADE_INTERFACE_VERSION',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"ethereumOFTXTokensOf"`
- */
-export const useReadJapanOpenChainTreasuryEthereumOftxTokensOf =
-  /*#__PURE__*/ createUseReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'ethereumOFTXTokensOf',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"owner"`
- */
-export const useReadJapanOpenChainTreasuryOwner =
-  /*#__PURE__*/ createUseReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'owner',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"proxiableUUID"`
- */
-export const useReadJapanOpenChainTreasuryProxiableUuid =
-  /*#__PURE__*/ createUseReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'proxiableUUID',
-  })
-
-/**
- * Wraps __{@link useReadContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"quoteMint"`
- */
-export const useReadJapanOpenChainTreasuryQuoteMint =
-  /*#__PURE__*/ createUseReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'quoteMint',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const useWriteJapanOpenChainTreasury =
-  /*#__PURE__*/ createUseWriteContract({ abi: japanOpenChainTreasuryAbi })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const useWriteJapanOpenChainTreasuryAddReserveToken =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const useWriteJapanOpenChainTreasuryInitialize =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const useWriteJapanOpenChainTreasuryMint =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const useWriteJapanOpenChainTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const useWriteJapanOpenChainTreasuryRenounceOwnership =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const useWriteJapanOpenChainTreasuryTransferOwnership =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link useWriteContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const useWriteJapanOpenChainTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createUseWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const useSimulateJapanOpenChainTreasury =
-  /*#__PURE__*/ createUseSimulateContract({ abi: japanOpenChainTreasuryAbi })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const useSimulateJapanOpenChainTreasuryAddReserveToken =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const useSimulateJapanOpenChainTreasuryInitialize =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const useSimulateJapanOpenChainTreasuryMint =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const useSimulateJapanOpenChainTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const useSimulateJapanOpenChainTreasuryRenounceOwnership =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const useSimulateJapanOpenChainTreasuryTransferOwnership =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const useSimulateJapanOpenChainTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createUseSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const useWatchJapanOpenChainTreasuryEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({ abi: japanOpenChainTreasuryAbi })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"AdminChanged"`
- */
-export const useWatchJapanOpenChainTreasuryAdminChangedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'AdminChanged',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"BeaconUpgraded"`
- */
-export const useWatchJapanOpenChainTreasuryBeaconUpgradedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'BeaconUpgraded',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"Upgraded"`
- */
-export const useWatchJapanOpenChainTreasuryUpgradedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'Upgraded',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"Initialized"`
- */
-export const useWatchJapanOpenChainTreasuryInitializedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'Initialized',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"OwnershipTransferred"`
- */
-export const useWatchJapanOpenChainTreasuryOwnershipTransferredEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'OwnershipTransferred',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"ReserveTokenAdded"`
- */
-export const useWatchJapanOpenChainTreasuryReserveTokenAddedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'ReserveTokenAdded',
-  })
-
-/**
- * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
- */
-export const useWatchJapanOpenChainTreasuryReserveTokenRemovedEvent =
-  /*#__PURE__*/ createUseWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'ReserveTokenRemoved',
   })
 
 /**
@@ -8011,6 +7353,666 @@ export const useWatchOftaUnpausedEvent =
   })
 
 /**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const useReadOftaTreasury = /*#__PURE__*/ createUseReadContract({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"BPS_DENOMINATOR"`
+ */
+export const useReadOftaTreasuryBpsDenominator =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'BPS_DENOMINATOR',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
+ */
+export const useReadOftaTreasuryUpgradeInterfaceVersion =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'UPGRADE_INTERFACE_VERSION',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"burnFee"`
+ */
+export const useReadOftaTreasuryBurnFee = /*#__PURE__*/ createUseReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'burnFee',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"feeOf"`
+ */
+export const useReadOftaTreasuryFeeOf = /*#__PURE__*/ createUseReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'feeOf',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"feeReceiver"`
+ */
+export const useReadOftaTreasuryFeeReceiver =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'feeReceiver',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"owner"`
+ */
+export const useReadOftaTreasuryOwner = /*#__PURE__*/ createUseReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"proxiableUUID"`
+ */
+export const useReadOftaTreasuryProxiableUuid =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'proxiableUUID',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"quoteCrossChainMint"`
+ */
+export const useReadOftaTreasuryQuoteCrossChainMint =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'quoteCrossChainMint',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const useWriteOftaTreasury = /*#__PURE__*/ createUseWriteContract({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const useWriteOftaTreasuryAddReserveToken =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"burn"`
+ */
+export const useWriteOftaTreasuryBurn = /*#__PURE__*/ createUseWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'burn',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
+ */
+export const useWriteOftaTreasuryCrossChainMint =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'crossChainMint',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"initialize"`
+ */
+export const useWriteOftaTreasuryInitialize =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"lzCompose"`
+ */
+export const useWriteOftaTreasuryLzCompose =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'lzCompose',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"mint"`
+ */
+export const useWriteOftaTreasuryMint = /*#__PURE__*/ createUseWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'mint',
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const useWriteOftaTreasuryRemoveReserveToken =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useWriteOftaTreasuryRenounceOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
+ */
+export const useWriteOftaTreasurySetBurnFee =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setBurnFee',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
+ */
+export const useWriteOftaTreasurySetFeeReceiver =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setFeeReceiver',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useWriteOftaTreasuryTransferOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const useWriteOftaTreasuryUpgradeToAndCall =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const useSimulateOftaTreasury = /*#__PURE__*/ createUseSimulateContract({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const useSimulateOftaTreasuryAddReserveToken =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"burn"`
+ */
+export const useSimulateOftaTreasuryBurn =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'burn',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
+ */
+export const useSimulateOftaTreasuryCrossChainMint =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'crossChainMint',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"initialize"`
+ */
+export const useSimulateOftaTreasuryInitialize =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"lzCompose"`
+ */
+export const useSimulateOftaTreasuryLzCompose =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'lzCompose',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"mint"`
+ */
+export const useSimulateOftaTreasuryMint =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'mint',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const useSimulateOftaTreasuryRemoveReserveToken =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useSimulateOftaTreasuryRenounceOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
+ */
+export const useSimulateOftaTreasurySetBurnFee =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setBurnFee',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
+ */
+export const useSimulateOftaTreasurySetFeeReceiver =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setFeeReceiver',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useSimulateOftaTreasuryTransferOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const useSimulateOftaTreasuryUpgradeToAndCall =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const useWatchOftaTreasuryEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({ abi: oftaTreasuryAbi })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"AdminChanged"`
+ */
+export const useWatchOftaTreasuryAdminChangedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'AdminChanged',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"BeaconUpgraded"`
+ */
+export const useWatchOftaTreasuryBeaconUpgradedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'BeaconUpgraded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"Upgraded"`
+ */
+export const useWatchOftaTreasuryUpgradedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'Upgraded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"BurnFeeSet"`
+ */
+export const useWatchOftaTreasuryBurnFeeSetEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'BurnFeeSet',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"FeeReceiverSet"`
+ */
+export const useWatchOftaTreasuryFeeReceiverSetEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'FeeReceiverSet',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const useWatchOftaTreasuryInitializedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const useWatchOftaTreasuryOwnershipTransferredEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"ReserveTokenAdded"`
+ */
+export const useWatchOftaTreasuryReserveTokenAddedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'ReserveTokenAdded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
+ */
+export const useWatchOftaTreasuryReserveTokenRemovedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'ReserveTokenRemoved',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const useReadOftaTreasuryProxy = /*#__PURE__*/ createUseReadContract({
+  abi: oftaTreasuryProxyAbi,
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"OFTX_COMPOSE_BURN_MSG_TYPE"`
+ */
+export const useReadOftaTreasuryProxyOftxComposeBurnMsgType =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'OFTX_COMPOSE_BURN_MSG_TYPE',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
+ */
+export const useReadOftaTreasuryProxyUpgradeInterfaceVersion =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'UPGRADE_INTERFACE_VERSION',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"ethereumOFTXTokensOf"`
+ */
+export const useReadOftaTreasuryProxyEthereumOftxTokensOf =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'ethereumOFTXTokensOf',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"owner"`
+ */
+export const useReadOftaTreasuryProxyOwner =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'owner',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"proxiableUUID"`
+ */
+export const useReadOftaTreasuryProxyProxiableUuid =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'proxiableUUID',
+  })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"quoteMint"`
+ */
+export const useReadOftaTreasuryProxyQuoteMint =
+  /*#__PURE__*/ createUseReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'quoteMint',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const useWriteOftaTreasuryProxy = /*#__PURE__*/ createUseWriteContract({
+  abi: oftaTreasuryProxyAbi,
+})
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const useWriteOftaTreasuryProxyAddReserveToken =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"initialize"`
+ */
+export const useWriteOftaTreasuryProxyInitialize =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"mint"`
+ */
+export const useWriteOftaTreasuryProxyMint =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'mint',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const useWriteOftaTreasuryProxyRemoveReserveToken =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useWriteOftaTreasuryProxyRenounceOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useWriteOftaTreasuryProxyTransferOwnership =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const useWriteOftaTreasuryProxyUpgradeToAndCall =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const useSimulateOftaTreasuryProxy =
+  /*#__PURE__*/ createUseSimulateContract({ abi: oftaTreasuryProxyAbi })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const useSimulateOftaTreasuryProxyAddReserveToken =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"initialize"`
+ */
+export const useSimulateOftaTreasuryProxyInitialize =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"mint"`
+ */
+export const useSimulateOftaTreasuryProxyMint =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'mint',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const useSimulateOftaTreasuryProxyRemoveReserveToken =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const useSimulateOftaTreasuryProxyRenounceOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const useSimulateOftaTreasuryProxyTransferOwnership =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const useSimulateOftaTreasuryProxyUpgradeToAndCall =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const useWatchOftaTreasuryProxyEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({ abi: oftaTreasuryProxyAbi })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"AdminChanged"`
+ */
+export const useWatchOftaTreasuryProxyAdminChangedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'AdminChanged',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"BeaconUpgraded"`
+ */
+export const useWatchOftaTreasuryProxyBeaconUpgradedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'BeaconUpgraded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"Upgraded"`
+ */
+export const useWatchOftaTreasuryProxyUpgradedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'Upgraded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const useWatchOftaTreasuryProxyInitializedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const useWatchOftaTreasuryProxyOwnershipTransferredEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"ReserveTokenAdded"`
+ */
+export const useWatchOftaTreasuryProxyReserveTokenAddedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'ReserveTokenAdded',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
+ */
+export const useWatchOftaTreasuryProxyReserveTokenRemovedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'ReserveTokenRemoved',
+  })
+
+/**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link oftxAbi}__
  */
 export const useReadOftx = /*#__PURE__*/ createUseReadContract({ abi: oftxAbi })
@@ -8807,660 +8809,6 @@ export const watchErc20TransferEvent = /*#__PURE__*/ createWatchContractEvent({
   abi: erc20Abi,
   eventName: 'Transfer',
 })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const readEthereumTreasury = /*#__PURE__*/ createReadContract({
-  abi: ethereumTreasuryAbi,
-})
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"BPS_DENOMINATOR"`
- */
-export const readEthereumTreasuryBpsDenominator =
-  /*#__PURE__*/ createReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'BPS_DENOMINATOR',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
- */
-export const readEthereumTreasuryUpgradeInterfaceVersion =
-  /*#__PURE__*/ createReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'UPGRADE_INTERFACE_VERSION',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"burnFee"`
- */
-export const readEthereumTreasuryBurnFee = /*#__PURE__*/ createReadContract({
-  abi: ethereumTreasuryAbi,
-  functionName: 'burnFee',
-})
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"feeOf"`
- */
-export const readEthereumTreasuryFeeOf = /*#__PURE__*/ createReadContract({
-  abi: ethereumTreasuryAbi,
-  functionName: 'feeOf',
-})
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"feeReceiver"`
- */
-export const readEthereumTreasuryFeeReceiver = /*#__PURE__*/ createReadContract(
-  { abi: ethereumTreasuryAbi, functionName: 'feeReceiver' },
-)
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"owner"`
- */
-export const readEthereumTreasuryOwner = /*#__PURE__*/ createReadContract({
-  abi: ethereumTreasuryAbi,
-  functionName: 'owner',
-})
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"proxiableUUID"`
- */
-export const readEthereumTreasuryProxiableUuid =
-  /*#__PURE__*/ createReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'proxiableUUID',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"quoteCrossChainMint"`
- */
-export const readEthereumTreasuryQuoteCrossChainMint =
-  /*#__PURE__*/ createReadContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'quoteCrossChainMint',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const writeEthereumTreasury = /*#__PURE__*/ createWriteContract({
-  abi: ethereumTreasuryAbi,
-})
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const writeEthereumTreasuryAddReserveToken =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"burn"`
- */
-export const writeEthereumTreasuryBurn = /*#__PURE__*/ createWriteContract({
-  abi: ethereumTreasuryAbi,
-  functionName: 'burn',
-})
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
- */
-export const writeEthereumTreasuryCrossChainMint =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'crossChainMint',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const writeEthereumTreasuryInitialize =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"lzCompose"`
- */
-export const writeEthereumTreasuryLzCompose = /*#__PURE__*/ createWriteContract(
-  { abi: ethereumTreasuryAbi, functionName: 'lzCompose' },
-)
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const writeEthereumTreasuryMint = /*#__PURE__*/ createWriteContract({
-  abi: ethereumTreasuryAbi,
-  functionName: 'mint',
-})
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const writeEthereumTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const writeEthereumTreasuryRenounceOwnership =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
- */
-export const writeEthereumTreasurySetBurnFee =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setBurnFee',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
- */
-export const writeEthereumTreasurySetFeeReceiver =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setFeeReceiver',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const writeEthereumTreasuryTransferOwnership =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const writeEthereumTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createWriteContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const simulateEthereumTreasury = /*#__PURE__*/ createSimulateContract({
-  abi: ethereumTreasuryAbi,
-})
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const simulateEthereumTreasuryAddReserveToken =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"burn"`
- */
-export const simulateEthereumTreasuryBurn =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'burn',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
- */
-export const simulateEthereumTreasuryCrossChainMint =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'crossChainMint',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const simulateEthereumTreasuryInitialize =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"lzCompose"`
- */
-export const simulateEthereumTreasuryLzCompose =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'lzCompose',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const simulateEthereumTreasuryMint =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const simulateEthereumTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const simulateEthereumTreasuryRenounceOwnership =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
- */
-export const simulateEthereumTreasurySetBurnFee =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setBurnFee',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
- */
-export const simulateEthereumTreasurySetFeeReceiver =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'setFeeReceiver',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const simulateEthereumTreasuryTransferOwnership =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const simulateEthereumTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createSimulateContract({
-    abi: ethereumTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__
- */
-export const watchEthereumTreasuryEvent =
-  /*#__PURE__*/ createWatchContractEvent({ abi: ethereumTreasuryAbi })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"AdminChanged"`
- */
-export const watchEthereumTreasuryAdminChangedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'AdminChanged',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"BeaconUpgraded"`
- */
-export const watchEthereumTreasuryBeaconUpgradedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'BeaconUpgraded',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"Upgraded"`
- */
-export const watchEthereumTreasuryUpgradedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'Upgraded',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"BurnFeeSet"`
- */
-export const watchEthereumTreasuryBurnFeeSetEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'BurnFeeSet',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"FeeReceiverSet"`
- */
-export const watchEthereumTreasuryFeeReceiverSetEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'FeeReceiverSet',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"Initialized"`
- */
-export const watchEthereumTreasuryInitializedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'Initialized',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"OwnershipTransferred"`
- */
-export const watchEthereumTreasuryOwnershipTransferredEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'OwnershipTransferred',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"ReserveTokenAdded"`
- */
-export const watchEthereumTreasuryReserveTokenAddedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'ReserveTokenAdded',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link ethereumTreasuryAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
- */
-export const watchEthereumTreasuryReserveTokenRemovedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: ethereumTreasuryAbi,
-    eventName: 'ReserveTokenRemoved',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const readJapanOpenChainTreasury = /*#__PURE__*/ createReadContract({
-  abi: japanOpenChainTreasuryAbi,
-})
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"OFTX_COMPOSE_BURN_MSG_TYPE"`
- */
-export const readJapanOpenChainTreasuryOftxComposeBurnMsgType =
-  /*#__PURE__*/ createReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'OFTX_COMPOSE_BURN_MSG_TYPE',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
- */
-export const readJapanOpenChainTreasuryUpgradeInterfaceVersion =
-  /*#__PURE__*/ createReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'UPGRADE_INTERFACE_VERSION',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"ethereumOFTXTokensOf"`
- */
-export const readJapanOpenChainTreasuryEthereumOftxTokensOf =
-  /*#__PURE__*/ createReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'ethereumOFTXTokensOf',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"owner"`
- */
-export const readJapanOpenChainTreasuryOwner = /*#__PURE__*/ createReadContract(
-  { abi: japanOpenChainTreasuryAbi, functionName: 'owner' },
-)
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"proxiableUUID"`
- */
-export const readJapanOpenChainTreasuryProxiableUuid =
-  /*#__PURE__*/ createReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'proxiableUUID',
-  })
-
-/**
- * Wraps __{@link readContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"quoteMint"`
- */
-export const readJapanOpenChainTreasuryQuoteMint =
-  /*#__PURE__*/ createReadContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'quoteMint',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const writeJapanOpenChainTreasury = /*#__PURE__*/ createWriteContract({
-  abi: japanOpenChainTreasuryAbi,
-})
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const writeJapanOpenChainTreasuryAddReserveToken =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const writeJapanOpenChainTreasuryInitialize =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const writeJapanOpenChainTreasuryMint =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const writeJapanOpenChainTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const writeJapanOpenChainTreasuryRenounceOwnership =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const writeJapanOpenChainTreasuryTransferOwnership =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const writeJapanOpenChainTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createWriteContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const simulateJapanOpenChainTreasury =
-  /*#__PURE__*/ createSimulateContract({ abi: japanOpenChainTreasuryAbi })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
- */
-export const simulateJapanOpenChainTreasuryAddReserveToken =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'addReserveToken',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"initialize"`
- */
-export const simulateJapanOpenChainTreasuryInitialize =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'initialize',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"mint"`
- */
-export const simulateJapanOpenChainTreasuryMint =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'mint',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
- */
-export const simulateJapanOpenChainTreasuryRemoveReserveToken =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'removeReserveToken',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
- */
-export const simulateJapanOpenChainTreasuryRenounceOwnership =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'renounceOwnership',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
- */
-export const simulateJapanOpenChainTreasuryTransferOwnership =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'transferOwnership',
-  })
-
-/**
- * Wraps __{@link simulateContract}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
- */
-export const simulateJapanOpenChainTreasuryUpgradeToAndCall =
-  /*#__PURE__*/ createSimulateContract({
-    abi: japanOpenChainTreasuryAbi,
-    functionName: 'upgradeToAndCall',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__
- */
-export const watchJapanOpenChainTreasuryEvent =
-  /*#__PURE__*/ createWatchContractEvent({ abi: japanOpenChainTreasuryAbi })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"AdminChanged"`
- */
-export const watchJapanOpenChainTreasuryAdminChangedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'AdminChanged',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"BeaconUpgraded"`
- */
-export const watchJapanOpenChainTreasuryBeaconUpgradedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'BeaconUpgraded',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"Upgraded"`
- */
-export const watchJapanOpenChainTreasuryUpgradedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'Upgraded',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"Initialized"`
- */
-export const watchJapanOpenChainTreasuryInitializedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'Initialized',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"OwnershipTransferred"`
- */
-export const watchJapanOpenChainTreasuryOwnershipTransferredEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'OwnershipTransferred',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"ReserveTokenAdded"`
- */
-export const watchJapanOpenChainTreasuryReserveTokenAddedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'ReserveTokenAdded',
-  })
-
-/**
- * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link japanOpenChainTreasuryAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
- */
-export const watchJapanOpenChainTreasuryReserveTokenRemovedEvent =
-  /*#__PURE__*/ createWatchContractEvent({
-    abi: japanOpenChainTreasuryAbi,
-    eventName: 'ReserveTokenRemoved',
-  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link noftxAbi}__
@@ -11619,6 +10967,657 @@ export const watchOftaUnpausedEvent = /*#__PURE__*/ createWatchContractEvent({
   abi: oftaAbi,
   eventName: 'Unpaused',
 })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const readOftaTreasury = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"BPS_DENOMINATOR"`
+ */
+export const readOftaTreasuryBpsDenominator = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'BPS_DENOMINATOR',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
+ */
+export const readOftaTreasuryUpgradeInterfaceVersion =
+  /*#__PURE__*/ createReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'UPGRADE_INTERFACE_VERSION',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"burnFee"`
+ */
+export const readOftaTreasuryBurnFee = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'burnFee',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"feeOf"`
+ */
+export const readOftaTreasuryFeeOf = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'feeOf',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"feeReceiver"`
+ */
+export const readOftaTreasuryFeeReceiver = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'feeReceiver',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"owner"`
+ */
+export const readOftaTreasuryOwner = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"proxiableUUID"`
+ */
+export const readOftaTreasuryProxiableUuid = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'proxiableUUID',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"quoteCrossChainMint"`
+ */
+export const readOftaTreasuryQuoteCrossChainMint =
+  /*#__PURE__*/ createReadContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'quoteCrossChainMint',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const writeOftaTreasury = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const writeOftaTreasuryAddReserveToken =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"burn"`
+ */
+export const writeOftaTreasuryBurn = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'burn',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
+ */
+export const writeOftaTreasuryCrossChainMint =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'crossChainMint',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeOftaTreasuryInitialize = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'initialize',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"lzCompose"`
+ */
+export const writeOftaTreasuryLzCompose = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'lzCompose',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"mint"`
+ */
+export const writeOftaTreasuryMint = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'mint',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const writeOftaTreasuryRemoveReserveToken =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeOftaTreasuryRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
+ */
+export const writeOftaTreasurySetBurnFee = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'setBurnFee',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
+ */
+export const writeOftaTreasurySetFeeReceiver =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setFeeReceiver',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeOftaTreasuryTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const writeOftaTreasuryUpgradeToAndCall =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const simulateOftaTreasury = /*#__PURE__*/ createSimulateContract({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const simulateOftaTreasuryAddReserveToken =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"burn"`
+ */
+export const simulateOftaTreasuryBurn = /*#__PURE__*/ createSimulateContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'burn',
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"crossChainMint"`
+ */
+export const simulateOftaTreasuryCrossChainMint =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'crossChainMint',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateOftaTreasuryInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"lzCompose"`
+ */
+export const simulateOftaTreasuryLzCompose =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'lzCompose',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"mint"`
+ */
+export const simulateOftaTreasuryMint = /*#__PURE__*/ createSimulateContract({
+  abi: oftaTreasuryAbi,
+  functionName: 'mint',
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const simulateOftaTreasuryRemoveReserveToken =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateOftaTreasuryRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setBurnFee"`
+ */
+export const simulateOftaTreasurySetBurnFee =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setBurnFee',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"setFeeReceiver"`
+ */
+export const simulateOftaTreasurySetFeeReceiver =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'setFeeReceiver',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateOftaTreasuryTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const simulateOftaTreasuryUpgradeToAndCall =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__
+ */
+export const watchOftaTreasuryEvent = /*#__PURE__*/ createWatchContractEvent({
+  abi: oftaTreasuryAbi,
+})
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"AdminChanged"`
+ */
+export const watchOftaTreasuryAdminChangedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'AdminChanged',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"BeaconUpgraded"`
+ */
+export const watchOftaTreasuryBeaconUpgradedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'BeaconUpgraded',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"Upgraded"`
+ */
+export const watchOftaTreasuryUpgradedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'Upgraded',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"BurnFeeSet"`
+ */
+export const watchOftaTreasuryBurnFeeSetEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'BurnFeeSet',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"FeeReceiverSet"`
+ */
+export const watchOftaTreasuryFeeReceiverSetEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'FeeReceiverSet',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchOftaTreasuryInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchOftaTreasuryOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"ReserveTokenAdded"`
+ */
+export const watchOftaTreasuryReserveTokenAddedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'ReserveTokenAdded',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
+ */
+export const watchOftaTreasuryReserveTokenRemovedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryAbi,
+    eventName: 'ReserveTokenRemoved',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const readOftaTreasuryProxy = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryProxyAbi,
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"OFTX_COMPOSE_BURN_MSG_TYPE"`
+ */
+export const readOftaTreasuryProxyOftxComposeBurnMsgType =
+  /*#__PURE__*/ createReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'OFTX_COMPOSE_BURN_MSG_TYPE',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"UPGRADE_INTERFACE_VERSION"`
+ */
+export const readOftaTreasuryProxyUpgradeInterfaceVersion =
+  /*#__PURE__*/ createReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'UPGRADE_INTERFACE_VERSION',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"ethereumOFTXTokensOf"`
+ */
+export const readOftaTreasuryProxyEthereumOftxTokensOf =
+  /*#__PURE__*/ createReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'ethereumOFTXTokensOf',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"owner"`
+ */
+export const readOftaTreasuryProxyOwner = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryProxyAbi,
+  functionName: 'owner',
+})
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"proxiableUUID"`
+ */
+export const readOftaTreasuryProxyProxiableUuid =
+  /*#__PURE__*/ createReadContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'proxiableUUID',
+  })
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"quoteMint"`
+ */
+export const readOftaTreasuryProxyQuoteMint = /*#__PURE__*/ createReadContract({
+  abi: oftaTreasuryProxyAbi,
+  functionName: 'quoteMint',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const writeOftaTreasuryProxy = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryProxyAbi,
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const writeOftaTreasuryProxyAddReserveToken =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"initialize"`
+ */
+export const writeOftaTreasuryProxyInitialize =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"mint"`
+ */
+export const writeOftaTreasuryProxyMint = /*#__PURE__*/ createWriteContract({
+  abi: oftaTreasuryProxyAbi,
+  functionName: 'mint',
+})
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const writeOftaTreasuryProxyRemoveReserveToken =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const writeOftaTreasuryProxyRenounceOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const writeOftaTreasuryProxyTransferOwnership =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link writeContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const writeOftaTreasuryProxyUpgradeToAndCall =
+  /*#__PURE__*/ createWriteContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const simulateOftaTreasuryProxy = /*#__PURE__*/ createSimulateContract({
+  abi: oftaTreasuryProxyAbi,
+})
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"addReserveToken"`
+ */
+export const simulateOftaTreasuryProxyAddReserveToken =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'addReserveToken',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"initialize"`
+ */
+export const simulateOftaTreasuryProxyInitialize =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'initialize',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"mint"`
+ */
+export const simulateOftaTreasuryProxyMint =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'mint',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"removeReserveToken"`
+ */
+export const simulateOftaTreasuryProxyRemoveReserveToken =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'removeReserveToken',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"renounceOwnership"`
+ */
+export const simulateOftaTreasuryProxyRenounceOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'renounceOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"transferOwnership"`
+ */
+export const simulateOftaTreasuryProxyTransferOwnership =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'transferOwnership',
+  })
+
+/**
+ * Wraps __{@link simulateContract}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `functionName` set to `"upgradeToAndCall"`
+ */
+export const simulateOftaTreasuryProxyUpgradeToAndCall =
+  /*#__PURE__*/ createSimulateContract({
+    abi: oftaTreasuryProxyAbi,
+    functionName: 'upgradeToAndCall',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__
+ */
+export const watchOftaTreasuryProxyEvent =
+  /*#__PURE__*/ createWatchContractEvent({ abi: oftaTreasuryProxyAbi })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"AdminChanged"`
+ */
+export const watchOftaTreasuryProxyAdminChangedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'AdminChanged',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"BeaconUpgraded"`
+ */
+export const watchOftaTreasuryProxyBeaconUpgradedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'BeaconUpgraded',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"Upgraded"`
+ */
+export const watchOftaTreasuryProxyUpgradedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'Upgraded',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"Initialized"`
+ */
+export const watchOftaTreasuryProxyInitializedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'Initialized',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"OwnershipTransferred"`
+ */
+export const watchOftaTreasuryProxyOwnershipTransferredEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'OwnershipTransferred',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"ReserveTokenAdded"`
+ */
+export const watchOftaTreasuryProxyReserveTokenAddedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'ReserveTokenAdded',
+  })
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link oftaTreasuryProxyAbi}__ and `eventName` set to `"ReserveTokenRemoved"`
+ */
+export const watchOftaTreasuryProxyReserveTokenRemovedEvent =
+  /*#__PURE__*/ createWatchContractEvent({
+    abi: oftaTreasuryProxyAbi,
+    eventName: 'ReserveTokenRemoved',
+  })
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link oftxAbi}__

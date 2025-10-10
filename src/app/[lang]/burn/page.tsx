@@ -42,7 +42,7 @@ import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
-import { readEthereumTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeEthereumTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
+import { readOftaTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeOftaTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
 
 export default function Burn() {
   const dict = useDict();
@@ -317,7 +317,7 @@ export default function Burn() {
           await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], burnTokenTxHash);
         });
       } else {
-        const hash = await writeEthereumTreasuryBurn(wagmiConfig, {
+        const hash = await writeOftaTreasuryBurn(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
           args: [destinationTokenAddress, tokensToBurn],
         });
@@ -639,7 +639,7 @@ export default function Burn() {
       try {
         if(fromToken === Token.USDA && fromNetwork.id !== toNetwork.id && burnAmount !== "") {
           setLoadingOutAmount(true);
-          const fee = await readEthereumTreasuryFeeOf(wagmiConfig, {
+          const fee = await readOftaTreasuryFeeOf(wagmiConfig, {
             address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
             args: [parseUnits(burnAmount, 6)],
             chainId: ethereum.id,

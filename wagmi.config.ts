@@ -5,9 +5,9 @@ import noftxAbi from "./src/abis/noftx.json";
 import noftxAdapterAbi from "./src/abis/noftxAdapter.json";
 import oftxAbi from "./src/abis/oftx.json";
 import oftxHelperAbi from "./src/abis/oftxHelper.json";
-import japanOpenChainTreasuryAbi from "./src/abis/japanOpenChainTreasury.json";
+import oftaTreasuryProxyAbi from "./src/abis/oftaTreasuryProxy.json";
 import oftaAbi from "./src/abis/ofta.json";
-import ethereumTreasuryAbi from "./src/abis/ethereumTreasury.json";
+import oftaTreasuryAbi from "./src/abis/oftaTreasury.json";
 
 export default defineConfig({
   out: "src/wagmi/generated.ts",
@@ -33,12 +33,12 @@ export default defineConfig({
       abi: oftxHelperAbi as any,
     },
     {
-      name: "ethereumTreasury",
-      abi: ethereumTreasuryAbi as any,
+      name: "oftaTreasury",
+      abi: oftaTreasuryAbi as any,
     },
     {
-      name: "japanOpenChainTreasury",
-      abi: japanOpenChainTreasuryAbi as any,
+      name: "oftaTreasuryProxy",
+      abi: oftaTreasuryProxyAbi as any,
     },
     {
       name: "ofta",

@@ -39,7 +39,7 @@ import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, TREASURY_MINT_LZ_COMPOSE_GAS_LIMIT, TREASURY_MINT_LZ_RECEIVE_GAS_LIMIT, USDA_MINT_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
-import { readErc20Allowance, readEthereumTreasuryQuoteCrossChainMint, readJapanOpenChainTreasuryQuoteMint, readNoftxAdapterQuoteSend, readOftxQuoteSend, writeErc20Approve, writeEthereumTreasuryCrossChainMint, writeEthereumTreasuryMint, writeJapanOpenChainTreasuryMint, writeNoftxAdapterSend, writeOftaApprove, writeOftxHelperMintAndSendOftx, writeOftxMint } from "@/wagmi/generated";
+import { readErc20Allowance, readOftaTreasuryQuoteCrossChainMint, readOftaTreasuryProxyQuoteMint, readNoftxAdapterQuoteSend, readOftxQuoteSend, writeErc20Approve, writeOftaTreasuryCrossChainMint, writeOftaTreasuryMint, writeOftaTreasuryProxyMint, writeNoftxAdapterSend, writeOftaApprove, writeOftxHelperMintAndSendOftx, writeOftxMint } from "@/wagmi/generated";
 
 export default function Mint() {
   const dict = useDict();
@@ -279,12 +279,12 @@ export default function Mint() {
           extraOptions: options as `0x${string}`,
         }
 
-        const fee: any = await readEthereumTreasuryQuoteCrossChainMint(wagmiConfig, {
+        const fee: any = await readOftaTreasuryQuoteCrossChainMint(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
           args: [crossChainMintParam],
         });
 
-        const mintTokenTxHash = await writeEthereumTreasuryCrossChainMint(wagmiConfig, {
+        const mintTokenTxHash = await writeOftaTreasuryCrossChainMint(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
           args: [crossChainMintParam, fee],
           value: fee.nativeFee,
@@ -334,7 +334,7 @@ export default function Mint() {
             extraOptions: options as `0x${string}`,
           }
 
-          const fee: any = await readJapanOpenChainTreasuryQuoteMint(wagmiConfig, {
+          const fee: any = await readOftaTreasuryProxyQuoteMint(wagmiConfig, {
             address: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
             args: [mintParam],
           });
@@ -348,7 +348,7 @@ export default function Mint() {
             hash: approveTokenTxHash,
           });
 
-          const mintTokenTxHash = await writeJapanOpenChainTreasuryMint(wagmiConfig, {
+          const mintTokenTxHash = await writeOftaTreasuryProxyMint(wagmiConfig, {
             address: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
             args: [mintParam, fee],
             value: fee.nativeFee,
@@ -424,7 +424,7 @@ export default function Mint() {
           });
         }
 
-        const mintTokenTxHash = await writeEthereumTreasuryMint(wagmiConfig, {
+        const mintTokenTxHash = await writeOftaTreasuryMint(wagmiConfig, {
           address: CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`,
           args: [sourceTokenAddress, tokensToMint],
         });
