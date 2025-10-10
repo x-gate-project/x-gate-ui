@@ -42,7 +42,7 @@ import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
 import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
-import { readEthereumTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeEthereumTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
+import { readOftaTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeOftaTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
 
 export default function Burn() {
   const dict = useDict();
@@ -59,7 +59,6 @@ export default function Burn() {
   const [pageState, setPageState] = useState(localStorageService.getPageState());
   const [loadingOutAmount, setLoadingOutAmount] = useState(false);
   const [outAmount, setOutAmount] = useState("");
-  const [fallbackToken, setFallbackToken] = useState<Token>(Token.USDA);
 
   const getToTokenByFromToken = useCallback((token: Token) => {
     return PAIR_TOKENS[token]?.burnToTokens[0];
@@ -76,6 +75,18 @@ export default function Burn() {
     }
     return toToken as Token;
   }, [pageState.burn.token, getToTokenByFromToken]);
+
+  const getDefaultFallbackToken = useCallback((toToken: Token) => {
+    if (toToken === Token.USDC) {
+      return Token.USDT;
+    } else if (toToken === Token.USDT) {
+      return Token.USDC;
+    }
+    return Token.USDT;
+  }, []);
+
+  const [fallbackToken, setFallbackToken] = useState<Token>(() => getDefaultFallbackToken(toToken));
+
   const toNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.toChainId)) || ethereum, [pageState, wagmiConfig]);
   const fromNetwork = useMemo(() => wagmiConfig.chains.find((chain) => chain.id === (pageState.burn.fromChainId)) || ethereum, [pageState, wagmiConfig]);
   const { data: fromTokenData, refetch: refetchFromTokenData } =
@@ -317,7 +328,7 @@ export default function Burn() {
           await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], burnTokenTxHash);
         });
       } else {
-        const hash = await writeEthereumTreasuryBurn(wagmiConfig, {
+        const hash = await writeOftaTreasuryBurn(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
           args: [destinationTokenAddress, tokensToBurn],
         });
@@ -621,11 +632,11 @@ export default function Burn() {
 
   const fallbackTokenOptions = useMemo(() => {
     if (toToken === Token.USDC) {
-      return [Token.USDA, Token.USDT];
+      return [Token.USDT, Token.USDA];
     } else if (toToken === Token.USDT) {
-      return [Token.USDA, Token.USDC];
+      return [Token.USDC, Token.USDA];
     }
-    return [Token.USDA, Token.USDT];
+    return [Token.USDT, Token.USDA];
   }, [toToken]);
 
   useEffect(() => {
@@ -637,9 +648,9 @@ export default function Burn() {
   useEffect(() => {
     const calculateOutAmount = async () => {
       try {
-        if(fromToken === Token.USDA && fromNetwork.id !== toNetwork.id && burnAmount !== "") {
+        if(fromToken === Token.USDA && burnAmount !== "") {
           setLoadingOutAmount(true);
-          const fee = await readEthereumTreasuryFeeOf(wagmiConfig, {
+          const fee = await readOftaTreasuryFeeOf(wagmiConfig, {
             address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
             args: [parseUnits(burnAmount, 6)],
             chainId: ethereum.id,
@@ -835,7 +846,7 @@ export default function Burn() {
                       },
                     }}
                     size="medium"
-                    value={loadingOutAmount ? "..." : outAmount}
+                    value={loadingOutAmount ? "" : outAmount}
                     name="to"
                     inputProps={{ "data-testid": "to-input" }}
                   />
@@ -845,10 +856,7 @@ export default function Burn() {
 
             {fromToken == Token.USDA && fromNetwork.id !== toNetwork.id && <div className={classes.itemWrapper}>
               <Box
-                width="100%"
-                padding="16px"
-                border="1px solid rgb(247, 248, 250)"
-                borderRadius="12px"
+                width="100%" display="flex" justifyContent="start" flexDirection="column"
               >
                 <FormControl component="fieldset">
                   <FormLabel
@@ -893,13 +901,14 @@ export default function Burn() {
               className={classes.burnButton}
               type="submit"
               color="primary"
-              startIcon={isBurning ? <CircularProgress color="inherit" size={24} /> : undefined}
+              startIcon={isBurning || loadingOutAmount ? <CircularProgress color="inherit" size={24} /> : undefined}
               disabled={
                 isBurning ||
                 !burnAmount ||
                 insufficientBalance ||
                 isDisconnected ||
-                isConnecting
+                isConnecting ||
+                loadingOutAmount
               }
             >
               {dict.burn_tab.button}
