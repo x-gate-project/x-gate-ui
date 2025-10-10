@@ -597,6 +597,8 @@ export default function Burn() {
         tokens={BURN_SUPPORT_TOKENS}
         selectedNetwork={fromNetwork}
         isFrom={true}
+        currentNetwork={fromDialogNetworkFilter}
+        setCurrentNetwork={setFromDialogNetworkFilter}
       />
     </Layout>
   );

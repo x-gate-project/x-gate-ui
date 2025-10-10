@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState, useEffect } from "react";
 import Typography from "@mui/material/Typography";
 // Components
 import { useDict } from "@/contexts/DictContext";
+import { useDialogNetworkFilter } from "@/contexts/DialogNetworkFilterContext";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import {
@@ -43,9 +44,18 @@ const SelectTokenDialog: React.FC<IProps> = ({
   isFrom,
 }) => {
   const dict = useDict();
+  const { 
+    fromDialogNetworkFilter, 
+    toDialogNetworkFilter, 
+    setFromDialogNetworkFilter, 
+    setToDialogNetworkFilter 
+  } = useDialogNetworkFilter();
 
   const { classes } = useStyles();
-  const [currentNetwork, setCurrentNetwork] = useState<Chain | null>(null);
+
+  // Use the appropriate filter based on isFrom prop
+  const currentNetwork = isFrom ? fromDialogNetworkFilter : toDialogNetworkFilter;
+  const setCurrentNetwork = isFrom ? setFromDialogNetworkFilter : setToDialogNetworkFilter;
 
   const allTokens = networks.flatMap((network) => {
     return tokens.map((token) => {
@@ -88,13 +98,11 @@ const SelectTokenDialog: React.FC<IProps> = ({
   useEffect(() => {
     if (open) {
       setSearchText("");
-      setCurrentNetwork(null);
     }
-  }, [open]);
+  }, [open, selectedNetwork]);
 
   const handleClose = useCallback(() => {
     setSearchText("");
-    setCurrentNetwork(null);
     onClose();
   }, [onClose]);
 
@@ -108,11 +116,11 @@ const SelectTokenDialog: React.FC<IProps> = ({
 
   const onSelectNetwork = useCallback((network: Chain) => {
     setCurrentNetwork(network);
-  }, []);
+  }, [setCurrentNetwork, isFrom]);
 
   const onSelectAllNetworks = useCallback(() => {
     setCurrentNetwork(null);
-  }, []);
+  }, [setCurrentNetwork, isFrom]);
 
   const changeHandler = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {

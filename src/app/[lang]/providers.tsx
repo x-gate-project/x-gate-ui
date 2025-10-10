@@ -12,6 +12,7 @@ import { getWagmiConfig } from "../../wagmi/config";
 import { DictProvider } from "@/contexts/DictContext";
 import { SupportedLocale } from "../../dicts";
 import { TransactionStateProvider } from "@/contexts/TransactionStateContext";
+import { DialogNetworkFilterProvider } from "@/contexts/DialogNetworkFilterContext";
 
 type Props = {
   children: ReactNode;
@@ -33,7 +34,11 @@ export function Providers({ children, initialWagmiState, params }: Props) {
             <WagmiProvider config={config} initialState={initialWagmiState}>
               <TransactionStateProvider>
                 <QueryClientProvider client={queryClient}>
-                  <ConnectKitProvider>{children}</ConnectKitProvider>
+                  <ConnectKitProvider>
+                    <DialogNetworkFilterProvider>
+                      {children}
+                    </DialogNetworkFilterProvider>
+                  </ConnectKitProvider>
                 </QueryClientProvider>
               </TransactionStateProvider>
             </WagmiProvider>
