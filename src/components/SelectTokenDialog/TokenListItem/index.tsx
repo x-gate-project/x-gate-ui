@@ -91,6 +91,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     justifyContent: "space-between",
     padding: "12px",
     marginLeft: "12px",
+    marginRight: "12px",
     backgroundColor: "white",
     borderRadius: "12px",
     cursor: "pointer",
