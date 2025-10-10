@@ -1,7 +1,10 @@
 import { Token } from "@/enums/token";
 import { renderTokenBalance } from "@/utils/render.util";
-import { getTokenAddress, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi/config";
+import {
+  getTokenAddress,
+  TOKEN_TO_DECIMALS_MAP,
+  TOKEN_TO_ICON_MAP,
+} from "@/utils/token.utils";
 import { Chain } from "viem";
 import { useAccount, useBalance } from "wagmi";
 import clsx from "clsx";
@@ -10,6 +13,7 @@ import Typography from "@mui/material/Typography";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { ellipsifyText } from "@/utils/string.utils";
+import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi/config";
 
 interface TokenListItemProps {
   tokenData: { token: Token; network: Chain };
@@ -37,7 +41,9 @@ const TokenListItem: React.FC<TokenListItemProps> = ({
   });
 
   const displayDecimals = TOKEN_TO_DECIMALS_MAP[token];
-  const balance = balanceData ? renderTokenBalance(balanceData?.formatted, { displayDecimals }) : '0';
+  const balance = balanceData
+    ? renderTokenBalance(balanceData?.formatted, { displayDecimals })
+    : "0";
 
   return (
     <div
@@ -55,29 +61,22 @@ const TokenListItem: React.FC<TokenListItemProps> = ({
         <TokenWithChainIcon
           tokenIcon={TOKEN_TO_ICON_MAP[token]}
           chainIcon={CHAIN_ID_TO_ICON_MAP[network.id]}
-          width={24}
-          height={24}
+          width={32}
+          height={32}
         />
         <div className={classes.tokenDetails}>
           <div className={classes.tokenInfo}>
             <div className={classes.tokenSymbolRow}>
-              <Typography className={classes.tokenSymbol}>
-                {token}
-              </Typography>
-              <Typography className={classes.tokenAddress}>
-                {tokenAddress ? ellipsifyText(tokenAddress, 4, 4) : ''}
-              </Typography>
+              <Typography className={classes.tokenSymbol}>{token}</Typography>
             </div>
-            <Typography className={classes.tokenName}>
-              {token}
-            </Typography>
+            <Typography className={classes.tokenName}>{token}</Typography>
           </div>
         </div>
       </div>
       <div className={classes.tokenBalanceContainer}>
-        <Typography className={classes.tokenBalance}>
-          {balance}
-        </Typography>
+        {address && (
+          <Typography className={classes.tokenBalance}>{balance}</Typography>
+        )}
       </div>
     </div>
   );
@@ -86,7 +85,7 @@ const TokenListItem: React.FC<TokenListItemProps> = ({
 const useStyles = makeStyles()((theme: Theme) => ({
   tokenListItem: {
     display: "flex",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: "12px",
     justifyContent: "space-between",
     padding: "12px",
@@ -134,12 +133,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     fontWeight: 600,
     lineHeight: "20px",
   },
-  tokenAddress: {
-    color: "#9CA3AF",
-    fontSize: "12px",
-    fontWeight: 400,
-    lineHeight: "16px",
-  },
   tokenName: {
     color: "#64748B",
     fontSize: "14px",
@@ -157,13 +150,13 @@ const useStyles = makeStyles()((theme: Theme) => ({
   },
   tokenBalance: {
     color: "#374151",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: 500,
     lineHeight: "20px",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-  }
+  },
 }));
 
 export default TokenListItem;
