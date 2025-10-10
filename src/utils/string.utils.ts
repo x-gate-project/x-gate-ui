@@ -1,4 +1,4 @@
-import { ethereum } from "@/wagmi.config";
+import { ethereum } from "@/wagmi/config";
 import { isProduction } from "./system";
 
 export const ellipsifyText = (text: string, first: number, last: number) =>

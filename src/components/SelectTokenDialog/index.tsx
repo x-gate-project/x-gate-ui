@@ -17,7 +17,7 @@ import clsx from "clsx";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { Chain } from "viem";
-import { CHAIN_ID_TO_ICON_MAP, ethereum, joc } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi/config";
 import CloseIcon from "@mui/icons-material/Close";
 import TokenListItem from "./TokenListItem";
 
@@ -25,10 +25,14 @@ interface IProps {
   open: boolean;
   onClose: () => void;
   onChangeToken: (token: Token, network: Chain) => void;
-  selectedToken: Token;
-  selectedNetwork: Chain;
-  networks: Chain[];
-  tokens: Token[];
+  selectedToken: {
+    token: Token;
+    network: Chain;
+  };
+  tokens: {
+    token: Token;
+    network: Chain;
+  }[];
   isFrom: boolean;
 }
 
@@ -37,8 +41,6 @@ const SelectTokenDialog: React.FC<IProps> = ({
   onClose,
   onChangeToken,
   selectedToken,
-  selectedNetwork,
-  networks,
   tokens,
   isFrom,
 }) => {
@@ -49,39 +51,15 @@ const SelectTokenDialog: React.FC<IProps> = ({
     null
   );
 
-  const allTokens = networks.flatMap((network) => {
-    return tokens.map((token) => {
-      if (token === Token.JOC && network.id === joc.id) {
-        return {
-          token,
-          network: joc,
-        };
-      }
-
-      if ((
-        (token === Token.USDT || token === Token.USDC || token === Token.JOCX ) && network.id === joc.id)
-        || (token === Token.JOC && network.id === ethereum.id)
-        || (token === Token.USDA && !(network.id === ethereum.id || network.id === joc.id))
-      ) {
-        return null;
-      }
-
-      return {
-        token,
-        network,
-      };
-    });
-  });
-
   const availableNetworks = useMemo(() => {
     const networkSet = new Set<Chain>();
-    allTokens.forEach((tokenData) => {
+    tokens.forEach((tokenData) => {
       if (tokenData && tokenData.network) {
         networkSet.add(tokenData.network);
       }
     });
     return Array.from(networkSet);
-  }, [allTokens]);
+  }, [tokens]);
 
   const [searchText, setSearchText] = useState("");
 
@@ -127,14 +105,14 @@ const SelectTokenDialog: React.FC<IProps> = ({
   );
 
   const filteredTokens = useMemo(() => {
-    let tokens = allTokens;
+    let filteredTokens = tokens;
 
     if (currentNetwork) {
-      tokens = tokens.filter((t) => t && t.network.id === currentNetwork.id);
+      filteredTokens = filteredTokens.filter((t) => t && t.network.id === currentNetwork.id);
     }
 
     if (searchText) {
-      tokens = tokens.filter(
+      filteredTokens = filteredTokens.filter(
         (t) =>
           t &&
           (t.token.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -142,8 +120,8 @@ const SelectTokenDialog: React.FC<IProps> = ({
       );
     }
 
-    return tokens;
-  }, [searchText, allTokens, currentNetwork]);
+    return filteredTokens;
+  }, [searchText, tokens, currentNetwork]);
 
   return (
     <Dialog
@@ -168,64 +146,66 @@ const SelectTokenDialog: React.FC<IProps> = ({
         </DialogTitle>
 
         <div className={classes.container}>
-          {/* Search Bar */}
-          <TextField
-            className={classes.searchTextField}
-            placeholder={dict.token_change_dialog.search_placeholder}
-            size="small"
-            onChange={onSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Image
-                    src="/icons/search-icon.svg"
-                    alt="search"
-                    width={16}
-                    height={16}
-                  />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div style={{ padding: "0 24px" }}>
+            {/* Search Bar */}
+            <TextField
+              className={classes.searchTextField}
+              placeholder={dict.token_change_dialog.search_placeholder}
+              size="small"
+              onChange={onSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Image
+                      src="/icons/search-icon.svg"
+                      alt="search"
+                      width={16}
+                      height={16}
+                    />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-          <div className={classes.networkSection}>
-            <Typography className={classes.sectionTitle}>
-              {dict.token_change_dialog.network}{" "}
-              {currentNetwork
-                ? currentNetwork.name
-                : dict.token_change_dialog.all}
-            </Typography>
-            <div className={classes.networkIcons}>
-              <div
-                className={clsx(
-                  classes.networkIcon,
-                  !currentNetwork && classes.networkIconSelected
-                )}
-                onClick={onSelectAllNetworks}
-              >
-                <Typography className={classes.allNetworksText}>
-                  {dict.token_change_dialog.all}
-                </Typography>
-              </div>
-              {availableNetworks.map((net) => (
+            <div className={classes.networkSection}>
+              <Typography className={classes.sectionTitle}>
+                {dict.token_change_dialog.network}{" "}
+                {currentNetwork
+                  ? currentNetwork.name
+                  : dict.token_change_dialog.all}
+              </Typography>
+              <div className={classes.networkIcons}>
                 <div
-                  key={net.id}
                   className={clsx(
                     classes.networkIcon,
-                    currentNetwork &&
-                      net.id === currentNetwork.id &&
-                      classes.networkIconSelected
+                    !currentNetwork && classes.networkIconSelected
                   )}
-                  onClick={() => onSelectNetwork(net)}
+                  onClick={onSelectAllNetworks}
                 >
-                  <Image
-                    src={CHAIN_ID_TO_ICON_MAP[net.id]}
-                    alt=""
-                    width={28}
-                    height={28}
-                  />
+                  <Typography className={classes.allNetworksText}>
+                    {dict.token_change_dialog.all}
+                  </Typography>
                 </div>
-              ))}
+                {availableNetworks.map((net) => (
+                  <div
+                    key={net.id}
+                    className={clsx(
+                      classes.networkIcon,
+                      currentNetwork &&
+                        net.id === currentNetwork.id &&
+                        classes.networkIconSelected
+                    )}
+                    onClick={() => onSelectNetwork(net)}
+                  >
+                    <Image
+                      src={CHAIN_ID_TO_ICON_MAP[net.id]}
+                      alt=""
+                      width={28}
+                      height={28}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -237,8 +217,8 @@ const SelectTokenDialog: React.FC<IProps> = ({
                     <TokenListItem
                       key={`${t.token}-${t.network.id}`}
                       tokenData={t}
-                      selectedToken={selectedToken}
-                      selectedNetwork={selectedNetwork}
+                      selectedToken={selectedToken.token}
+                      selectedNetwork={selectedToken.network}
                       onSelectToken={onSelectToken}
                     />
                   )
@@ -262,7 +242,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "stretch",
-    padding: "0 24px 24px 24px",
+    padding: "0 0 24px 0",
     backgroundColor: "#FFFFFF",
   },
   dialogTitle: {
@@ -393,18 +373,28 @@ const useStyles = makeStyles()((theme: Theme) => ({
     display: "flex",
     flexDirection: "column",
     gap: "8px",
-    maxHeight: "300px",
+    maxHeight: "calc(80vh - 200px)",
     overflowY: "auto",
-    "&::-webkit-scrollbar": {
-      width: "6px",
+    '&::-webkit-scrollbar': {
+    width: '14px',
+    background: 'transparent',
+  },
+  '&:hover': {
+    '&::-webkit-scrollbar': {
+      width: '14px',
     },
-    "&::-webkit-scrollbar-track": {
-      backgroundColor: "#F1F5F9",
-      borderRadius: "3px",
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: "#E2E8F0",
     },
-    "&::-webkit-scrollbar-thumb": {
-      backgroundColor: "#CBD5E1",
-      borderRadius: "3px",
+    },
+    '&::-webkit-scrollbar-track': {
+      background: 'rgba(0, 0, 0, 0)',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      border: '4px solid rgba(0, 0, 0, 0)',
+      backgroundClip: 'padding-box',
+      borderRadius: '9999px',
+      backgroundColor: "white",
     },
   },
   emptyState: {
@@ -415,7 +405,6 @@ const useStyles = makeStyles()((theme: Theme) => ({
     minHeight: "120px",
   },
   emptyStateText: {
-    // color: "#64748B",
     fontSize: "16px",
     fontWeight: 400,
     textAlign: "center",
@@ -433,6 +422,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
   dialogPaper: {
     borderRadius: "30px",
     maxWidth: "418px",
+    maxHeight: "80vh",
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },

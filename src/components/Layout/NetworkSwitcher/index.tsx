@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import Button from "@mui/material/Button";
-import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi/config";
 import { useAccount, useConfig } from "wagmi";
 import NetworkChangePopover from "@/components/NetworkChangePopover";
 import { switchChain } from "wagmi/actions";

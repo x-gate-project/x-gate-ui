@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "wagmi:generate": "wagmi generate"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -42,6 +43,7 @@
     "@types/node": "^20",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@wagmi/cli": "^2.6.0",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "typescript": "^5"

@@ -18,20 +18,14 @@ import TokenWithChainIcon from "@/components/TokenWithChainIcon";
 import {
   useAccount,
   useBalance,
-  useCall,
-  useChainId,
   useConfig,
 } from "wagmi";
 import {
   switchChain,
-  writeContract,
   waitForTransactionReceipt,
-  readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_TREASURY_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_TREASURY_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
 import { Chain, parseEther, parseUnits } from "viem";
-import usdtxAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
-import erc20Abi from "@/libs/usdtx/abis/Erc20Abi.json";
 import Layout from "@/components/Layout";
 import Image from "next/image";
 import { Token } from "@/enums/token";
@@ -40,16 +34,12 @@ import localStorageService from "@/services/local-storage.service";
 import { waitForMessageReceived } from "@layerzerolabs/scan-client";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
-import oftxHelperAbi from "@/libs/usdtx/abis/OFTXHelperAbi.json";
-import jocxAdapterAbi from "@/libs/jocx/abis/JOCXAdapter.json";
-import treasuryAbi from "@/libs/usdtx/abis/EthereumTreasuryAbi.json";
-import japanOpenChainTreasuryAbi from "@/libs/usdtx/abis/JapanOpenChainTreasuryAbi.json";
-import oftaHelperAbi from "@/libs/usdtx/abis/OFTAHelperAbi.json";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
-import { JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, USDA_MINT_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
-import SelectTokenDialog2 from "@/components/SelectTokenDialog2";
+import { JOCX_MINT_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, TREASURY_MINT_LZ_COMPOSE_GAS_LIMIT, TREASURY_MINT_LZ_RECEIVE_GAS_LIMIT, USDA_MINT_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import SelectTokenDialog from "@/components/SelectTokenDialog";
+import { readErc20Allowance, readEthereumTreasuryQuoteCrossChainMint, readJapanOpenChainTreasuryQuoteMint, readNoftxAdapterQuoteSend, readOftxQuoteSend, writeErc20Approve, writeEthereumTreasuryCrossChainMint, writeEthereumTreasuryMint, writeJapanOpenChainTreasuryMint, writeNoftxAdapterSend, writeOftaApprove, writeOftxHelperMintAndSendOftx, writeOftxMint } from "@/wagmi/generated";
 
 export default function Mint() {
   const dict = useDict();
@@ -62,7 +52,7 @@ export default function Mint() {
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
 
-  const getToTokenByFromToken = useCallback((token: Token) => {
+  const getToTokenByFromToken = useCallback((token: string) => {
     return PAIR_TOKENS[token]?.mintToTokens[0];
   }, []);
 
@@ -73,7 +63,7 @@ export default function Mint() {
   const toToken = useMemo(() => {
     const [fromToken, toToken] = pageState.mint.token.split("/");
     if(!toToken) {
-      return getToTokenByFromToken(fromToken as Token);
+      return getToTokenByFromToken(fromToken);
     }
     return toToken as Token;
   }, [pageState.mint.token, getToTokenByFromToken]);
@@ -147,32 +137,24 @@ export default function Mint() {
       .toHex()
       .toString();
 
-      const sendParam = [
-        CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
-        ethers.zeroPadValue(address, 32),
-        tokensToMint,
-        tokensToMint,
-        options,
-        "0x",
-        "0x",
-      ];
+      const sendParam = {
+        dstEid: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
+        to: ethers.zeroPadValue(address, 32) as `0x${string}`,
+        amountLD: tokensToMint,
+        minAmountLD: tokensToMint,
+        extraOptions: options as `0x${string}`,
+        composeMsg: "0x" as `0x${string}`,
+        oftCmd: "0x" as `0x${string}`,
+      };
 
-      const fee: any = await readContract(wagmiConfig, {
-        abi: oftaHelperAbi,
+      const fee = await readNoftxAdapterQuoteSend(wagmiConfig, {
         address: process.env.NEXT_PUBLIC_JOCX_ADAPTER_JOC_ADDRESS as `0x${string}`,
-        functionName: 'quoteSend',
         args: [sendParam, false],
       });
 
-      const mintTokenTxHash = await writeContract(wagmiConfig, {
+      const mintTokenTxHash = await writeNoftxAdapterSend(wagmiConfig, {
         address: process.env.NEXT_PUBLIC_JOCX_ADAPTER_JOC_ADDRESS as `0x${string}`,
-        abi: jocxAdapterAbi,
-        functionName: 'send',
-        args: [
-          sendParam,
-          [fee.nativeFee, 0],
-          address,
-        ],
+        args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address],
         value: fee.nativeFee + tokensToMint,
       });
 
@@ -257,28 +239,21 @@ export default function Mint() {
       }
 
       const sourceTokenAddress = getTokenAddress(fromToken, fromNetwork) as `0x${string}`;
-      const tokensToMint = parseUnits(mintAmount, 6);
+      const tokensToMint = parseUnits(mintAmount, TOKEN_TO_DECIMALS_MAP[fromToken]);
 
       if(fromNetwork.id !== toNetwork.id) {
         const options = Options.newOptions().addExecutorLzReceiveOption(USDA_MINT_LZ_RECEIVE_GAS_LIMIT, 0).toHex().toString()
 
-        const allowance = await readContract(wagmiConfig, {
+        const allowance = await readErc20Allowance(wagmiConfig, {
           address: sourceTokenAddress,
-          abi: erc20Abi,
-          functionName: "allowance",
-          args: [address, process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS!],
+          args: [address, process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`],
         });
 
         if((allowance as bigint) !== tokensToMint) {
           if(allowance !== BigInt(0) && fromToken === Token.USDT) {
-            const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
-              abi: erc20Abi,
+            const approveTokenToZeroTxHash = await writeErc20Approve(wagmiConfig, {
               address: sourceTokenAddress as `0x${string}`,
-              functionName: "approve",
-              args: [
-                process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as any,
-                0,
-              ],
+              args: [process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`, BigInt(0)],
             });
 
             await waitForTransactionReceipt(wagmiConfig, {
@@ -286,14 +261,9 @@ export default function Mint() {
             });
           }
 
-          const approveTokenTxHash = await writeContract(wagmiConfig, {
-            abi: erc20Abi,
+          const approveTokenTxHash = await writeErc20Approve(wagmiConfig, {
             address: sourceTokenAddress as `0x${string}`,
-            functionName: "approve",
-            args: [
-              process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
-              tokensToMint,
-          ],
+            args: [process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`, tokensToMint],
           });
 
           await waitForTransactionReceipt(wagmiConfig, {
@@ -301,25 +271,21 @@ export default function Mint() {
           });
         }
 
-        const crossChainMintParam = [
-          CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
-          tokensToMint,
-          tokensToMint,
-          sourceTokenAddress,
-          options,
-        ]
+        const crossChainMintParam = {
+          dstEid: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
+          amount: tokensToMint,
+          minAmount: tokensToMint,
+          token: sourceTokenAddress,
+          extraOptions: options as `0x${string}`,
+        }
 
-        const fee: any = await readContract(wagmiConfig, {
-          abi: treasuryAbi,
+        const fee: any = await readEthereumTreasuryQuoteCrossChainMint(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
-          functionName: "quoteCrossChainMint",
           args: [crossChainMintParam],
         });
 
-        const mintTokenTxHash = await writeContract(wagmiConfig, {
-          abi: treasuryAbi,
+        const mintTokenTxHash = await writeEthereumTreasuryCrossChainMint(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
-          functionName: "crossChainMint",
           args: [crossChainMintParam, fee],
           value: fee.nativeFee,
         });
@@ -353,50 +319,37 @@ export default function Mint() {
         });
 
       } else {
-        if (fromToken === Token.USDTX || fromToken === Token.USDCX) {
+        if ((fromToken === Token.USDTX || fromToken === Token.USDCX) && fromNetwork.id === joc.id) {
           const options = Options.newOptions()
-            .addExecutorLzReceiveOption(200000, 0)
-            .addExecutorComposeOption(0, 500000, 0)
+            .addExecutorLzReceiveOption(TREASURY_MINT_LZ_RECEIVE_GAS_LIMIT, 0)
+            .addExecutorComposeOption(0, TREASURY_MINT_LZ_COMPOSE_GAS_LIMIT, 0)
             .toHex()
             .toString()
 
-          const mintParam = [
-            CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
-            tokensToMint,
-            tokensToMint,
-            sourceTokenAddress,
-            options,
-          ]
+          const mintParam = {
+            dstEid: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[ethereum.id],
+            amount: tokensToMint,
+            minAmount: tokensToMint,
+            token: sourceTokenAddress,
+            extraOptions: options as `0x${string}`,
+          }
 
-          const fee: any = await readContract(wagmiConfig, {
-            abi: japanOpenChainTreasuryAbi,
+          const fee: any = await readJapanOpenChainTreasuryQuoteMint(wagmiConfig, {
             address: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
-            functionName: "quoteMint",
             args: [mintParam],
           });
 
-            console.log('fee', fee);
-
-          const approveTokenTxHash = await writeContract(wagmiConfig, {
-            abi: oftaHelperAbi,
+          const approveTokenTxHash = await writeOftaApprove(wagmiConfig, {
             address: sourceTokenAddress,
-            functionName: "approve",
-            args: [
-              process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
-              tokensToMint,
-            ],
+            args: [process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`, tokensToMint],
           });
-
-          console.log('approveTokenTxHash', approveTokenTxHash);
 
           await waitForTransactionReceipt(wagmiConfig, {
             hash: approveTokenTxHash,
           });
 
-          const mintTokenTxHash = await writeContract(wagmiConfig, {
-            abi: japanOpenChainTreasuryAbi,
+          const mintTokenTxHash = await writeJapanOpenChainTreasuryMint(wagmiConfig, {
             address: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
-            functionName: "mint",
             args: [mintParam, fee],
             value: fee.nativeFee,
           });
@@ -428,24 +381,32 @@ export default function Mint() {
             });
             await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id], mintTokenTxHash);
           });
+
+          refetchFromTokenBalance();
+          refetchToTokenBalance();
+          enqueueSnackbar(
+            dict.mint_tab.mint_success
+              .replace("{{token}}", toToken)
+              .replace("{{from}}", fromNetwork.name)
+              .replace("{{to}}", toNetwork.name),
+            { variant: "success" }
+          );
+
+          return;
         }
 
-        const allowance = await readContract(wagmiConfig, {
+        const allowance = await readErc20Allowance(wagmiConfig, {
           address: sourceTokenAddress,
-          abi: erc20Abi,
-          functionName: "allowance",
-          args: [address, CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id]!],
+          args: [address, CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`],
         });
 
         if((allowance as bigint) !== tokensToMint) {
           if(allowance !== BigInt(0) && fromToken === Token.USDT) {
-            const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
-              abi: erc20Abi,
+            const approveTokenToZeroTxHash = await writeErc20Approve(wagmiConfig, {
               address: sourceTokenAddress as `0x${string}`,
-              functionName: "approve",
               args: [
                 CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as any,
-                0,
+                BigInt(0),
               ],
             });
 
@@ -454,28 +415,17 @@ export default function Mint() {
             });
           }
 
-          console.log('tokensToMint', tokensToMint);
-
-          const approveTokenTxHash = await writeContract(wagmiConfig, {
-            abi: erc20Abi,
+          const approveTokenTxHash = await writeErc20Approve(wagmiConfig, {
             address: sourceTokenAddress as `0x${string}`,
-            functionName: "approve",
-            args: [
-              CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id],
-              tokensToMint,
-            ],
+            args: [CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`, tokensToMint],
           });
           await waitForTransactionReceipt(wagmiConfig, {
             hash: approveTokenTxHash,
           });
-
-          console.log('approveTokenTxHash', approveTokenTxHash);
         }
 
-        const mintTokenTxHash = await writeContract(wagmiConfig, {
-          abi: treasuryAbi,
+        const mintTokenTxHash = await writeEthereumTreasuryMint(wagmiConfig, {
           address: CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`,
-          functionName: "mint",
           args: [sourceTokenAddress, tokensToMint],
         });
 
@@ -575,40 +525,31 @@ export default function Mint() {
         if (toNetwork.id !== ethereum.id) {
           const options = Options.newOptions().addExecutorLzReceiveOption(OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, 0).toHex().toString()
 
-          const sendParam = [
-              CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
-              ethers.zeroPadValue(address, 32),
-              parseUnits(mintAmount, 6),
-              parseUnits(mintAmount, 6),
-              options,
-              '0x',
-              '0x',
-          ]
+          const sendParam = {
+            dstEid: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
+            to: ethers.zeroPadValue(address, 32) as `0x${string}`,
+            amountLD: parseUnits(mintAmount, 6),
+            minAmountLD: parseUnits(mintAmount, 6),
+            extraOptions: options as `0x${string}`,
+            composeMsg: '0x' as `0x${string}`,
+            oftCmd: '0x' as `0x${string}`,
+          };
 
-          const fee: any = await readContract(wagmiConfig, {
-            abi: usdtxAbi,
+          const fee: any = await readOftxQuoteSend(wagmiConfig, {
             address: destinationTokenAddress as `0x${string}`,
-            functionName: "quoteSend",
             args: [sendParam, false],
           });
 
-          const allowance = await readContract(wagmiConfig, {
+          const allowance = await readErc20Allowance(wagmiConfig, {
             address: sourceTokenAddress as `0x${string}`,
-            abi: erc20Abi,
-            functionName: "allowance",
-            args: [address, process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS!],
+            args: [address, process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as `0x${string}`],
           });
 
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
             if(allowance !== BigInt(0) && fromToken === Token.USDT) {
-              const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
-                abi: erc20Abi,
+              const approveTokenToZeroTxHash = await writeErc20Approve(wagmiConfig, {
                 address: sourceTokenAddress as `0x${string}`,
-                functionName: "approve",
-                args: [
-                  process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as any,
-                  0,
-                ],
+                args: [process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as `0x${string}`, BigInt(0)],
               });
 
               await waitForTransactionReceipt(wagmiConfig, {
@@ -616,25 +557,18 @@ export default function Mint() {
               });
             }
 
-            const approveTokenTxHash = await writeContract(wagmiConfig, {
-              abi: erc20Abi,
+            const approveTokenTxHash = await writeErc20Approve(wagmiConfig, {
               address: sourceTokenAddress as `0x${string}`,
-              functionName: "approve",
-              args: [
-                process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as any,
-                parseUnits(mintAmount, 6),
-              ],
+              args: [process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as `0x${string}`, parseUnits(mintAmount, 6)],
             });
             await waitForTransactionReceipt(wagmiConfig, {
               hash: approveTokenTxHash,
             });
           }
 
-          const mintTokenTxHash = await writeContract(wagmiConfig, {
-            abi: oftxHelperAbi,
-            address: process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as any,
-            functionName: "mintAndSendOFTX",
-            args: [destinationTokenAddress, sendParam, [fee.nativeFee, 0], address],
+          const mintTokenTxHash = await writeOftxHelperMintAndSendOftx(wagmiConfig, {
+            address: process.env.NEXT_PUBLIC_OFTX_HELPER_ADDRESS as `0x${string}`,
+            args: [destinationTokenAddress as `0x${string}`, sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)} , address],
             value: fee.nativeFee,
           });
 
@@ -666,37 +600,26 @@ export default function Mint() {
             await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[fromNetwork.id], mintTokenTxHash);
           });
         } else {
-          const allowance = await readContract(wagmiConfig, {
+          const allowance = await readErc20Allowance(wagmiConfig, {
             address: sourceTokenAddress as `0x${string}`,
-            abi: erc20Abi,
-            functionName: "allowance",
-            args: [address, destinationTokenAddress],
+            args: [address, destinationTokenAddress as `0x${string}`],
           });
           if((allowance as bigint) !== parseUnits(mintAmount, 6)) {
             if(allowance !== BigInt(0) && fromToken === Token.USDT) {
-              const approveTokenToZeroTxHash = await writeContract(wagmiConfig, {
-                abi: erc20Abi,
+              const approveTokenToZeroTxHash = await writeErc20Approve(wagmiConfig, {
                 address: sourceTokenAddress as `0x${string}`,
-                functionName: "approve",
-                args: [
-                  destinationTokenAddress,
-                  0,
-                ],
+                args: [destinationTokenAddress as `0x${string}`, BigInt(0)],
               });
               await waitForTransactionReceipt(wagmiConfig, {
                 hash: approveTokenToZeroTxHash,
               });
             }
 
-            const approveTokenTxHash = await writeContract(wagmiConfig, {
-              abi: erc20Abi,
+            const approveTokenTxHash = await writeErc20Approve(wagmiConfig, {
               address: sourceTokenAddress as `0x${string}`,
-              functionName: "approve",
-              args: [
-                destinationTokenAddress,
-                parseUnits(mintAmount, 6),
-              ],
+              args: [destinationTokenAddress as `0x${string}`, parseUnits(mintAmount, 6)],
             });
+
             await waitForTransactionReceipt(wagmiConfig, {
               hash: approveTokenTxHash,
             });
@@ -704,13 +627,11 @@ export default function Mint() {
 
           console.log(`Approved ${toToken} successfully. Minting ${toToken} ...`);
 
-          const mintTokenTxHash = await writeContract(wagmiConfig, {
-            abi: usdtxAbi,
+          const mintTokenTxHash = await writeOftxMint(wagmiConfig, {
             address:
               fromToken === Token.USDT
-                ? (process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as any)
-                : (process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as any),
-            functionName: "mint",
+                ? (process.env.NEXT_PUBLIC_USDTX_ETHEREUM_ADDRESS as `0x${string}`)
+                : (process.env.NEXT_PUBLIC_USDCX_ETHEREUM_ADDRESS as `0x${string}`),
             args: [parseUnits(mintAmount, 6)],
           });
 
@@ -783,14 +704,30 @@ export default function Mint() {
   const handleSelectFromToken = useCallback((token: Token, network: Chain) => {
     const isFromJOC = token === Token.JOC && toNetwork.id === joc.id;
     let mappingToToken = getToTokenByFromToken(token);
-    const mintToTokens = PAIR_TOKENS[token as keyof typeof PAIR_TOKENS]?.mintToTokens as Token[] | undefined;
-    if(mintToTokens?.includes(toToken)) {
+    const mintToTokens = PAIR_TOKENS[token]?.mintToTokens || [];
+    if(mintToTokens.includes(toToken)) {
       mappingToToken = toToken;
     }
+
+    const mappingToTokenConfig = PAIR_TOKENS[mappingToToken];
+    const isToNetworkSupported = mappingToTokenConfig?.suportedNetworks?.some(
+      (supportedNet) => supportedNet.id === toNetwork.id
+    );
+
+    let finalToChainId = isFromJOC
+      ? ethereum.id
+      : (isToNetworkSupported
+          ? toNetwork.id
+          : mappingToTokenConfig?.suportedNetworks?.[0]?.id);
+
+    if(token === Token.USDTX || token === Token.USDCX) {
+      finalToChainId = network.id;
+    }
+
     const pageState = localStorageService.setPageState({
       mintToken: `${token}/${mappingToToken}`,
       mintFromChainId: network.id,
-      mintToChainId: isFromJOC ? ethereum.id : undefined,
+      mintToChainId: finalToChainId,
     });
     setPageState(pageState);
   }, [setPageState, toNetwork, getToTokenByFromToken, toToken]);
@@ -804,7 +741,7 @@ export default function Mint() {
   }, [setPageState, fromToken]);
 
   const fromTokens = useMemo(() => {
-    const tokens = Object.keys(PAIR_TOKENS).filter(token => PAIR_TOKENS[token as Token].mintToTokens.length > 0) as Token[];
+    const tokens = Object.keys(PAIR_TOKENS).filter(token => PAIR_TOKENS[token].mintToTokens.length > 0) as Token[];
     return [ethereum, joc].flatMap((network) => {
       return tokens.map((token) => {
         if (token === Token.JOC && network.id === joc.id) {
@@ -814,13 +751,16 @@ export default function Mint() {
           };
         }
 
-        if ((
-          (token === Token.USDT || token === Token.USDC || token === Token.JOCX ) && network.id === joc.id)
-          || (token === Token.JOC && network.id === ethereum.id)
-          || (token === Token.USDA && !(network.id === ethereum.id || network.id === joc.id))
-          || (token === Token.USDTX && network.id === ethereum.id)
-          || (token === Token.USDCX && network.id === ethereum.id)
-        ) {
+        const tokenConfig = PAIR_TOKENS[token];
+        const isNetworkSupported = tokenConfig?.suportedNetworks?.some(
+          (supportedNet) => supportedNet.id === network.id
+        );
+
+        const isUsdaEthSpecialCase =
+          (token === Token.USDTX || token === Token.USDCX) &&
+          network.id === ethereum.id;
+
+        if (!isNetworkSupported || isUsdaEthSpecialCase) {
           return null;
         }
 
@@ -843,12 +783,17 @@ export default function Mint() {
           };
         }
 
-        if ((
-          (token === Token.USDT || token === Token.USDC || token === Token.JOCX ) && network.id === joc.id)
-          || (token === Token.JOC && network.id === ethereum.id)
-          || (token === Token.USDA && !(network.id === ethereum.id || network.id === joc.id))
-          || ((fromToken === Token.USDTX || fromToken === Token.USDCX) && token === Token.USDA && network.id === ethereum.id)
-        ) {
+        const tokenConfig = PAIR_TOKENS[token];
+        const isNetworkSupported = tokenConfig?.suportedNetworks?.some(
+          (supportedNet) => supportedNet.id === network.id
+        );
+
+        const isUsdaEthSpecialCase =
+          (fromToken === Token.USDTX || fromToken === Token.USDCX) &&
+          token === Token.USDA &&
+          network.id === ethereum.id;
+
+        if (!isNetworkSupported || isUsdaEthSpecialCase) {
           return null;
         }
 
@@ -1057,7 +1002,7 @@ export default function Mint() {
             </Button>
         </div>
       </form>
-      <SelectTokenDialog2
+      <SelectTokenDialog
         open={openToTokenChangeDialog}
         onClose={onCloseToTokenChangeDialog}
         onChangeToken={handleSelectToToken}
@@ -1065,7 +1010,7 @@ export default function Mint() {
         tokens={toTokens as { token: Token; network: Chain }[]}
         isFrom={false}
       />
-      <SelectTokenDialog2
+      <SelectTokenDialog
         open={openFromTokenChangeDialog}
         onClose={onCloseFromTokenChangeDialog}
         onChangeToken={handleSelectFromToken}

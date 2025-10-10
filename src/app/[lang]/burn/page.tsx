@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   TextField,
@@ -9,27 +9,27 @@ import {
   Box,
   alpha,
   InputAdornment,
-  useTheme,
-  Tooltip,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { useDict } from "@/contexts/DictContext";
 import { useSnackbar } from "notistack";
 import TokenWithChainIcon from "@/components/TokenWithChainIcon";
-import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
+import { useAccount, useBalance, useConfig } from "wagmi";
 import {
   switchChain,
-  writeContract,
   waitForTransactionReceipt,
-  readContract,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
 import { Chain, parseUnits } from "viem";
-import tokenContractAbi from "@/libs/usdtx/abis/UsdtxAbi.json";
 import Layout from "@/components/Layout";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
-import { ethers } from "ethers";
+import { ethers, formatUnits } from "ethers";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
 import { Token } from "@/enums/token";
@@ -39,31 +39,27 @@ import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
-import jocxAbi from "@/libs/jocx/abis/JOCX.json";
-import treasuryAbi from "@/libs/usdtx/abis/EthereumTreasuryAbi.json";
-import oftaHelperAbi from "@/libs/usdtx/abis/OFTAHelperAbi.json";
 import { renderTokenBalance } from "@/utils/render.util";
-import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
+import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
-
-const BURN_SUPPORT_TOKENS = [
-  Token.USDTX,
-  Token.USDCX,
-  Token.JOCX,
-  Token.USDA
-]
+import { readEthereumTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeEthereumTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
 
 export default function Burn() {
   const dict = useDict();
   const wagmiConfig = useConfig();
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   const [burnAmount, setBurnAmount] = useState("");
-  const resetBurnAmount = useCallback(() => setBurnAmount(""), []);
+  const resetBurnAmount = useCallback(() => {
+    setBurnAmount("");
+    setOutAmount("");
+  }, []);
   const { classes } = useStyles();
   const { chainId } = useAccount();
   const { address, isConnecting, isDisconnected } = useAccount();
   const [pageState, setPageState] = useState(localStorageService.getPageState());
-  const [fallbackAddress, setFallbackAddress] = useState("");
+  const [loadingOutAmount, setLoadingOutAmount] = useState(false);
+  const [outAmount, setOutAmount] = useState("");
+  const [fallbackToken, setFallbackToken] = useState<Token>(Token.USDA);
 
   const getToTokenByFromToken = useCallback((token: Token) => {
     return PAIR_TOKENS[token]?.burnToTokens[0];
@@ -118,15 +114,20 @@ export default function Burn() {
     setOpenToTokenChangeDialog(false);
   }, [setOpenToTokenChangeDialog]);
 
-  const handleMintAmountChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const amount = event.target.value
+  const handleBurnAmountChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      try {
+        const amount = event.target.value
         .replace(/[^0-9.]/g, '') // Removes non-numeric characters or periods
         .replace(/^0+(\d)/, '$1') // Remove leading 0 unless a decimal number
         .replace(/^(\.)/, '0$1') // If it starts with a period, add a leading 0
         .replace(/(\..*?)\./g, '$1') // Only one dot is allowed;
         .replace(new RegExp(`(\\.\\d{${displayDecimals}})\\d+`, 'g'), '$1'); // Allow only up to token.decimal
-      setBurnAmount(amount);
+
+        setBurnAmount(amount);
+      } catch (error) {
+        console.log("Burn amount change failed with error: ", error);
+      }
     },
     [displayDecimals]
   );
@@ -151,28 +152,24 @@ export default function Burn() {
         .toHex()
         .toString();
 
-      const sendParam = [
-        destinationChain,
-        ethers.zeroPadValue(address as `0x${string}`, 32),
-        tokensToBurn,
-        tokensToBurn,
-        options,
-        "0x",
-        "0x",
-      ];
+      const sendParam = {
+        dstEid: destinationChain,
+        to: ethers.zeroPadValue(address as `0x${string}`, 32) as `0x${string}`,
+        amountLD: tokensToBurn,
+        minAmountLD: tokensToBurn,
+        extraOptions: options as `0x${string}`,
+        composeMsg: "0x" as `0x${string}`,
+        oftCmd: "0x" as `0x${string}`,
+      };
 
-      const fee: any = await readContract(wagmiConfig, {
-        abi: jocxAbi,
+      const fee = await readNoftxQuoteSend(wagmiConfig, {
         address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
-        functionName: "quoteSend",
         args: [sendParam, false],
       });
 
-      const burnTxHash = await writeContract(wagmiConfig, {
-        abi: jocxAbi,
+      const burnTxHash = await writeNoftxSend(wagmiConfig, {
         address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
-        functionName: "send",
-        args: [sendParam, [fee.nativeFee, 0], address],
+        args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
         value: fee.nativeFee,
       });
 
@@ -259,10 +256,13 @@ export default function Burn() {
       const tokensToBurn = ethers.parseUnits(burnAmount, 6);
 
       if (fromNetwork.id !== toNetwork.id) {
-        const fallbackTokenAddress = fallbackAddress ? fallbackAddress : '0x0000000000000000000000000000000000000000' as `0x${string}`;
+        const fallbackTokenAddress = fallbackToken === Token.USDA
+          ? '0x0000000000000000000000000000000000000000' as `0x${string}`
+          : getTokenAddress(fallbackToken, toNetwork) as `0x${string}`;
+
         const options = Options.newOptions()
-          .addExecutorLzReceiveOption(200000, 0)
-          .addExecutorComposeOption(0, 500000, 0)
+          .addExecutorLzReceiveOption(OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, 0)
+          .addExecutorComposeOption(0, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, 0)
           .toHex()
           .toString()
 
@@ -274,28 +274,24 @@ export default function Burn() {
           ]
         )
 
-        const sendParam = [
-          CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
-          ethers.zeroPadValue(process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`, 32), // Send to Ethereum Treasury
-          tokensToBurn,
-          tokensToBurn,
-          options,
-          composeMessage,
-          '0x',
-        ]
+        const sendParam = {
+          dstEid: CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id],
+          to: ethers.zeroPadValue(process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`, 32) as `0x${string}`, // Send to Ethereum Treasury
+          amountLD: tokensToBurn,
+          minAmountLD: tokensToBurn,
+          extraOptions: options as `0x${string}`,
+          composeMsg: composeMessage as `0x${string}`,
+          oftCmd: '0x' as `0x${string}`,
+        }
 
-        const fee: any = await readContract(wagmiConfig, {
-          abi: oftaHelperAbi,
+        const fee: any = await readOftaQuoteSend(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_USDA_JOC_ADDRESS as `0x${string}`,
-          functionName: "quoteSend",
           args: [sendParam, false],
         });
 
-        const burnTokenTxHash = await writeContract(wagmiConfig, {
-          abi: oftaHelperAbi,
+        const burnTokenTxHash = await writeOftaSend(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_USDA_JOC_ADDRESS as `0x${string}`,
-          functionName: "send",
-          args: [sendParam, [fee.nativeFee, 0], address],
+          args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
           value: fee.nativeFee,
         });
 
@@ -321,10 +317,8 @@ export default function Burn() {
           await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], burnTokenTxHash);
         });
       } else {
-        const hash = await writeContract(wagmiConfig, {
-          abi: treasuryAbi,
+        const hash = await writeEthereumTreasuryBurn(wagmiConfig, {
           address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
-          functionName: "burn",
           args: [destinationTokenAddress, tokensToBurn],
         });
 
@@ -390,12 +384,8 @@ export default function Burn() {
     setIsBurning,
     fromNetwork,
     toToken,
-    fallbackAddress
+    fallbackToken,
   ]);
-
-  const handleFallbackAddressChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setFallbackAddress(event.target.value);
-  }, []);
 
   const handleSubmit = useCallback(
     async (event: any) => {
@@ -438,28 +428,24 @@ export default function Burn() {
           );
 
           const destEndpointId = isProduction ? EndpointId.ETHEREUM_V2_MAINNET : EndpointId.SEPOLIA_V2_TESTNET;
-          const sendParam = [
-            destEndpointId,
-            ethers.zeroPadValue(ethereumTokenAddress, 32),
-            ethers.parseUnits(burnAmount, 6),
-            ethers.parseUnits(burnAmount, 6),
-            options,
-            composeMessage,
-            "0x",
-          ];
+          const sendParam = {
+            dstEid: destEndpointId,
+            to: ethers.zeroPadValue(ethereumTokenAddress, 32) as `0x${string}`,
+            amountLD: ethers.parseUnits(burnAmount, 6),
+            minAmountLD: ethers.parseUnits(burnAmount, 6),
+            extraOptions: options as `0x${string}`,
+            composeMsg: composeMessage as `0x${string}`,
+            oftCmd: "0x" as `0x${string}`,
+          };
 
-          const fee: any = await readContract(wagmiConfig, {
-            abi: tokenContractAbi,
+          const fee = await readOftxQuoteSend(wagmiConfig, {
             address: sourceTokenAddress,
-            functionName: "quoteSend",
             args: [sendParam, false],
           });
 
-          const sendTokenTxHash = await writeContract(wagmiConfig, {
-            abi: tokenContractAbi,
+          const sendTokenTxHash = await writeOftxSend(wagmiConfig, {
             address: sourceTokenAddress,
-            functionName: "send",
-            args: [sendParam, [fee.nativeFee, 0], address],
+            args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address],
             value: fee.nativeFee,
           });
           enqueueSnackbar(
@@ -491,10 +477,8 @@ export default function Burn() {
             await waitForMessageReceived(CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP[toNetwork.id], sendTokenTxHash);
           });
         } else {
-          const hash = await writeContract(wagmiConfig, {
-            abi: tokenContractAbi,
+          const hash = await writeOftxBurn(wagmiConfig, {
             address: fromToken === Token.USDTX ? CHAIN_ID_TO_USDTX_ADDRESS_MAP[toNetwork.id] as any : CHAIN_ID_TO_USDCX_ADDRESS_MAP[toNetwork.id] as any,
-            functionName: "burn",
             args: [parseUnits(burnAmount, 6)],
           });
 
@@ -562,12 +546,13 @@ export default function Burn() {
     ]
   );
 
-  const handleSelectToken = useCallback((token: Token, network: Chain) => {
+  const handleSelectFromToken = useCallback((token: Token, network: Chain) => {
     let mappingToToken = getToTokenByFromToken(token);
-    const burnToTokens = PAIR_TOKENS[token as keyof typeof PAIR_TOKENS]?.burnToTokens as Token[] | undefined;
-    if(burnToTokens?.includes(toToken)) {
+    const burnToTokens = PAIR_TOKENS[token]?.burnToTokens || [];
+    if(burnToTokens.includes(toToken)) {
       mappingToToken = toToken;
     }
+
     const pageState = localStorageService.setPageState({
       burnToken: `${token}/${mappingToToken}`,
       burnFromChainId: network.id,
@@ -583,6 +568,99 @@ export default function Burn() {
     });
     setPageState(pageState);
   }, [setPageState, fromToken]);
+
+  const fromTokens = useMemo(() => {
+    const tokens = Object.keys(PAIR_TOKENS).filter(token => PAIR_TOKENS[token].burnToTokens.length > 0);
+    return wagmiConfig.chains.flatMap((network) => {
+      return tokens.map((token) => {
+        if (token === Token.JOC && network.id === joc.id) {
+          return {
+            token,
+            network: joc,
+          };
+        }
+
+        const tokenConfig = PAIR_TOKENS[token];
+        const isNetworkSupported = tokenConfig?.suportedNetworks?.some(
+          (supportedNet) => supportedNet.id === network.id
+        );
+
+        if (!isNetworkSupported) {
+          return null;
+        }
+
+        return {
+          token,
+          network,
+        };
+      });
+    });
+  }, [wagmiConfig]);
+
+  const toTokens = useMemo(() => {
+    const tokens = [Token.USDT, Token.USDC];
+    return [ethereum].flatMap((network) => {
+      return tokens.map((token) => {
+
+        const tokenConfig = PAIR_TOKENS[token];
+        const isNetworkSupported = tokenConfig?.suportedNetworks?.some(
+          (supportedNet) => supportedNet.id === network.id
+        );
+
+        if (!isNetworkSupported) {
+          return null;
+        }
+
+        return {
+          token,
+          network,
+        };
+      });
+    });
+  }, []);
+
+  const fallbackTokenOptions = useMemo(() => {
+    if (toToken === Token.USDC) {
+      return [Token.USDA, Token.USDT];
+    } else if (toToken === Token.USDT) {
+      return [Token.USDA, Token.USDC];
+    }
+    return [Token.USDA, Token.USDT];
+  }, [toToken]);
+
+  useEffect(() => {
+    if (fromToken === Token.USDA && fromNetwork.id !== toNetwork.id && !fallbackTokenOptions.includes(fallbackToken)) {
+      setFallbackToken(fallbackTokenOptions[0]);
+    }
+  }, [fromToken, fromNetwork, toNetwork, fallbackTokenOptions, fallbackToken]);
+
+  useEffect(() => {
+    const calculateOutAmount = async () => {
+      try {
+        if(fromToken === Token.USDA && fromNetwork.id !== toNetwork.id && burnAmount !== "") {
+          setLoadingOutAmount(true);
+          const fee = await readEthereumTreasuryFeeOf(wagmiConfig, {
+            address: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS as `0x${string}`,
+            args: [parseUnits(burnAmount, 6)],
+            chainId: ethereum.id,
+          });
+
+          const calculatedOutAmount = parseUnits(burnAmount, 6) - fee;
+          setOutAmount(formatUnits(calculatedOutAmount, 6));
+        } else {
+          setOutAmount(burnAmount);
+        }
+      } catch (error) {
+        console.log("Out amount failed with error: ", error);
+        setOutAmount(burnAmount);
+      } finally {
+        setLoadingOutAmount(false);
+      }
+    };
+
+    const timer = setTimeout(calculateOutAmount, 500);
+    return () => clearTimeout(timer);
+  }, [burnAmount, fromToken, fromNetwork, toNetwork, wagmiConfig, enqueueSnackbar, dict]);
 
   return (
     <Layout>
@@ -668,7 +746,7 @@ export default function Burn() {
                     autoFocus
                     size="medium"
                     value={burnAmount}
-                    onChange={handleMintAmountChange}
+                    onChange={handleBurnAmountChange}
                     inputProps={{ "data-testid": "amount-input" }}
                     error={insufficientBalance}
                     helperText={insufficientBalance && dict.burn_tab.invalid_amount}
@@ -757,7 +835,7 @@ export default function Burn() {
                       },
                     }}
                     size="medium"
-                    value={burnAmount}
+                    value={loadingOutAmount ? "..." : outAmount}
                     name="to"
                     inputProps={{ "data-testid": "to-input" }}
                   />
@@ -766,29 +844,47 @@ export default function Burn() {
             </div>
 
             {fromToken == Token.USDA && fromNetwork.id !== toNetwork.id && <div className={classes.itemWrapper}>
-              <Box width="100%" display="flex" justifyContent="start" flexDirection="column">
-                {<TextField
-                  fullWidth
-                  placeholder={dict.send_tab.receive_address_placeholder}
-                  variant="outlined"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "6px",
-                    },
-                    "& .MuiInputBase-input": {
-                      paddingLeft: "24px",
-                    },
-                    paddingTop: '6px',
-                  }}
-                  className={classes.addressTextField}
-                  onChange={handleFallbackAddressChange}
-                  size="small"
-                  value={fallbackAddress}
-                  name="to"
-                  inputProps={{ "data-testid": "address-input" }}
-                  error={!ethers.isAddress(fallbackAddress) && fallbackAddress !== ""}
-                  helperText={!ethers.isAddress(fallbackAddress) && fallbackAddress !== "" && dict.send_tab.invalid_receive_address}
-                />}
+              <Box
+                width="100%"
+                padding="16px"
+                border="1px solid rgb(247, 248, 250)"
+                borderRadius="12px"
+              >
+                <FormControl component="fieldset">
+                  <FormLabel
+                    component="legend"
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#020617 !important",
+                      marginBottom: "8px",
+                      "&.Mui-focused": {
+                        color: "#020617 !important"
+                      }
+                    }}
+                  >
+                    {dict.burn_tab.insufficient_tokens_prompt.replace('{{toToken}}', toToken)}
+                  </FormLabel>
+                  <RadioGroup
+                    value={fallbackToken}
+                    onChange={(e) => setFallbackToken(e.target.value as Token)}
+                  >
+                    {fallbackTokenOptions.map((token) => (
+                      <FormControlLabel
+                        key={token}
+                        value={token}
+                        control={<Radio />}
+                        label={token}
+                        sx={{
+                          "& .MuiFormControlLabel-label": {
+                            color: "#020617",
+                            fontSize: "14px"
+                          }
+                        }}
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
               </Box>
             </div>}
           </div>
@@ -813,21 +909,17 @@ export default function Burn() {
       <SelectTokenDialog
         open={openFromTokenChangeDialog}
         onClose={onCloseFromTokenChangeDialog}
-        onChangeToken={handleSelectToken}
-        selectedToken={fromToken}
-        networks={wagmiConfig.chains as any}
-        tokens={BURN_SUPPORT_TOKENS}
-        selectedNetwork={fromNetwork}
+        onChangeToken={handleSelectFromToken}
+        selectedToken={{ token: fromToken, network: fromNetwork }}
+        tokens={fromTokens as { token: Token; network: Chain }[]}
         isFrom={true}
       />
       <SelectTokenDialog
         open={openToTokenChangeDialog}
         onClose={onCloseToTokenChangeDialog}
         onChangeToken={handleSelectToToken}
-        selectedToken={toToken}
-        networks={[ethereum]}
-        tokens={[Token.USDT, Token.USDC]}
-        selectedNetwork={toNetwork}
+        selectedToken={{ token: toToken, network: toNetwork }}
+        tokens={toTokens as { token: Token; network: Chain }[]}
         isFrom={false}
       />
     </Layout>

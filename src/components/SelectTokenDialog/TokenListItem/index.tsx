@@ -1,7 +1,7 @@
 import { Token } from "@/enums/token";
 import { renderTokenBalance } from "@/utils/render.util";
 import { getTokenAddress, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi.config";
+import { CHAIN_ID_TO_ICON_MAP } from "@/wagmi/config";
 import { Chain } from "viem";
 import { useAccount, useBalance } from "wagmi";
 import clsx from "clsx";
@@ -90,7 +90,9 @@ const useStyles = makeStyles()((theme: Theme) => ({
     gap: "12px",
     justifyContent: "space-between",
     padding: "12px",
-    backgroundColor: "#F8F9FA",
+    marginLeft: "12px",
+    marginRight: "12px",
+    backgroundColor: "white",
     borderRadius: "12px",
     cursor: "pointer",
     transition: "all 0.2s ease",
@@ -99,8 +101,10 @@ const useStyles = makeStyles()((theme: Theme) => ({
     },
   },
   tokenListItemSelected: {
-    backgroundColor: "#EBF4FF",
-    border: "1px solid #3B82F6",
+    backgroundColor: "#F1F5F9",
+    cursor: "not-allowed",
+    opacity: 0.5,
+    pointerEvents: "none",
   },
   tokenInfoWrapper: {
     display: "flex",
