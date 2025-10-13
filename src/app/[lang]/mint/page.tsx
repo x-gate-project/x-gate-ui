@@ -24,7 +24,7 @@ import {
   switchChain,
   waitForTransactionReceipt,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_TREASURY_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
+import { baseNet, CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_TREASURY_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
 import { Chain, parseEther, parseUnits } from "viem";
 import Layout from "@/components/Layout";
 import Image from "next/image";
@@ -319,7 +319,7 @@ export default function Mint() {
         });
 
       } else {
-        if ((fromToken === Token.USDTX || fromToken === Token.USDCX) && fromNetwork.id === joc.id) {
+        if ((fromToken === Token.USDTX || fromToken === Token.USDCX)) {
           const options = Options.newOptions()
             .addExecutorLzReceiveOption(TREASURY_MINT_LZ_RECEIVE_GAS_LIMIT, 0)
             .addExecutorComposeOption(0, TREASURY_MINT_LZ_COMPOSE_GAS_LIMIT, 0)
@@ -335,13 +335,13 @@ export default function Mint() {
           }
 
           const fee: any = await readOftaTreasuryProxyQuoteMint(wagmiConfig, {
-            address: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
+            address: CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`,
             args: [mintParam],
           });
 
           const approveTokenTxHash = await writeOftaApprove(wagmiConfig, {
             address: sourceTokenAddress,
-            args: [process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`, tokensToMint],
+            args: [CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`, tokensToMint],
           });
 
           await waitForTransactionReceipt(wagmiConfig, {
@@ -349,7 +349,7 @@ export default function Mint() {
           });
 
           const mintTokenTxHash = await writeOftaTreasuryProxyMint(wagmiConfig, {
-            address: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS as `0x${string}`,
+            address: CHAIN_ID_TO_TREASURY_ADDRESS_MAP[fromNetwork.id] as `0x${string}`,
             args: [mintParam, fee],
             value: fee.nativeFee,
           });
@@ -742,7 +742,7 @@ export default function Mint() {
 
   const fromTokens = useMemo(() => {
     const tokens = Object.keys(PAIR_TOKENS).filter(token => PAIR_TOKENS[token].mintToTokens.length > 0) as Token[];
-    return [ethereum, joc].flatMap((network) => {
+    return [ethereum, joc, baseNet].flatMap((network) => {
       return tokens.map((token) => {
         if (token === Token.JOC && network.id === joc.id) {
           return {
@@ -774,6 +774,14 @@ export default function Mint() {
 
   const toTokens = useMemo(() => {
     const tokens = PAIR_TOKENS[fromToken]?.mintToTokens || [toToken];
+
+    if ((fromToken === Token.USDTX || fromToken === Token.USDCX) && (fromNetwork.id === joc.id || fromNetwork.id === baseNet.id)) {
+      return [{
+        token: Token.USDA,
+        network: fromNetwork,
+      }];
+    }
+
     return wagmiConfig.chains.flatMap((network) => {
       return tokens.map((token) => {
         if (token === Token.JOC && network.id === joc.id) {
@@ -803,7 +811,7 @@ export default function Mint() {
         };
       });
     });
-  }, [fromToken, toToken, wagmiConfig]);
+  }, [fromToken, toToken, wagmiConfig, fromNetwork]);
 
   return (
     <Layout>
