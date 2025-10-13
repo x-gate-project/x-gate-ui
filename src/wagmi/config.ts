@@ -220,6 +220,7 @@ export const CHAIN_ID_TO_USDA_ADDRESS_MAP = {
 export const CHAIN_ID_TO_TREASURY_ADDRESS_MAP = {
   [ethereum.id]: process.env.NEXT_PUBLIC_TREASURY_ETHEREUM_ADDRESS,
   [joc.id]: process.env.NEXT_PUBLIC_TREASURY_JOC_ADDRESS,
+  [baseNet.id]: process.env.NEXT_PUBLIC_TREASURY_BASE_ADDRESS,
 }
 
 export const CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP = {

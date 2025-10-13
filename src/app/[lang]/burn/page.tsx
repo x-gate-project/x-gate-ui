@@ -25,7 +25,7 @@ import {
   switchChain,
   waitForTransactionReceipt,
 } from "wagmi/actions";
-import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
+import { CHAIN_ID_TO_ICON_MAP, CHAIN_ID_TO_JOCX_ADDRESS_MAP, CHAIN_ID_TO_LZ_ENDPOINT_ID_MAP, CHAIN_ID_TO_USDA_ADDRESS_MAP, CHAIN_ID_TO_USDCX_ADDRESS_MAP, CHAIN_ID_TO_USDTX_ADDRESS_MAP, ethereum, joc } from "@/wagmi/config";
 import { Chain, parseUnits } from "viem";
 import Layout from "@/components/Layout";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
@@ -296,12 +296,12 @@ export default function Burn() {
         }
 
         const fee: any = await readOftaQuoteSend(wagmiConfig, {
-          address: process.env.NEXT_PUBLIC_USDA_JOC_ADDRESS as `0x${string}`,
+          address: CHAIN_ID_TO_USDA_ADDRESS_MAP[fromNetwork.id] as `0x${string}`,
           args: [sendParam, false],
         });
 
         const burnTokenTxHash = await writeOftaSend(wagmiConfig, {
-          address: process.env.NEXT_PUBLIC_USDA_JOC_ADDRESS as `0x${string}`,
+          address: CHAIN_ID_TO_USDA_ADDRESS_MAP[fromNetwork.id] as `0x${string}`,
           args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
           value: fee.nativeFee,
         });

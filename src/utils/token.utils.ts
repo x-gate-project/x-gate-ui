@@ -77,7 +77,7 @@ export const PAIR_TOKENS: Record<Token | string, {
     burnToTokens: [Token.JOC]
   },
   [Token.USDA]: {
-    suportedNetworks: [ethereum, joc],
+    suportedNetworks: [ethereum, joc, baseNet],
     mintToTokens: [],
     burnToTokens: [Token.USDT, Token.USDC]
   },
