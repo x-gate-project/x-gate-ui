@@ -22,13 +22,13 @@ export default function Header() {
             </Link>
             <StyledLeftNavigationDiv>
               <Link
-                href={process.env.NEXT_PUBLIC_SWAP_URL || ""}
+                href="/swap"
                 target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.swap_title}</StyledLinkButton>
               </Link>
               <Link
-                href={process.env.NEXT_PUBLIC_POOL_URL || ""}
+                href="/swap/pool"
                 target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
@@ -54,13 +54,13 @@ export default function Header() {
             <StyledRightNavigationDiv>
               <StyledRightTransferButton>{dict.dashboard.transfer_title}</StyledRightTransferButton>
               <Link
-                href={process.env.NEXT_PUBLIC_SWAP_URL || ""}
+                href="/swap"
                 target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.swap_title}</StyledLinkButton>
               </Link>
               <Link
-                href={process.env.NEXT_PUBLIC_POOL_URL || ""}
+                href="/swap/pool"
                 target='_self'
               >
                 <StyledLinkButton>{dict.dashboard.pool_title}</StyledLinkButton>
