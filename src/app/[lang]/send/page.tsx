@@ -30,7 +30,7 @@ import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
 import TokenChangePopover from "@/components/TokenChangePopover";
-import { waitForMessageReceived } from '@layerzerolabs/scan-client';
+import { waitForMessageReceived } from '@x-gate-project/x-gate-scan-client';
 import { Token } from "@/enums/token";
 import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
