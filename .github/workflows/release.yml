@@ -1,0 +1,52 @@
+name: Release
+
+# push (release / release/v*) → changesets opens/updates the "Release packages"
+#   PR; when that PR merges and no changesets remain, release.mjs cuts the
+#   vX.Y.Z[-beta.N] tag + GitHub Release.
+
+on:
+  push:
+    branches:
+      - release
+      - "release/v*"
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write # changesets commits to changeset-release/<branch>; release.mjs pushes the tag + Release
+  pull-requests: write # changesets/action opens the Release packages PR
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Config npm
+        run: |
+          npm set @x-gate-project:registry=https://npm.pkg.github.com
+          npm set //npm.pkg.github.com/:_authToken=${{ secrets.READ_NPM_PACKAGES_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create Release Pull Request or Release
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: npm run changeset version
+          publish: npm run release
+          # release.mjs owns the tag + GitHub Release; the action must not create its own.
+          createGithubReleases: false
+          title: "chore: release packages"
+          commit: "chore: release packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

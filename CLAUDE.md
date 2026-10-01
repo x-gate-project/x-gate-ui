@@ -14,6 +14,7 @@ npm run dev            # Next.js dev server on http://localhost:3000
 npm run build          # production build (also the only type check)
 npm run lint           # next lint (eslint flat config, `no-explicit-any` and `no-unused-vars` are off)
 npm run wagmi:generate # regenerate src/wagmi/generated.ts from src/abis/*.json
+npm run changeset      # add a changeset (.changeset/*.md) describing the change + bump type
 ```
 
 There is no test suite.
@@ -27,7 +28,16 @@ There is no test suite.
 //npm.pkg.github.com/:_authToken=<token>
 ```
 
-In CI (`.github/workflows/publish.yml`) the same is done with `npm config set` and the `READ_NPM_PACKAGES_TOKEN` secret. That workflow is manual (`workflow_dispatch`): it runs `npm version pre<bump> --preid build` and pushes the version commit and tag.
+In CI (`.github/workflows/release.yml`) the same is done with `npm set` and the `READ_NPM_PACKAGES_TOKEN` secret.
+
+### Versioning (Changesets)
+
+Versions and `CHANGELOG.md` are managed by Changesets (`.changeset/config.json`, base branch `release`). Do not bump `package.json` `version` by hand.
+
+- A PR with a user-facing change should include a changeset (`npm run changeset`, choose patch/minor/major, commit the generated file). Changes that need no release can skip it.
+- On every push to `release` / `release/v*`, `release.yml` runs `changesets/action`. If changesets are pending, it opens or updates a "chore: release packages" PR (`changeset version` bumps the version, writes `CHANGELOG.md` and deletes the changeset files). Once that PR is merged, the next run calls `npm run release` (`scripts/release.mjs`). The package is private, so nothing goes to npm: the script cuts the `vX.Y.Z` tag and a "Release - vX.Y.Z" GitHub Release with notes from the latest changelog section. It skips a tag whose Release already exists, so it's safe to re-run. `RELEASE_DRY_RUN=1 npm run release` shows what it would do.
+- Prereleases use Changesets pre-mode: `npx changeset pre enter beta` (writes `.changeset/pre.json`) gives `-beta.N` versions, released as GitHub prereleases. `npx changeset pre exit` returns to stable versions.
+- The setup mirrors `gu-corp/gu-api` (same config, action inputs, and release script, minus its monorepo/SDK parts).
 
 ## Architecture
 
