@@ -30,7 +30,7 @@ import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { waitForMessageReceived } from "@x-gate-project/x-gate-scan-client";
 import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";

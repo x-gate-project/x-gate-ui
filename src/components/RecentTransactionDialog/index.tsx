@@ -5,7 +5,7 @@ import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { Box, CircularProgress, Dialog, DialogTitle, IconButton } from '@mui/material';
 import { useTransactionState } from '@/contexts/TransactionStateContext';
-import { getEtherscanTxLink, getLayerZeroTxLink } from '@/utils/string.utils';
+import { getEtherscanTxLink, getXGateScanTxLink } from '@/utils/string.utils';
 import Link from 'next/link';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -38,7 +38,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
 
   const getExplorerLink = (tx: Transaction) => {
     if (tx.lzEndpointId) {
-      return getLayerZeroTxLink(tx.hash);
+      return getXGateScanTxLink(tx.hash);
     }
     return getEtherscanTxLink(tx.hash);
   };
@@ -75,9 +75,9 @@ const RecentTransactionDialog: React.FC<IProps> = ({
                 className={classes.listItem}
               >
                 <Box display="flex" alignItems="center" gap="8px">
-                {!tx.confirmedAt && <Box width={20} height={20} display="flex" alignItems="center" justifyContent="center"><CircularProgress size={20} color="primary" /></Box>}
+                {!tx.confirmedAt && !tx.isFailed && <Box width={20} height={20} display="flex" alignItems="center" justifyContent="center"><CircularProgress size={20} color="primary" /></Box>}
                 {tx.confirmedAt && !tx.isFailed && <CheckCircleIcon className={classes.itemIcon} color="success" />}
-                {tx.confirmedAt && tx.isFailed && <ErrorIcon className={classes.itemIcon} color="error" />}
+                {tx.isFailed && <ErrorIcon className={classes.itemIcon} color="error" />}
                 <Typography className={classes.summary}>{tx.summary}</Typography>
                 </Box>
                 <Link href={getExplorerLink(tx)} target="_blank">

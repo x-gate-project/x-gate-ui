@@ -1,7 +1,7 @@
 "use client";
 
 import localStorageService, { Transaction } from "@/services/local-storage.service";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { waitForMessageReceived } from "@x-gate-project/x-gate-scan-client";
 import { enqueueSnackbar } from "notistack";
 import {
   createContext,
@@ -115,7 +115,7 @@ export const TransactionStateProvider: FC<{ children: ReactNode }> = ({ children
       if(!processedAddressesRef.current.has(address)) {
         processedAddressesRef.current.add(address);
         for (const tx of storedTransactions) {
-          if (!tx.confirmedAt) {
+          if (!tx.confirmedAt && !tx.isFailed) {
             try {
               if (tx.lzEndpointId) {
                 await waitForMessageReceived(tx.lzEndpointId, tx.hash);
