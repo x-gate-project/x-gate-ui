@@ -24,6 +24,9 @@ env:
 jobs:
   publish-version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
     strategy:
       matrix:
         node-version: [22.x]
@@ -33,7 +36,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - name: Configure GitHub Packages registry
+        run: |
+          npm config set @x-gate-project:registry https://npm.pkg.github.com
+          npm config set //npm.pkg.github.com/:_authToken '${NODE_AUTH_TOKEN}'
       - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Version
         id: create-version
         run: |
