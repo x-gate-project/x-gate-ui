@@ -31,7 +31,7 @@ import Image from "next/image";
 import { Token } from "@/enums/token";
 import { getTokenAddress, PAIR_TOKENS, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { waitForMessageReceived } from "@x-gate-project/x-gate-scan-client";
 import { ethers } from "ethers";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { TransactionMethod } from "@/enums/transaction-method";

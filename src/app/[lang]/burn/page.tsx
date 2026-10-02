@@ -34,12 +34,13 @@ import { EndpointId } from "@layerzerolabs/lz-definitions";
 import Image from "next/image";
 import { Token } from "@/enums/token";
 import { getTokenAddress, PAIR_TOKENS, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { waitForMessageReceived } from "@x-gate-project/x-gate-scan-client";
 import localStorageService from "@/services/local-storage.service";
 import { isProduction } from "@/utils/system";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { renderTokenBalance } from "@/utils/render.util";
+import { getFeeOverrides } from "@/utils/fee.utils";
 import { JOCX_BURN_LZ_RECEIVE_GAS_LIMIT, OFTA_BURN_LZ_COMPOSE_GAS_LIMIT, OFTA_BURN_LZ_RECEIVE_GAS_LIMIT, OFTX_BURN_LZ_COMPOSE_GAS_LIMIT, OFTX_BURN_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
 import { readOftaTreasuryFeeOf, readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeOftaTreasuryBurn, writeNoftxSend, writeOftaSend, writeOftxBurn, writeOftxSend } from "@/wagmi/generated";
@@ -182,6 +183,7 @@ export default function Burn() {
         address: CHAIN_ID_TO_JOCX_ADDRESS_MAP[fromNetwork.id] as any,
         args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
         value: fee.nativeFee,
+        ...(await getFeeOverrides(wagmiConfig, fromNetwork.id)),
       });
 
       enqueueSnackbar(
@@ -458,6 +460,7 @@ export default function Burn() {
             address: sourceTokenAddress,
             args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address],
             value: fee.nativeFee,
+            ...(await getFeeOverrides(wagmiConfig, fromNetwork.id)),
           });
           enqueueSnackbar(
             dict.burn_tab.waiting_for_sending
