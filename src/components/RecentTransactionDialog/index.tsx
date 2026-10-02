@@ -5,7 +5,7 @@ import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { Box, CircularProgress, Dialog, DialogTitle, IconButton } from '@mui/material';
 import { useTransactionState } from '@/contexts/TransactionStateContext';
-import { getEtherscanTxLink, getLayerZeroTxLink } from '@/utils/string.utils';
+import { getEtherscanTxLink, getXGateScanTxLink } from '@/utils/string.utils';
 import Link from 'next/link';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -38,7 +38,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
 
   const getExplorerLink = (tx: Transaction) => {
     if (tx.lzEndpointId) {
-      return getLayerZeroTxLink(tx.hash);
+      return getXGateScanTxLink(tx.hash);
     }
     return getEtherscanTxLink(tx.hash);
   };

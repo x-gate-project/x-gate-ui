@@ -1,7 +1,7 @@
 "use client";
 
 import localStorageService, { Transaction } from "@/services/local-storage.service";
-import { waitForMessageReceived } from "@layerzerolabs/scan-client";
+import { waitForMessageReceived } from "@x-gate-project/x-gate-scan-client";
 import { enqueueSnackbar } from "notistack";
 import {
   createContext,

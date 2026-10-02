@@ -33,7 +33,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - name: Configure GitHub Packages registry
+        run: |
+          npm config set @x-gate-project:registry https://npm.pkg.github.com
+          npm config set //npm.pkg.github.com/:_authToken '${NODE_AUTH_TOKEN}'
       - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.READ_NPM_PACKAGES_TOKEN }}
       - name: Version
         id: create-version
         run: |

@@ -29,7 +29,7 @@ import { useSnackbar } from "notistack";
 import { Options } from "@layerzerolabs/lz-v2-utilities";
 import { Chain, parseUnits } from "viem";
 import { ethers } from "ethers";
-import { waitForMessageReceived } from '@layerzerolabs/scan-client';
+import { waitForMessageReceived } from '@x-gate-project/x-gate-scan-client';
 import { Token } from "@/enums/token";
 import { getTokenAddress, PAIR_TOKENS, TOKEN_TO_DECIMALS_MAP, TOKEN_TO_ICON_MAP } from "@/utils/token.utils";
 import localStorageService from "@/services/local-storage.service";
@@ -37,6 +37,7 @@ import { switchChain } from "wagmi/actions";
 import { useTransactionState } from "@/contexts/TransactionStateContext";
 import { TransactionMethod } from "@/enums/transaction-method";
 import { renderTokenBalance } from "@/utils/render.util";
+import { getFeeOverrides } from "@/utils/fee.utils";
 import { JOCX_SEND_LZ_RECEIVE_GAS_LIMIT, OFTX_SEND_LZ_RECEIVE_GAS_LIMIT, USDA_SEND_LZ_RECEIVE_GAS_LIMIT } from "@/consts/gas";
 import SelectTokenDialog from "@/components/SelectTokenDialog";
 import { readNoftxQuoteSend, readOftaQuoteSend, readOftxQuoteSend, writeNoftxSend, writeOftaSend, writeOftxSend } from "@/wagmi/generated";
@@ -259,6 +260,7 @@ export default function Send() {
           address: sourceTokenAddress as `0x${string}`,
           args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
           value: fee.nativeFee,
+          ...(await getFeeOverrides(wagmiConfig, selectedFromNetwork.id)),
         });
         setIsSending(false);
         enqueueSnackbar( dict.send_tab.waiting_for_sending, { variant: "info" });
@@ -375,6 +377,7 @@ export default function Send() {
           address: sourceTokenAddress as `0x${string}`,
           args: [sendParam, {nativeFee: fee.nativeFee, lzTokenFee: BigInt(0)}, address as `0x${string}`],
           value: fee.nativeFee,
+          ...(await getFeeOverrides(wagmiConfig, selectedFromNetwork.id)),
         });
 
         setIsSending(false);
