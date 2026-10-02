@@ -5,7 +5,8 @@ import { makeStyles } from "tss-react/mui";
 import { Theme } from "@mui/material/styles";
 import { Box, CircularProgress, Dialog, DialogTitle, IconButton } from '@mui/material';
 import { useTransactionState } from '@/contexts/TransactionStateContext';
-import { getEtherscanTxLink, getXGateScanTxLink } from '@/utils/string.utils';
+import { getExplorerTxLink, getXGateScanTxLink } from '@/utils/string.utils';
+import { useConfig } from 'wagmi';
 import Link from 'next/link';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -26,6 +27,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
 
   const { classes } = useStyles();
   const { transactions, clearCompletedTransactions } = useTransactionState();
+  const { chains } = useConfig();
 
   const pendingTransactions = useMemo(() => transactions.filter((tx) => tx.confirmedAt === undefined && tx.isFailed === undefined).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
   const confirmedTransactions = useMemo(() => transactions.filter((tx) => (tx.confirmedAt !== undefined || tx.isFailed !== undefined)).sort((a, b) => b.createdAt - a.createdAt), [transactions]);
@@ -40,7 +42,7 @@ const RecentTransactionDialog: React.FC<IProps> = ({
     if (tx.lzEndpointId) {
       return getXGateScanTxLink(tx.hash);
     }
-    return getEtherscanTxLink(tx.hash);
+    return getExplorerTxLink(chains.find((chain) => chain.id === tx.fromChainId), tx.hash);
   };
 
   return (
