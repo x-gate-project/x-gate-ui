@@ -1,6 +1,6 @@
 import { createConfig, http, cookieStorage, createStorage } from "wagmi";
 import { mainnet, sepolia, arbitrum, base, arbitrumSepolia, baseSepolia, avalancheFuji, avalanche } from "wagmi/chains";
-import { defineChain } from "viem";
+import { Chain, defineChain } from "viem";
 import { isProduction } from "../utils/system";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import { walletConnect } from "wagmi/connectors";
@@ -155,20 +155,19 @@ export const avalancheNet = isProduction
       },
     });
 
+// Avalanche Fuji is not supported on testnet.
+const supportedChains: [Chain, ...Chain[]] = isProduction
+  ? [ethereum, joc, arbitrumNet, baseNet, avalancheNet]
+  : [ethereum, joc, arbitrumNet, baseNet];
+
 export function getWagmiConfig() {
   return createConfig({
-    chains: [ethereum, joc, arbitrumNet, baseNet, avalancheNet],
+    chains: supportedChains,
     ssr: true,
     storage: createStorage({
       storage: cookieStorage,
     }),
-    transports: {
-      [joc.id]: http(),
-      [ethereum.id]: http(),
-      [arbitrumNet.id]: http(),
-      [avalancheNet.id]: http(),
-      [baseNet.id]: http()
-    } as any,
+    transports: Object.fromEntries(supportedChains.map((chain) => [chain.id, http()])) as any,
     connectors: [
       walletConnect({
         showQrModal: false,
